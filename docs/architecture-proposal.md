@@ -4,7 +4,7 @@ Status: proposed, not implemented.
 
 ## Problem
 
-Every OAuth2/OIDC server port (`rust-oauth2-server` reference, `typescript-oauth2-server`, `go-oauth2-server`, future languages) has to behave the same way on the wire and enforce the same security rules. Today the TypeScript port holds the only fixtures, matrix and runner, and the Go port would copy them. Copies drift, each port re-derives the RFC requirements from Rust tests, and nothing measures whether two ports implement the same contract.
+Every OAuth2/OIDC server port (`rust-oauth2-server` reference, `python-oauth2-server`, `typescript-oauth2-server`, `go-oauth2-server`, future languages) has to behave the same way on the wire and enforce the same security rules. Today the TypeScript port holds the only fixtures, matrix and runner, and the Go port would copy them. Copies drift, each port re-derives the RFC requirements from Rust tests, and nothing measures whether two ports implement the same contract.
 
 This repository becomes the **single, versioned, language-neutral contract**. A server is conformant to a contract version and profile if and only if the contract's runner passes against it. Implementations are interchangeable; the contract is the product. When the contract changes, each language gets a mechanical "bump and make it pass" task an agent can execute.
 
@@ -20,7 +20,7 @@ This repository becomes the **single, versioned, language-neutral contract**. A 
 1. **Black box only.** The runner never imports implementation code and never reads its database. Anything it needs (seeded clients, a test user login, clock) goes through a documented SUT interface.
 2. **Data over code.** Requirements and scenarios are declarative YAML validated by JSON Schema. Adding a test case should not require touching the runner.
 3. **One runner.** Shared semantics (step chaining, normalization, redirect capture, PKCE/DPoP helpers) live in one tested implementation. Ports never re-implement the harness.
-4. **Reference-validated.** A scenario is `stable` only after it passes against the pinned Rust reference, or carries a recorded `reference-deviation` where Rust is wrong and the RFC wins.
+4. **Reference-validated.** A scenario is `stable` only after it passes against the pinned Rust reference, or carries a recorded `reference-deviation` where Rust is wrong and the RFC wins. The Python port (`python-oauth2-server`, FastAPI, most feature-complete port, RFC tests ported 1:1 from Rust, shares Rust's SQL schema) is the second validation target: a scenario that passes on Rust but fails on Python, or vice versa, is reviewed before promotion.
 5. **No false PASS.** The runner's own CI proves that mismatches, missing setup and all-skipped suites fail with a nonzero exit (lesson from the TS harness, PRs #3/#5).
 6. **RFC beats reference.** Where Rust diverges from an RFC, the contract encodes the RFC and records the Rust deviation. Never silently copy unsafe behavior.
 
@@ -113,7 +113,7 @@ The TS fixtures are mostly `deferred` because there was no way to set up state b
 - Optional **clock control** endpoint for expiry scenarios, otherwise those scenarios use short configured TTLs.
 - Health/readiness endpoint the runner waits on.
 
-The Rust reference gets the same interface (it already has seed-admin env vars); that is a scoped PR on `rust-oauth2-server`.
+The Rust reference gets the same interface first (it already has seed-admin env vars); the Python port follows as the second implementation. Each is a scoped PR on its own repository.
 
 ## Runner
 
@@ -137,21 +137,21 @@ OpenAPI only fixes the wire shape: paths, parameters, status codes, body schemas
 3. **Invariants — named properties.** Each security rule is stated once as a property with a requirement ID and an observation recipe, e.g. `INV-CODE-SINGLE-USE`: for any code, at most one token exchange succeeds, and after a second attempt tokens issued from it are inactive at introspection. Invariants are checked across every scenario run and every generated trace, not just in the one scenario that motivated them.
 4. **Model-based (stateful property) testing.** A small executable reference model of the abstract server state (clients, codes, token families, consents, revocations, clock) lives in the runner. The runner generates random command sequences (authorize, exchange, refresh, replay, revoke, introspect, advance clock), runs them against the SUT, and checks each response against the model's prediction and the invariants; failures shrink to a minimal reproducing sequence, which can be committed as a new example scenario. Prior art: QuickCheck state-machine testing, `fast-check` model-based commands, Hypothesis stateful testing. Randomized runs use a recorded seed so failures replay deterministically.
 5. **Concurrency properties.** Race scenarios issue parallel requests (same code redeemed N times, same refresh token rotated concurrently) and require exactly one success. Catches non-atomic storage that sequential tests miss.
-6. **Differential testing.** The same generated sequence runs against the Rust reference and the port; normalized outcomes must match except for recorded deviations. Disagreement flags either a port bug or a reference bug for review.
+6. **Differential testing.** The same generated sequence runs against the Rust reference and each port (Python first, being the most complete); normalized outcomes must match except for recorded deviations. Disagreement flags either a port bug or a reference bug for review.
 7. **External oracles.** For OIDC/FAPI profiles, run the OpenID Foundation's open-source conformance suite (self-hostable) as an additional gate instead of re-encoding everything ourselves. Optional later: a formal model of the core code/refresh state machine (TLA+ or Quint) to model-check invariants and keep the executable model honest.
 
 Not every layer ships at once. Stage 1 ships layers 1–3; the model-based, concurrency and differential layers are a research spike that must first prove they find real bugs (seeded-mutant tests: deliberately broken SUT variants such as non-atomic code redemption must be caught) before becoming a CI gate.
 
 ## Port playbook (`docs/PORTING.md`)
 
-Captures what porting taught us, as normative guidance with requirement IDs where applicable: reject duplicated OAuth parameters before parsing; atomic one-time code redemption; refresh-token family revocation on replay; persist signing keys, never regenerate on restart; fail closed on missing secrets/issuer or insecure production settings; no implicit/ROPC; never claim compliance from endpoint stubs; prove the CLI wires failures into the exit code. Plus the language-port Kanban sequence: architecture approval → CI bootstrap with contract runner → skeleton + SUT interface → profile waves.
+Captures what porting taught us, as normative guidance with requirement IDs where applicable: security state (PAR request URIs, DPoP replay/nonce, rate limits, key rotation, events) must live in shared persistence, not process memory, or multi-replica deployments break single-use guarantees (the Python port is pinned to one replica until this is fixed); reject duplicated OAuth parameters before parsing; atomic one-time code redemption; refresh-token family revocation on replay; persist signing keys, never regenerate on restart; fail closed on missing secrets/issuer or insecure production settings; no implicit/ROPC; never claim compliance from endpoint stubs; prove the CLI wires failures into the exit code. Plus the language-port Kanban sequence: architecture approval → CI bootstrap with contract runner → skeleton + SUT interface → profile waves.
 
 ## Migration and staging
 
 1. **Contract repo bootstrap:** schemas, requirement + scenario formats, extracted runner with self-tests, CI. Port the existing 5 TS fixtures and the 94-entry Rust route inventory.
-2. **Core profile:** requirements catalog for RFC 6749/7636/9207/9700 core and stable scenarios, validated against the Rust reference once the SUT interface lands there.
+2. **Core profile:** requirements catalog for RFC 6749/7636/9207/9700 core and stable scenarios, derived from the Rust tests and the Python port's 1:1 ported RFC tests, validated against Rust and Python once their SUT interfaces land.
 3. **Rust reference SUT interface:** seed file + test login on `rust-oauth2-server`; contract CI runs against its image.
-4. **Consumers:** TypeScript port replaces its in-repo harness with the contract runner; Go port's CI bootstrap consumes the contract instead of vendoring TS fixtures.
+4. **Consumers:** Python port adds a `conformance.yaml` manifest and runs the contract in CI alongside its own tests; TypeScript port replaces its in-repo harness with the contract runner; Go port's CI bootstrap consumes the contract instead of vendoring TS fixtures.
 5. **Further profiles:** token-lifecycle, oidc-basic, then device/PAR/DCR, DPoP/mTLS, agent, each with negative security scenarios.
 
 ## Decisions for owner
