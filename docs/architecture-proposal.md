@@ -1,6 +1,6 @@
 # OAuth2 conformance contract — architecture proposal
 
-Status: proposed, not implemented.
+Status: approved 2026-10-11 (owner), not implemented.
 
 ## Problem
 
