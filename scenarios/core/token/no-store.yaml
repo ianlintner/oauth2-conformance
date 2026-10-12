@@ -1,0 +1,14 @@
+id: core.token.error-no-store
+title: Token error responses are not cacheable
+requirements: [RFC6749-5.1-no-store]
+profile: core
+status: stable
+steps:
+  - id: token
+    request:
+      method: POST
+      path: /oauth/token
+      form: { grant_type: urn:example:bogus }
+    expect:
+      status: 400
+      headers: { cache-control: no-store }

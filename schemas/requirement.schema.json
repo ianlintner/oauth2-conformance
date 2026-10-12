@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ianlintner/oauth2-conformance/schemas/requirement.schema.json",
+  "title": "Conformance requirement",
+  "description": "One normative requirement from a specification, with a stable ID. RFC text is summarized and linked, never copied wholesale.",
+  "type": "array",
+  "minItems": 1,
+  "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["id", "spec", "clause", "level", "profile", "summary", "link"],
+    "properties": {
+      "id": {
+        "type": "string",
+        "pattern": "^[A-Z][A-Z0-9]*(?:[0-9])?-[A-Za-z0-9._-]+$",
+        "description": "Stable identifier, e.g. RFC7636-4.6-S256-VERIFY."
+      },
+      "spec": {
+        "type": "string",
+        "minLength": 1,
+        "description": "Human-readable spec name, e.g. 'RFC 7636'."
+      },
+      "clause": {
+        "type": "string",
+        "minLength": 1,
+        "description": "Section number within the spec, e.g. '4.6'."
+      },
+      "level": {
+        "enum": ["MUST", "MUST NOT", "SHOULD", "SHOULD NOT", "MAY"],
+        "description": "RFC 2119 requirement level."
+      },
+      "profile": {
+        "type": "string",
+        "minLength": 1,
+        "description": "Profile this requirement belongs to, e.g. 'core'."
+      },
+      "summary": {
+        "type": "string",
+        "minLength": 10,
+        "description": "One-sentence statement of the normative requirement."
+      },
+      "link": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^https://",
+        "description": "Canonical link to the clause."
+      },
+      "notes": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  }
+}

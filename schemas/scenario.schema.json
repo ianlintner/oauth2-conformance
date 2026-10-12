@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ianlintner/oauth2-conformance/schemas/scenario.schema.json",
+  "title": "Conformance scenario",
+  "description": "One black-box conformance scenario: ordered steps the runner executes against a system under test, with declared expectations. Evolved from the typescript-oauth2-server fixture format (request/expect/bind) plus captures and interpolation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "requirements", "profile", "status", "steps"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*(?:\\.[a-z0-9-]+)+$",
+      "description": "Dot-delimited stable identifier, e.g. core.pkce.wrong-verifier."
+    },
+    "title": { "type": "string", "minLength": 3 },
+    "requirements": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "pattern": "^[A-Z][A-Z0-9]*(?:[0-9])?-[A-Za-z0-9._-]+$" },
+      "description": "Requirement IDs this scenario proves."
+    },
+    "profile": { "type": "string", "minLength": 1 },
+    "status": { "$ref": "#/$defs/status" },
+    "note": { "type": "string", "minLength": 1 },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/step" }
+    }
+  },
+  "$defs": {
+    "status": {
+      "enum": ["draft", "stable", "reference-deviation", "retired"],
+      "description": "Lifecycle of a scenario. Only stable runs count toward conformance."
+    },
+    "variable": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Template string; {{name}} or {{a.b}} interpolates a captured or generated value."
+    },
+    "stringRecord": {
+      "type": "object",
+      "propertyNames": { "type": "string", "minLength": 1 },
+      "additionalProperties": { "$ref": "#/$defs/variable" }
+    },
+    "step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_-]*$" },
+        "use": {
+          "type": "string",
+          "enum": ["login-and-authorize"],
+          "description": "Runner helper invoked instead of a raw request."
+        },
+        "with": { "type": "object", "additionalProperties": true },
+        "request": { "$ref": "#/$defs/request" },
+        "expect": { "$ref": "#/$defs/expect" },
+        "capture": {
+          "type": "object",
+          "propertyNames": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$" },
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^(?:redirect\\.(?:query|fragment)|body|header)\\.[^\\s]+$"
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "required": ["use"] },
+          "then": { "not": { "required": ["request"] } },
+          "else": { "required": ["request", "expect"] }
+        }
+      ]
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["method", "path"],
+      "properties": {
+        "method": { "enum": ["GET", "POST", "PUT", "DELETE"] },
+        "path": {
+          "type": "string",
+          "pattern": "^/(?!/)[^\\\\\\s]*$",
+          "description": "Server-local absolute path. Must not begin with // or contain a backslash."
+        },
+        "query": { "$ref": "#/$defs/stringRecord" },
+        "form": { "$ref": "#/$defs/stringRecord" },
+        "json": { "type": "object", "additionalProperties": true },
+        "headers": { "$ref": "#/$defs/stringRecord" }
+      },
+      "not": { "required": ["form", "json"], "description": "A request carries either a form body or a JSON body, never both." }
+    },
+    "expect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status"],
+      "properties": {
+        "status": { "type": "integer", "minimum": 100, "maximum": 599 },
+        "headers": { "$ref": "#/$defs/stringRecord" },
+        "json": { "type": "object", "additionalProperties": true },
+        "jsonSchema": { "type": "object", "description": "Inline JSON Schema the normalized body must satisfy." },
+        "redirect": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "location": { "type": "string", "minLength": 1 },
+            "query": { "$ref": "#/$defs/stringRecord" },
+            "fragment": { "$ref": "#/$defs/stringRecord" }
+          }
+        }
+      }
+    }
+  }
+}
