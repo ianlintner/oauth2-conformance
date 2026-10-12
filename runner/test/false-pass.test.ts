@@ -8,7 +8,8 @@ import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
-import { mkdtemp, mkdir, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { parse } from 'yaml';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -149,4 +150,63 @@ test('coverage --profile scopes the gate to one profile and still fails when it 
   assert.equal(core.code, 0, core.stdout + core.stderr);
   const all = await cli([...args, '--min', '100']);
   assert.equal(all.code, 1, 'draft-only profiles must not count as covered');
+});
+
+test('a wrong response header fails the run', async () => {
+  const server = createServer((_req, res) => {
+    res.writeHead(401, { 'content-type': 'application/json', 'www-authenticate': 'Bearer' });
+    res.end(JSON.stringify({ error: 'invalid_client' }));
+  });
+  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+  const url = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+  try {
+    const dir = await scenarios({
+      'a.yaml': scenario('fp.header', 'stable', 401).replace('expect: { status: 401,', 'expect: { status: 401, headers: { www-authenticate: Basic },'),
+    });
+    const result = await cli(['run', '--base-url', url, '--scenarios', dir]);
+    assert.equal(result.code, 1, result.stdout + result.stderr);
+    assert.match(result.stdout, /FAIL fp\.header/);
+    assert.match(result.stdout, /www-authenticate/);
+  } finally {
+    server.close();
+  }
+});
+
+test('a wrong claim in the response body fails the run', async () => {
+  const { server, url } = await listen(401, { error: 'invalid_request' });
+  try {
+    const dir = await scenarios({ 'a.yaml': scenario('fp.claim', 'stable', 401) });
+    const result = await cli(['run', '--base-url', url, '--scenarios', dir]);
+    assert.equal(result.code, 1, result.stdout + result.stderr);
+    assert.match(result.stdout, /FAIL fp\.claim/);
+    assert.match(result.stdout, /error/);
+  } finally {
+    server.close();
+  }
+});
+
+test('a run whose scenarios are all non-stable fails with verdict=fail', async () => {
+  const { server, url } = await listen(401, { error: 'invalid_client' });
+  try {
+    const dir = await scenarios({
+      'a.yaml': scenario('fp.draft', 'draft', 401),
+      'b.yaml': scenario('fp.deviation', 'reference-deviation', 401),
+    });
+    const result = await cli(['run', '--base-url', url, '--scenarios', dir]);
+    assert.equal(result.code, 1, result.stdout + result.stderr);
+    assert.match(result.stdout, /verdict=fail/);
+  } finally {
+    server.close();
+  }
+});
+
+test('the Rust route inventory pins the 94 routes of the reference commit', async () => {
+  const inventory = parse(await readFile(path.join(repoRoot, 'reference', 'rust-routes.yaml'), 'utf8')) as {
+    commit: string;
+    routes: { method: string; path: string }[];
+  };
+  assert.equal(inventory.commit, 'f6206d81848a13dc653aca718002f5c2e78cce61');
+  assert.equal(inventory.routes.length, 94);
+  const keys = inventory.routes.map((route) => `${route.method} ${route.path}`);
+  assert.equal(new Set(keys).size, keys.length, 'routes must be unique');
 });
