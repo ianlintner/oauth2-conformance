@@ -23,7 +23,7 @@ export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
 export const HTTP_METHODS: readonly HttpMethod[] = ['GET', 'POST', 'PUT', 'DELETE'] as const;
 
 /** Outcome of a single scenario in a run. */
-export type Outcome = 'pass' | 'fail' | 'skip' | 'deferred';
+export type Outcome = 'pass' | 'fail' | 'deferred';
 
 export function parseScenarioStatus(input: unknown): ScenarioStatus {
   if (typeof input === 'string' && (SCENARIO_STATUSES as readonly string[]).includes(input)) {

@@ -1,0 +1,21 @@
+id: rfc7636.pkce.missing-challenge
+title: PKCE code exchange without a code_challenge is rejected
+requirements: [RFC7636-4.4.1-missing-challenge]
+profile: pkce
+status: draft
+steps:
+  - id: token
+    request:
+      method: POST
+      path: /oauth/token
+      form:
+        grant_type: authorization_code
+        code: "{{code}}"
+        client_id: client-a
+        redirect_uri: https://client.example/callback
+    expect:
+      status: 400
+      json: { error: invalid_request }
+note: |
+  Requires live authorization setup and client registration to obtain a code
+  with known PKCE properties; no executable endpoint setup exists yet.

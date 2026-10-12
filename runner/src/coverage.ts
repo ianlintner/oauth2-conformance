@@ -45,9 +45,11 @@ export function buildCoverage(
   requirements: Requirement[],
   scenarios: Scenario[],
   profiles: Profile[] = [],
+  scopeProfile?: string,
 ): CoverageReport {
   const byRequirement = new Map<string, RequirementCoverage>();
   for (const requirement of requirements) {
+    if (scopeProfile !== undefined && requirement.profile !== scopeProfile) continue;
     byRequirement.set(requirement.id, {
       requirement: requirement.id,
       profile: requirement.profile,
@@ -66,6 +68,7 @@ export function buildCoverage(
   const knownProfileIds = new Set(profiles.map((profile) => profile.id));
 
   for (const scenario of scenarios) {
+    if (scopeProfile !== undefined && scenario.profile !== scopeProfile) continue;
     if (profiles.length > 0 && !knownProfileIds.has(scenario.profile)) {
       unknownProfiles.add(scenario.profile);
     }

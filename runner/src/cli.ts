@@ -16,6 +16,7 @@ import { loadProfiles, loadRequirements, loadScenarios } from './loader.js';
 import { buildCoverage, renderCoverage } from './coverage.js';
 import { runScenarios, type RunReport } from './runner.js';
 import { loginAndAuthorize } from './helpers.js';
+import { validateRepository } from './schema-validate.js';
 
 interface ParsedArgs {
   command: string;
@@ -59,7 +60,8 @@ export function usage(): string {
     'Commands:',
     '  run       --base-url URL --scenarios DIR [--requirements DIR] [--profile ID] [--report FILE]',
     '  validate  --scenarios DIR [--requirements DIR] [--profiles DIR]',
-    '  coverage  --scenarios DIR --requirements DIR [--profiles DIR] [--min PERCENT] [--json]',
+    '  validate-schemas  [--root DIR]   JSON Schema 2020-12 check of every data file',
+    '  coverage  --scenarios DIR --requirements DIR [--profiles DIR] [--profile ID] [--min PERCENT] [--json]',
     '',
     'Exit codes: 0 success, 1 conformance/validation failure, 2 usage error.',
   ].join('\n');
@@ -86,11 +88,24 @@ async function commandValidate(flags: Record<string, string | boolean>): Promise
   return 0;
 }
 
+async function commandValidateSchemas(flags: Record<string, string | boolean>): Promise<number> {
+  const root = rootFlag(flags);
+  const { checked, violations } = await validateRepository(root);
+  for (const violation of violations) console.error(`INVALID ${violation.file} (${violation.kind}): ${violation.message}`);
+  if (checked === 0) {
+    console.error(`validate-schemas: no data files found under ${root}`);
+    return 1;
+  }
+  if (violations.length > 0) return 1;
+  console.log(`validate-schemas: OK (${checked} files)`);
+  return 0;
+}
+
 async function commandCoverage(flags: Record<string, string | boolean>): Promise<number> {
   const scenarios = await loadScenarios(rootFlag(flags, 'scenarios'));
   const requirements = await loadRequirements(rootFlag(flags, 'requirements'));
   const profiles = flags.profiles !== undefined ? await loadProfiles(rootFlag(flags, 'profiles')) : [];
-  const report = buildCoverage(requirements, scenarios, profiles);
+  const report = buildCoverage(requirements, scenarios, profiles, flags.profile !== undefined ? stringFlag(flags, 'profile') : undefined);
   if (flags.json === true) {
     console.log(JSON.stringify(report, null, 2));
   } else {
@@ -138,6 +153,8 @@ export async function main(argv: string[]): Promise<number> {
       return commandRun(flags);
     case 'validate':
       return commandValidate(flags);
+    case 'validate-schemas':
+      return commandValidateSchemas(flags);
     case 'coverage':
       return commandCoverage(flags);
     case 'help':

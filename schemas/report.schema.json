@@ -5,7 +5,7 @@
   "description": "Machine-readable result of one conformance run, emitted by the runner as JSON.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["contract", "implementation", "profile", "executed", "passed", "failed", "skipped", "results"],
+  "required": ["contract", "implementation", "profile", "executed", "passed", "failed", "deferred", "results"],
   "properties": {
     "contract": { "type": "string", "minLength": 1 },
     "implementation": { "type": "string", "minLength": 1 },
@@ -15,7 +15,7 @@
     "executed": { "type": "integer", "minimum": 0 },
     "passed": { "type": "integer", "minimum": 0 },
     "failed": { "type": "integer", "minimum": 0 },
-    "skipped": { "type": "integer", "minimum": 0 },
+    "deferred": { "type": "integer", "minimum": 0 },
     "verdict": { "enum": ["pass", "fail"] },
     "results": {
       "type": "array",
@@ -28,7 +28,7 @@
           "title": { "type": "string" },
           "profile": { "type": "string" },
           "status": { "enum": ["draft", "stable", "reference-deviation", "retired"] },
-          "outcome": { "enum": ["pass", "fail", "skip", "deferred"] },
+          "outcome": { "enum": ["pass", "fail", "deferred"] },
           "diffs": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
           "note": { "type": "string" }
         }

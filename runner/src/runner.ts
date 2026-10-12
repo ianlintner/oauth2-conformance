@@ -6,8 +6,8 @@
  * generalized to:
  *  - black-box HTTP execution against a base URL (see ./http.ts);
  *  - ordered multi-step scenarios with `{{var}}` captures;
- *  - `reference-deviation` scenarios: they still execute (so a deviation that
- *    starts passing is visible) but a failure is recorded as `deferred`
+ *  - `draft` and `reference-deviation` scenarios: they still execute (so one
+ *    that starts passing is visible) but a failure is recorded as `deferred`
  *    rather than `fail`, and only `stable` scenarios affect the verdict.
  *
  * A run in which no stable scenario executed must never report `pass`: an
@@ -24,7 +24,7 @@ export interface ScenarioResult {
   profile: string;
   status: Scenario['status'];
   requirements: string[];
-  outcome: 'pass' | 'fail' | 'skip' | 'deferred';
+  outcome: 'pass' | 'fail' | 'deferred';
   diffs: Diff[];
   note?: string;
   steps: number;
@@ -40,7 +40,6 @@ export interface RunReport {
   executed: number;
   passed: number;
   failed: number;
-  skipped: number;
   deferred: number;
   verdict: 'pass' | 'fail';
   results: ScenarioResult[];
@@ -169,8 +168,9 @@ export async function runScenarios(scenarios: Scenario[], options: RunOptions): 
     }
 
     const rawOutcome: ScenarioResult['outcome'] = diffs.length === 0 ? 'pass' : 'fail';
-    // A reference-deviation never fails the build, but it is still reported.
-    const outcome = rawOutcome === 'fail' && scenario.status === 'reference-deviation' ? 'deferred' : rawOutcome;
+    // Only `stable` scenarios can fail the build. A failing `draft` or
+    // `reference-deviation` scenario is still reported, as `deferred`.
+    const outcome = rawOutcome === 'fail' && scenario.status !== 'stable' ? 'deferred' : rawOutcome;
     results.push({
       id: scenario.id,
       ...(scenario.title !== undefined ? { title: scenario.title } : {}),
@@ -189,9 +189,8 @@ export async function runScenarios(scenarios: Scenario[], options: RunOptions): 
   const passed = results.filter((result) => result.outcome === 'pass').length;
   const failed = results.filter((result) => result.outcome === 'fail').length;
   const deferred = results.filter((result) => result.outcome === 'deferred').length;
-  const skipped = results.filter((result) => result.outcome === 'skip').length;
 
-  // An empty or all-skipped run is not evidence of conformance.
+  // A run in which no stable scenario executed is not evidence of conformance.
   const stableExecuted = results.filter((result) => result.status === 'stable').length;
 
   return {
@@ -203,7 +202,6 @@ export async function runScenarios(scenarios: Scenario[], options: RunOptions): 
     executed,
     passed,
     failed,
-    skipped,
     deferred,
     verdict: failed === 0 && stableExecuted > 0 ? 'pass' : 'fail',
     results,

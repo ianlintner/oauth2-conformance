@@ -1,0 +1,7 @@
+- id: RFC9700-4.5-code-replay
+  spec: RFC 9700
+  clause: "4.5"
+  level: MUST
+  profile: hardening
+  summary: An authorization code that has already been exchanged is rejected with invalid_grant when replayed.
+  link: https://www.rfc-editor.org/rfc/rfc9700#section-4.5
