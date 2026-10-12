@@ -1,0 +1,45 @@
+name: runner
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+defaults:
+  run:
+    working-directory: runner
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.29.3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: runner/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm test
+
+  validate-data:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.29.3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: runner/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm conformance validate-schemas --root ..
+      - run: pnpm conformance validate --scenarios ../scenarios --requirements ../requirements --profiles ../profiles
+      - run: pnpm conformance coverage --scenarios ../scenarios --requirements ../requirements --profiles ../profiles --profile core --min 100

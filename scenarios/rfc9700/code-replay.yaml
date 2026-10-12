@@ -1,0 +1,22 @@
+id: rfc9700.code-replay
+title: Replaying an already-exchanged authorization code is rejected
+requirements: [RFC9700-4.5-code-replay]
+profile: hardening
+status: draft
+steps:
+  - id: token
+    request:
+      method: POST
+      path: /oauth/token
+      form:
+        grant_type: authorization_code
+        code: "{{code}}"
+        client_id: client-a
+        redirect_uri: https://client.example/callback
+        code_verifier: matching-verifier
+    expect:
+      status: 400
+      json: { error: invalid_grant }
+note: |
+  Requires live setup to obtain a code, exchange it successfully, replay the
+  same code, and verify it is rejected.

@@ -1,0 +1,8 @@
+id: core
+title: Core token endpoint
+description: Baseline OAuth 2.0 token endpoint error handling that needs no seeded state beyond an unknown client.
+requirements:
+  - RFC6749-5.2-invalid-client
+  - RFC6749-5.2-unsupported-grant-type
+  - RFC6749-5.2-missing-grant-type
+  - RFC6749-5.1-no-store

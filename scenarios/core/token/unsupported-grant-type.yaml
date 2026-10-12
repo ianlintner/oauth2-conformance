@@ -1,0 +1,14 @@
+id: core.token.unsupported-grant-type
+title: Unsupported grant type is rejected
+requirements: [RFC6749-5.2-unsupported-grant-type]
+profile: core
+status: stable
+steps:
+  - id: token
+    request:
+      method: POST
+      path: /oauth/token
+      form: { grant_type: urn:example:bogus }
+    expect:
+      status: 400
+      json: { error: unsupported_grant_type }

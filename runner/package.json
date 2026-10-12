@@ -1,0 +1,36 @@
+{
+  "name": "@ianlintner/oauth2-conformance-runner",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Language-neutral OAuth2/OIDC conformance runner: executes YAML scenarios against a black-box system under test.",
+  "packageManager": "pnpm@10.29.3",
+  "engines": {
+    "node": ">=24"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "bin": {
+    "oauth2-conformance": "./src/cli.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "tsx --test test/*.test.ts",
+    "check": "pnpm typecheck && pnpm lint && pnpm test",
+    "conformance": "tsx src/cli.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "eslint": "^10.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0",
+    "typescript-eslint": "^8.0.0"
+  },
+  "dependencies": {
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
+    "yaml": "^2.5.0"
+  }
+}

@@ -1,0 +1,42 @@
+- id: RFC6749-5.2-invalid-client
+  spec: RFC 6749
+  clause: "5.2"
+  level: MUST
+  profile: core
+  summary: Failed client authentication at the token endpoint returns error invalid_client with HTTP 401.
+  link: https://www.rfc-editor.org/rfc/rfc6749#section-5.2
+- id: RFC6749-5.2-unsupported-grant-type
+  spec: RFC 6749
+  clause: "5.2"
+  level: MUST
+  profile: core
+  summary: A grant type the authorization server does not support is rejected with error unsupported_grant_type.
+  link: https://www.rfc-editor.org/rfc/rfc6749#section-5.2
+- id: RFC6749-5.2-missing-grant-type
+  spec: RFC 6749
+  clause: "5.2"
+  level: MUST
+  profile: core
+  summary: A token request missing the required grant_type parameter is rejected with error invalid_request.
+  link: https://www.rfc-editor.org/rfc/rfc6749#section-5.2
+- id: RFC6749-5.1-no-store
+  spec: RFC 6749
+  clause: "5.1"
+  level: MUST
+  profile: core
+  summary: Error and token responses from the token endpoint include Cache-Control no-store.
+  link: https://www.rfc-editor.org/rfc/rfc6749#section-5.1
+- id: RFC6749-4.1.3-invalid-client
+  spec: RFC 6749
+  clause: "4.1.3"
+  level: MUST
+  profile: hardening
+  summary: An authorization-code exchange without valid client authentication is rejected with invalid_client and HTTP 401.
+  link: https://www.rfc-editor.org/rfc/rfc6749#section-4.1.3
+- id: RFC6749-4.1.3-wrong-redirect-uri
+  spec: RFC 6749
+  clause: "4.1.3"
+  level: MUST
+  profile: hardening
+  summary: A code exchange whose redirect_uri differs from the one used at authorization is rejected with invalid_grant.
+  link: https://www.rfc-editor.org/rfc/rfc6749#section-4.1.3

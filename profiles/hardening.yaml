@@ -1,0 +1,7 @@
+id: hardening
+title: Authorization-code hardening
+description: Authorization-code exchange checks from RFC 6749 and RFC 9700 that need a seeded client and a live authorization code. Draft only until the runner supports that setup.
+requirements:
+  - RFC6749-4.1.3-invalid-client
+  - RFC6749-4.1.3-wrong-redirect-uri
+  - RFC9700-4.5-code-replay

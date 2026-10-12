@@ -1,0 +1,4 @@
+implementation: example-server
+contract: 0.1.0
+profiles: [core]
+endpoint: http://localhost:8080
