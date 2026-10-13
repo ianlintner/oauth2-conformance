@@ -1,0 +1,23 @@
+id: core.authorize.redirect-uri-mismatch
+title: Authorization request with an unregistered redirect_uri is rejected, not redirected
+requirements: [RFC6749-3.1.2-redirect-uri-mismatch]
+profile: core
+status: stable
+note: |
+  Invariant INV-REDIRECT-EXACT-MATCH. RFC 6749 section 3.1.2.4 / 4.1.2.1: an
+  invalid redirect_uri is reported to the resource owner and never redirected to.
+steps:
+  - id: authorize
+    request:
+      method: GET
+      path: /oauth/authorize
+      query:
+        response_type: code
+        client_id: client-a
+        redirect_uri: https://evil.example/cb
+        state: s-redirect-mismatch
+        code_challenge: E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM
+        code_challenge_method: S256
+    expect:
+      status: 400
+      json: { error: invalid_request }

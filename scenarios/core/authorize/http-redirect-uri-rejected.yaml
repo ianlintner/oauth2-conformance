@@ -1,0 +1,25 @@
+id: core.authorize.http-redirect-uri-rejected
+title: A non-loopback http redirect URI is not accepted
+requirements: [RFC9700-2.6-no-http-redirect-uri]
+profile: core
+status: stable
+note: |
+  INV-NO-HTTP-REDIRECT-URI. RFC 9700 2.6 prohibits http redirection URIs apart
+  from the RFC 8252 7.3 loopback exception. client-a is registered with an
+  https redirect URI only; a request for the http form of a non-loopback host
+  must not be redirected to.
+steps:
+  - id: authorize
+    request:
+      method: GET
+      path: /oauth/authorize
+      query:
+        response_type: code
+        client_id: client-a
+        redirect_uri: "http://client.example/callback"
+        state: s-http
+        code_challenge: E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM
+        code_challenge_method: S256
+    expect:
+      status: 400
+      json: { error: invalid_request }

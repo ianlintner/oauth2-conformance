@@ -1,0 +1,21 @@
+id: core.native.loopback-path-exact
+title: The loopback port wildcard does not relax path matching
+requirements: [RFC8252-7.3-loopback-path-exact]
+profile: core
+status: stable
+note: INV-LOOPBACK-PORT-WILDCARD. A request path that differs from the registered /cb must not match, even for a loopback host. Rejected as invalid_request (unregistered redirect URI).
+steps:
+  - id: authorize
+    request:
+      method: GET
+      path: /oauth/authorize
+      query:
+        response_type: code
+        client_id: client-loopback-v4
+        redirect_uri: "http://127.0.0.1:9999/other"
+        state: s-v4-path
+        code_challenge: E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM
+        code_challenge_method: S256
+    expect:
+      status: 400
+      json: { error: invalid_request }

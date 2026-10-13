@@ -1,0 +1,58 @@
+id: core.hardening.code-single-use
+title: An authorization code is redeemed at most once
+requirements: [RFC6749-4.1.3-code-single-use, RFC6749-10.5-code-single-use, RFC9700-2.1.1-code-replay-rejected, RFC9700-2.1.1-code-replay-revokes-tokens]
+profile: core
+status: draft
+note: |
+  Invariant INV-CODE-SINGLE-USE. Obtain a code, exchange it (200), exchange the
+  same code again (400 invalid_grant), then require that the tokens from the
+  first exchange are inactive (RFC 9700 2.1.1).
+  Runner/SUT gaps (part 3/3): code acquisition (login-and-authorize
+  short-circuit, see core.authorize.code-issued); no capture of access_token
+  into a follow-up introspection step because /oauth/introspect and the
+  inactive-token check are v0.2 token-lifecycle scope, so replay-revokes-tokens
+  stays unverifiable in core until that endpoint contract exists.
+steps:
+  - id: auth
+    use: login-and-authorize
+    with:
+      username: alice
+      password: test-only-password
+      loginPath: /auth/login
+      authorizePath: /oauth/authorize
+      query:
+        response_type: code
+        client_id: client-a
+        redirect_uri: https://client.example/callback
+        state: s-replay
+        code_challenge: E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM
+        code_challenge_method: S256
+    expect:
+      status: 302
+    capture:
+      code: redirect.query.code
+  - id: exchange
+    request:
+      method: POST
+      path: /oauth/token
+      headers: { authorization: "Basic Y2xpZW50LWE6dGVzdC1vbmx5LXNlY3JldA==" }
+      form:
+        grant_type: authorization_code
+        code: "{{code}}"
+        redirect_uri: https://client.example/callback
+        code_verifier: dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk
+    expect:
+      status: 200
+  - id: replay
+    request:
+      method: POST
+      path: /oauth/token
+      headers: { authorization: "Basic Y2xpZW50LWE6dGVzdC1vbmx5LXNlY3JldA==" }
+      form:
+        grant_type: authorization_code
+        code: "{{code}}"
+        redirect_uri: https://client.example/callback
+        code_verifier: dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk
+    expect:
+      status: 400
+      json: { error: invalid_grant }

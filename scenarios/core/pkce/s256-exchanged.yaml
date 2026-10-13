@@ -1,0 +1,45 @@
+id: core.pkce.s256-exchanged
+title: An S256-protected code exchanges with the matching verifier
+requirements: [RFC7636-4.2-s256-supported]
+profile: core
+status: draft
+note: |
+  Invariants INV-S256-ONLY, INV-PKCE-BINDING.
+  Runner gaps (part 3/3): login-and-authorize returns the first 3xx, so against a
+  SUT that redirects unauthenticated requests to its login page it never submits
+  credentials; with.loginPath is not declared by the SUT contract. Until fixed the
+  authorization-code step cannot yield a code.
+steps:
+  - id: auth
+    use: login-and-authorize
+    with:
+      username: alice
+      password: test-only-password
+      loginPath: /auth/login
+      authorizePath: /oauth/authorize
+      query:
+        response_type: code
+        client_id: client-public
+        redirect_uri: https://client.example/callback
+        state: s-gen
+        code_challenge: E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM
+        code_challenge_method: S256
+    expect:
+      status: 302
+    capture:
+      code: redirect.query.code
+  - id: token
+    request:
+      method: POST
+      path: /oauth/token
+      form:
+        grant_type: authorization_code
+        code: "{{code}}"
+        client_id: client-public
+        redirect_uri: https://client.example/callback
+        code_verifier: dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk
+    expect:
+      status: 200
+      jsonSchema:
+        type: object
+        required: [access_token, token_type]

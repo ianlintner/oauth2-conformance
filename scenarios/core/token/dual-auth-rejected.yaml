@@ -1,0 +1,22 @@
+id: core.token.dual-auth-rejected
+title: Credentials in both Basic header and body are rejected as a single method is required
+requirements: [RFC6749-2.3-client-credentials-single-method]
+profile: core
+status: stable
+note: |
+  Invariant INV-CLIENT-SINGLE-AUTH-METHOD. A client MUST NOT use more than one
+  authentication method in one request (RFC 6749 section 2.3). Expected error
+  follows section 5.2 (invalid_client, 401).
+steps:
+  - id: token
+    request:
+      method: POST
+      path: /oauth/token
+      headers: { authorization: "Basic Y2xpZW50LWE6dGVzdC1vbmx5LXNlY3JldA==" }
+      form:
+        grant_type: client_credentials
+        client_id: client-a
+        client_secret: test-only-secret
+    expect:
+      status: 401
+      json: { error: invalid_client }

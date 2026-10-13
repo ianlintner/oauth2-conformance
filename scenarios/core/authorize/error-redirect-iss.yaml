@@ -1,0 +1,22 @@
+id: core.authorize.error-redirect-iss
+title: Authorization error delivered by redirect carries the issuer identifier
+requirements: [RFC9207-2-iss-on-error]
+profile: core
+status: stable
+note: |
+  Invariant INV-ISS-ON-AUTHORIZE-RESPONSE. Literal issuer is the one in
+  examples/seed.yaml. redirect.query values are compared after decoding.
+steps:
+  - id: authorize
+    request:
+      method: GET
+      path: /oauth/authorize
+      query:
+        response_type: token
+        client_id: client-a
+        redirect_uri: https://client.example/callback
+        state: s-iss-error
+    expect:
+      status: 302
+      redirect:
+        query: { error: unsupported_response_type, iss: "http://localhost:8080" }

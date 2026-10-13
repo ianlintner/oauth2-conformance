@@ -1,0 +1,26 @@
+id: core.authorize.require-state
+title: With state enforcement on, a request without state is rejected and one with state is accepted
+requirements: [RFC9700-4.7-require-state-configurable, RFC9700-4.7-require-state-rejects-missing, RFC9700-4.7-require-state-accepts-present]
+profile: core
+status: draft
+note: |
+  RFC 9700 4.7 state handling. The Rust reference exposes a per-client
+  require_state flag. Runner/SUT gaps (part 3/3, owner-gated SUT interface
+  change): the seed schema has no per-client require_state setting, so a
+  scenario cannot select which clients enforce state; until that field exists
+  this scenario is draft and only documents the intended exchange. The step
+  below is the require_state=true rejection case against a client that the
+  future seed would mark as enforcing (client-state-required).
+steps:
+  - id: missing-state
+    request:
+      method: GET
+      path: /oauth/authorize
+      query:
+        response_type: code
+        client_id: client-state-required
+        redirect_uri: https://client.example/callback
+        code_challenge: E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM
+        code_challenge_method: S256
+    expect:
+      status: 400

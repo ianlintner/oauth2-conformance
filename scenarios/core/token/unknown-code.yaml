@@ -1,0 +1,20 @@
+id: core.token.unknown-code
+title: A token request carrying a code the server never issued is rejected invalid_grant
+requirements: [RFC6749-4.1.3-unknown-code]
+profile: core
+status: stable
+note: INV-CODE-SINGLE-USE. A fabricated uuid code must be rejected; no live code is required.
+steps:
+  - id: token
+    request:
+      method: POST
+      path: /oauth/token
+      headers: { authorization: "Basic Y2xpZW50LWE6dGVzdC1vbmx5LXNlY3JldA==" }
+      form:
+        grant_type: authorization_code
+        code: 00000000-0000-0000-0000-000000000000
+        redirect_uri: https://client.example/callback
+        code_verifier: dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk
+    expect:
+      status: 400
+      json: { error: invalid_grant }

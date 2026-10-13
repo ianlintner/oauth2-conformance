@@ -1,0 +1,21 @@
+id: core.native.localhost-no-wildcard
+title: The localhost hostname does not receive the loopback port wildcard
+requirements: [RFC8252-7.3-localhost-no-wildcard]
+profile: core
+status: stable
+note: INV-LOOPBACK-FAMILIES-DISTINCT. localhost is not a loopback literal; a request for http://localhost:9999/cb must not match the http://localhost/cb registration.
+steps:
+  - id: authorize
+    request:
+      method: GET
+      path: /oauth/authorize
+      query:
+        response_type: code
+        client_id: client-localhost
+        redirect_uri: "http://localhost:9999/cb"
+        state: s-localhost
+        code_challenge: E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM
+        code_challenge_method: S256
+    expect:
+      status: 400
+      json: { error: invalid_request }

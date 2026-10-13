@@ -1,0 +1,21 @@
+id: core.native.loopback-ipv4-any-port
+title: A 127.0.0.1 redirect URI matches any port at request time
+requirements: [RFC8252-7.3-loopback-ipv4-any-port]
+profile: core
+status: stable
+note: |
+  INV-LOOPBACK-PORT-WILDCARD. Registered http://127.0.0.1/cb must accept a request for http://127.0.0.1:9999/cb. A 302 means the request was accepted (login redirect or code redirect); a mismatch must be rejected with 400 and never redirected to the URI.
+steps:
+  - id: authorize
+    request:
+      method: GET
+      path: /oauth/authorize
+      query:
+        response_type: code
+        client_id: client-loopback-v4
+        redirect_uri: "http://127.0.0.1:9999/cb"
+        state: s-xyz
+        code_challenge: E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM
+        code_challenge_method: S256
+    expect:
+      status: 302

@@ -1,0 +1,23 @@
+id: core.pkce.plain-method-rejected
+title: The plain code_challenge_method is rejected
+requirements: [RFC7636-4.2-plain-rejected]
+profile: core
+status: stable
+note: |
+  INV-S256-ONLY. Core is S256-only; plain is rejected with invalid_request (RFC 7636 4.4.1). Rust answers 400 JSON.
+steps:
+  - id: authorize
+    request:
+      method: GET
+      path: /oauth/authorize
+      query:
+        response_type: code
+        client_id: client-public
+        redirect_uri: "https://client.example/callback"
+        state: s-xyz
+        code_challenge: dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk
+        code_challenge_method: plain
+    expect:
+      status: 302
+      redirect:
+        query: { error: invalid_request, state: s-xyz }

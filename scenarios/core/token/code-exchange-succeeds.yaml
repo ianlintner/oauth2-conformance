@@ -1,0 +1,45 @@
+id: core.token.code-exchange-succeeds
+title: A well-formed authorization-code exchange returns a token response
+requirements: [RFC6749-4.1.3-code-exchange-succeeds, RFC7636-4.6-s256-verify]
+profile: core
+status: draft
+note: |
+  Invariant INV-PKCE-BINDING. client-a authenticates with HTTP Basic and the S256 verifier matches the challenge.
+  Runner gaps (part 3/3): login-and-authorize returns the first 3xx, so against a
+  SUT that redirects unauthenticated requests to its login page it never submits
+  credentials; with.loginPath is not declared by the SUT contract. Until fixed the
+  authorization-code step cannot yield a code.
+steps:
+  - id: auth
+    use: login-and-authorize
+    with:
+      username: alice
+      password: test-only-password
+      loginPath: /auth/login
+      authorizePath: /oauth/authorize
+      query:
+        response_type: code
+        client_id: client-a
+        redirect_uri: https://client.example/callback
+        state: s-gen
+        code_challenge: E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM
+        code_challenge_method: S256
+    expect:
+      status: 302
+    capture:
+      code: redirect.query.code
+  - id: token
+    request:
+      method: POST
+      path: /oauth/token
+      headers: { authorization: "Basic Y2xpZW50LWE6dGVzdC1vbmx5LXNlY3JldA==" }
+      form:
+        grant_type: authorization_code
+        code: "{{code}}"
+        redirect_uri: https://client.example/callback
+        code_verifier: dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk
+    expect:
+      status: 200
+      jsonSchema:
+        type: object
+        required: [access_token, token_type]
