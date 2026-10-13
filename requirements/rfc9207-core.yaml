@@ -1,0 +1,37 @@
+# RFC 9207 (OAuth 2.0 Authorization Server Issuer Identification) requirements
+# for the core profile. Knowing which authorization server produced an
+# authorization response is what makes mix-up attacks detectable, so every
+# authorization response carries iss.
+#
+# Source material: rust-oauth2-server authorization handler and its
+# compliance_rfc6749 redirect assertions (see docs/ROADMAP.md, v0.1 core).
+- id: RFC9207-2-iss-on-success
+  spec: RFC 9207
+  clause: "2"
+  level: MUST
+  profile: core
+  summary: A successful authorization response includes an iss parameter whose value is the authorization server's issuer identifier.
+  link: https://www.rfc-editor.org/rfc/rfc9207#section-2
+- id: RFC9207-2-iss-on-error
+  spec: RFC 9207
+  clause: "2"
+  level: MUST
+  profile: core
+  summary: An authorization error response delivered by redirect includes the same iss parameter as a success response.
+  link: https://www.rfc-editor.org/rfc/rfc9207#section-2
+- id: RFC9207-2.3-iss-matches-metadata-issuer
+  spec: RFC 9207
+  clause: "2.3"
+  level: MUST
+  profile: core
+  summary: For a server publishing metadata, the iss value, once form-urldecoded, is identical to the issuer value in that metadata.
+  link: https://www.rfc-editor.org/rfc/rfc9207#section-2.3
+  notes: Renamed from RFC9207-2-iss-exact-match; the identity rule is stated in section 2.3, and the comparison is made after decoding (section 2.4).
+- id: RFC9207-2.1-iss-form-urlencoded
+  spec: RFC 9207
+  clause: "2.1"
+  level: MUST
+  profile: core
+  summary: The iss parameter is form-urlencoded in the redirect query (for example https%3A%2F%2Fhonest.as.example), and decodes to the issuer identifier.
+  link: https://www.rfc-editor.org/rfc/rfc9207#section-2.1
+  notes: The section 2.1 example shows a percent-encoded iss; section 2.4 has clients decode it (RFC 6749 Appendix B) before a simple string comparison. Encoding is therefore expected, never prohibited. Replaces the incorrect RFC9207-3-iss-no-url-encoding.

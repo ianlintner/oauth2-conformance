@@ -1,0 +1,156 @@
+# RFC 6749 core requirements: authorization-code grant, client authentication,
+# redirect URI handling, error responses and token-endpoint response hygiene.
+#
+# One-line summaries are derived from the clause; RFC text is never copied
+# wholesale. Source material: rust-oauth2-server tests/compliance_rfc6749.rs and
+# tests/security_http.rs (see docs/ROADMAP.md, milestone v0.1 core).
+- id: RFC6749-3.1.2-redirect-uri-mismatch
+  spec: RFC 6749
+  clause: "3.1.2"
+  level: MUST
+  profile: core
+  summary: An authorization request whose redirect_uri does not exactly match a registered redirect URI is rejected.
+  link: https://www.rfc-editor.org/rfc/rfc6749#section-3.1.2
+- id: RFC6749-3.1.2-localhost-port-wildcard
+  spec: RFC 6749
+  clause: "3.1.2"
+  level: MUST
+  profile: core
+  summary: A registered loopback redirect URI (127.0.0.1 / [::1]) matches a request carrying any port, per RFC 8252 section 7.3.
+  link: https://www.rfc-editor.org/rfc/rfc6749#section-3.1.2
+  notes: RFC 6749 registered-URI matching as relaxed for native apps; the loopback port wildcard is specified by RFC 8252 section 7.3.
+- id: RFC6749-4.1.1-response-type-required
+  spec: RFC 6749
+  clause: "4.1.1"
+  level: MUST
+  profile: core
+  summary: An authorization request that omits the required response_type parameter is rejected.
+  link: https://www.rfc-editor.org/rfc/rfc6749#section-4.1.1
+- id: RFC6749-4.1.1-response-type-unsupported
+  spec: RFC 6749
+  clause: "4.1.1"
+  level: MUST
+  profile: core
+  summary: An authorization request with a response_type the server does not support (including implicit-flow values) is rejected.
+  link: https://www.rfc-editor.org/rfc/rfc6749#section-4.1.1
+- id: RFC6749-4.1.1-client-id-required
+  spec: RFC 6749
+  clause: "4.1.1"
+  level: MUST
+  profile: core
+  summary: An authorization request that omits the required client_id parameter is rejected.
+  link: https://www.rfc-editor.org/rfc/rfc6749#section-4.1.1
+- id: RFC6749-4.1.1-unknown-client
+  spec: RFC 6749
+  clause: "4.1.1"
+  level: MUST
+  profile: core
+  summary: An authorization request bearing an unknown client_id is rejected with invalid_client.
+  link: https://www.rfc-editor.org/rfc/rfc6749#section-4.1.1
+- id: RFC6749-4.1.2-authorization-code-issued
+  spec: RFC 6749
+  clause: "4.1.2"
+  level: MUST
+  profile: core
+  summary: A successful authorization response redirects to the client redirect URI with a code query parameter.
+  link: https://www.rfc-editor.org/rfc/rfc6749#section-4.1.2
+- id: RFC6749-4.1.2-state-echoed
+  spec: RFC 6749
+  clause: "4.1.2"
+  level: MUST
+  profile: core
+  summary: When the authorization request carries state, the exact value received is included in the authorization response.
+  link: https://www.rfc-editor.org/rfc/rfc6749#section-4.1.2
+- id: RFC6749-4.1.3-code-exchange-succeeds
+  spec: RFC 6749
+  clause: "4.1.3"
+  level: MUST
+  profile: core
+  summary: A well-formed authorization-code exchange with valid client authentication returns a token response.
+  link: https://www.rfc-editor.org/rfc/rfc6749#section-4.1.3
+- id: RFC6749-4.1.3-unknown-code
+  spec: RFC 6749
+  clause: "4.1.3"
+  level: MUST
+  profile: core
+  summary: A token request carrying an authorization code the server never issued is rejected with invalid_grant.
+  link: https://www.rfc-editor.org/rfc/rfc6749#section-4.1.3
+- id: RFC6749-4.1.3-redirect-uri-mismatch
+  spec: RFC 6749
+  clause: "4.1.3"
+  level: MUST
+  profile: core
+  summary: A code exchange whose redirect_uri differs from the one used at authorization is rejected with invalid_grant.
+  link: https://www.rfc-editor.org/rfc/rfc6749#section-4.1.3
+- id: RFC6749-4.1.3-invalid-client
+  spec: RFC 6749
+  clause: "4.1.3"
+  level: MUST
+  profile: core
+  summary: A code exchange without valid client authentication is rejected with invalid_client and HTTP 401.
+  link: https://www.rfc-editor.org/rfc/rfc6749#section-4.1.3
+- id: RFC6749-4.1.3-code-single-use
+  spec: RFC 6749
+  clause: "4.1.3"
+  level: MUST
+  profile: core
+  summary: An authorization code is single-use; a second exchange of the same code is rejected with invalid_grant.
+  link: https://www.rfc-editor.org/rfc/rfc6749#section-4.1.3
+  notes: RFC 6749 states the one-time requirement in section 4.1.2 and 10.5; tested at the exchange in 4.1.3.
+- id: RFC6749-5.1-no-store
+  spec: RFC 6749
+  clause: "5.1"
+  level: MUST
+  profile: core
+  summary: Token endpoint responses carrying tokens or other sensitive information include Cache-Control no-store and Pragma no-cache.
+  notes: Section 5.1 mandates these headers for responses containing tokens, credentials or other sensitive information (success responses); the section 5.2 error example also shows them but does not state a separate MUST. The stable scenario core.token.error-no-store asserts the error case as a conservative expectation; a success-response scenario and a decision on the error-case level are follow-ups for part 2/3 (t_201a2697).
+  link: https://www.rfc-editor.org/rfc/rfc6749#section-5.1
+- id: RFC6749-5.2-error-format
+  spec: RFC 6749
+  clause: "5.2"
+  level: MUST
+  profile: core
+  summary: A token endpoint error response is a JSON object carrying an error field, and uses HTTP 400 unless stated otherwise.
+  link: https://www.rfc-editor.org/rfc/rfc6749#section-5.2
+- id: RFC6749-5.2-invalid-client
+  spec: RFC 6749
+  clause: "5.2"
+  level: MUST
+  profile: core
+  summary: Failed client authentication at the token endpoint returns error invalid_client with HTTP 401.
+  link: https://www.rfc-editor.org/rfc/rfc6749#section-5.2
+- id: RFC6749-5.2-missing-grant-type
+  spec: RFC 6749
+  clause: "5.2"
+  level: MUST
+  profile: core
+  summary: A token request missing the required grant_type parameter is rejected with error invalid_request.
+  link: https://www.rfc-editor.org/rfc/rfc6749#section-5.2
+- id: RFC6749-5.2-unsupported-grant-type
+  spec: RFC 6749
+  clause: "5.2"
+  level: MUST
+  profile: core
+  summary: A grant type the authorization server does not support is rejected with error unsupported_grant_type.
+  link: https://www.rfc-editor.org/rfc/rfc6749#section-5.2
+- id: RFC6749-10.5-code-single-use
+  spec: RFC 6749
+  clause: "10.5"
+  level: MUST
+  profile: core
+  summary: Authorization codes are single-use, remain unguessable, and are not reused after a failed exchange.
+  link: https://www.rfc-editor.org/rfc/rfc6749#section-10.5
+- id: RFC6749-2.3.1-basic-auth-urlencoded
+  spec: RFC 6749
+  clause: "2.3.1"
+  level: MUST
+  profile: core
+  summary: client_id and client_secret are form-urlencoded before being placed in an HTTP Basic authorization header.
+  link: https://www.rfc-editor.org/rfc/rfc6749#section-2.3.1
+- id: RFC6749-2.3-client-credentials-single-method
+  spec: RFC 6749
+  clause: "2.3"
+  level: MUST NOT
+  profile: core
+  summary: A client must not use more than one authentication method in a single token request; multiple credential sources are rejected.
+  link: https://www.rfc-editor.org/rfc/rfc6749#section-2.3

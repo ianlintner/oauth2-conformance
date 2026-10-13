@@ -1,8 +1,59 @@
 id: core
-title: Core token endpoint
-description: Baseline OAuth 2.0 token endpoint error handling that needs no seeded state beyond an unknown client.
+title: Core authorization-code server
+description: v0.1 core profile. RFC 6749 authorization code and client authentication, RFC 7636 PKCE (S256 only), RFC 9207 iss, RFC 8252 native redirects, RFC 9700 code replay / state / redirect / HTTPS rules, and no implicit/ROPC (implicit rejection is a local policy pending owner approval).
 requirements:
-  - RFC6749-5.2-invalid-client
-  - RFC6749-5.2-unsupported-grant-type
-  - RFC6749-5.2-missing-grant-type
+  - RFC6749-3.1.2-redirect-uri-mismatch
+  - RFC6749-3.1.2-localhost-port-wildcard
+  - RFC6749-4.1.1-response-type-required
+  - RFC6749-4.1.1-response-type-unsupported
+  - RFC6749-4.1.1-client-id-required
+  - RFC6749-4.1.1-unknown-client
+  - RFC6749-4.1.2-authorization-code-issued
+  - RFC6749-4.1.2-state-echoed
+  - RFC6749-4.1.3-code-exchange-succeeds
+  - RFC6749-4.1.3-unknown-code
+  - RFC6749-4.1.3-redirect-uri-mismatch
+  - RFC6749-4.1.3-invalid-client
+  - RFC6749-4.1.3-code-single-use
   - RFC6749-5.1-no-store
+  - RFC6749-5.2-error-format
+  - RFC6749-5.2-invalid-client
+  - RFC6749-5.2-missing-grant-type
+  - RFC6749-5.2-unsupported-grant-type
+  - RFC6749-10.5-code-single-use
+  - RFC6749-2.3.1-basic-auth-urlencoded
+  - RFC6749-2.3-client-credentials-single-method
+  - RFC7636-4.1-code-challenge-required
+  - RFC7636-4.1-verifier-length
+  - RFC7636-4.2-s256-supported
+  - RFC7636-4.2-plain-rejected
+  - RFC7636-4.2-method-without-challenge
+  - RFC7636-4.3-verifier-mismatch
+  - RFC7636-4.3-missing-verifier
+  - RFC7636-4.3-verifier-as-challenge
+  - RFC7636-4.6-s256-verify
+  - RFC8252-7.3-loopback-ipv4-any-port
+  - RFC8252-7.3-loopback-ipv6-any-port
+  - RFC8252-7.3-loopback-path-exact
+  - RFC8252-7.3-loopback-scheme-exact
+  - RFC8252-7.3-loopback-families-distinct
+  - RFC8252-7.3-localhost-no-wildcard
+  - RFC8252-7.3-non-loopback-exact
+  - RFC8252-7.1-private-uri-scheme-exact
+  - RFC8252-8.12-as-may-block-embedded-user-agent
+  - RFC9207-2-iss-on-success
+  - RFC9207-2-iss-on-error
+  - RFC9207-2.3-iss-matches-metadata-issuer
+  - RFC9207-2.1-iss-form-urlencoded
+  - RFC9700-2.1.1-code-replay-revokes-tokens
+  - RFC9700-2.1.1-code-replay-rejected
+  - RFC9700-4.7-require-state-configurable
+  - RFC9700-4.7-require-state-rejects-missing
+  - RFC9700-4.7-require-state-accepts-present
+  - RFC9700-2.6-no-http-redirect-uri
+  - RFC9700-2.6-http-upgrade-redirect-308
+  - RFC9700-2.6-https-enforcement-disableable
+  - RFC9700-4.13-forwarded-proto-trusted
+  - RFC9700-4.13-forwarded-proto-untrusted
+  - RFC9700-2.1.2-implicit-grant-rejected-policy
+  - RFC9700-2.4-ropc-prohibited

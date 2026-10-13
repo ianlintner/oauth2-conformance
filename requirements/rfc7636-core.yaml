@@ -1,0 +1,68 @@
+# RFC 7636 PKCE requirements for the core profile. The core profile is
+# S256-only: the plain code_challenge_method is a MUST NOT, not an option.
+#
+# Source material: rust-oauth2-server tests/compliance_rfc7636.rs
+# (see docs/ROADMAP.md, milestone v0.1 core).
+- id: RFC7636-4.1-code-challenge-required
+  spec: RFC 7636
+  clause: "4.1"
+  level: MUST
+  profile: core
+  summary: An authorization request for an authorization_code client that carries no code_challenge is rejected.
+  link: https://www.rfc-editor.org/rfc/rfc7636#section-4.1
+- id: RFC7636-4.1-verifier-length
+  spec: RFC 7636
+  clause: "4.1"
+  level: MUST
+  profile: core
+  summary: A code_verifier shorter than 43 or longer than 128 characters is rejected.
+  link: https://www.rfc-editor.org/rfc/rfc7636#section-4.1
+- id: RFC7636-4.2-s256-supported
+  spec: RFC 7636
+  clause: "4.2"
+  level: MUST
+  profile: core
+  summary: The S256 code_challenge_method is accepted and an S256-protected code exchanges successfully with the matching verifier.
+  link: https://www.rfc-editor.org/rfc/rfc7636#section-4.2
+- id: RFC7636-4.2-plain-rejected
+  spec: RFC 7636
+  clause: "4.2"
+  level: MUST NOT
+  profile: core
+  summary: The plain code_challenge_method is rejected; only S256 is accepted.
+  link: https://www.rfc-editor.org/rfc/rfc7636#section-4.2
+- id: RFC7636-4.2-method-without-challenge
+  spec: RFC 7636
+  clause: "4.2"
+  level: MUST
+  profile: core
+  summary: A code_challenge_method supplied without a code_challenge is rejected with invalid_request.
+  link: https://www.rfc-editor.org/rfc/rfc7636#section-4.2
+- id: RFC7636-4.3-verifier-mismatch
+  spec: RFC 7636
+  clause: "4.3"
+  level: MUST
+  profile: core
+  summary: A code exchange whose code_verifier does not match the stored code_challenge is rejected with invalid_grant.
+  link: https://www.rfc-editor.org/rfc/rfc7636#section-4.3
+- id: RFC7636-4.3-missing-verifier
+  spec: RFC 7636
+  clause: "4.3"
+  level: MUST
+  profile: core
+  summary: A code exchange that omits code_verifier when a challenge was registered is rejected with invalid_grant.
+  link: https://www.rfc-editor.org/rfc/rfc7636#section-4.3
+- id: RFC7636-4.3-verifier-as-challenge
+  spec: RFC 7636
+  clause: "4.3"
+  level: MUST
+  profile: core
+  summary: Sending the raw verifier as the challenge fails, because the comparison is against S256(verifier) and not the verifier itself.
+  link: https://www.rfc-editor.org/rfc/rfc7636#section-4.3
+- id: RFC7636-4.6-s256-verify
+  spec: RFC 7636
+  clause: "4.6"
+  level: MUST
+  profile: core
+  summary: The server derives S256(code_verifier) and compares it to the stored code_challenge before issuing tokens.
+  link: https://www.rfc-editor.org/rfc/rfc7636#section-4.6
