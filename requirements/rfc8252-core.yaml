@@ -1,0 +1,70 @@
+# RFC 8252 (OAuth 2.0 for Native Apps) requirements for the core profile.
+# These cover loopback redirect handling and the ban on embedded user-agents,
+# not the full native-app guidance.
+#
+# Source material: rust-oauth2-server tests/rfc8252_native_apps.rs
+# (see docs/ROADMAP.md, milestone v0.1 core).
+- id: RFC8252-7.3-loopback-ipv4-any-port
+  spec: RFC 8252
+  clause: "7.3"
+  level: MUST
+  profile: core
+  summary: A redirect URI registered on 127.0.0.1 matches a request carrying any port at that host.
+  link: https://www.rfc-editor.org/rfc/rfc8252#section-7.3
+- id: RFC8252-7.3-loopback-ipv6-any-port
+  spec: RFC 8252
+  clause: "7.3"
+  level: MUST
+  profile: core
+  summary: A redirect URI registered on [::1] matches a request carrying any port at that host.
+  link: https://www.rfc-editor.org/rfc/rfc8252#section-7.3
+- id: RFC8252-7.3-loopback-path-exact
+  spec: RFC 8252
+  clause: "7.3"
+  level: MUST
+  profile: core
+  summary: The loopback port wildcard does not relax path matching; the request path must equal the registered path.
+  link: https://www.rfc-editor.org/rfc/rfc8252#section-7.3
+- id: RFC8252-7.3-loopback-scheme-exact
+  spec: RFC 8252
+  clause: "7.3"
+  level: MUST
+  profile: core
+  summary: The loopback port wildcard does not relax scheme matching; http and https redirect URIs remain distinct.
+  link: https://www.rfc-editor.org/rfc/rfc8252#section-7.3
+- id: RFC8252-7.3-loopback-families-distinct
+  spec: RFC 8252
+  clause: "7.3"
+  level: MUST
+  profile: core
+  summary: IPv4 and IPv6 loopback hosts are distinct registrations and do not cross-match.
+  link: https://www.rfc-editor.org/rfc/rfc8252#section-7.3
+- id: RFC8252-7.3-localhost-no-wildcard
+  spec: RFC 8252
+  clause: "7.3"
+  level: MUST
+  profile: core
+  summary: The hostname localhost is not a loopback literal and does not receive the any-port exception.
+  link: https://www.rfc-editor.org/rfc/rfc8252#section-7.3
+  notes: RFC 8252 section 7.3 permits the exception for the loopback literal; section 8.3 advises against assuming it for the localhost hostname.
+- id: RFC8252-7.3-non-loopback-exact
+  spec: RFC 8252
+  clause: "7.3"
+  level: MUST
+  profile: core
+  summary: A non-loopback redirect URI requires an exact match, with no port wildcarding.
+  link: https://www.rfc-editor.org/rfc/rfc8252#section-7.3
+- id: RFC8252-7.1-private-uri-scheme-exact
+  spec: RFC 8252
+  clause: "7.1"
+  level: MUST
+  profile: core
+  summary: A claimed custom scheme redirect URI matches the registered value byte for byte, with no normalization.
+  link: https://www.rfc-editor.org/rfc/rfc8252#section-7.1
+- id: RFC8252-8.12-no-embedded-user-agent
+  spec: RFC 8252
+  clause: "8.12"
+  level: MUST NOT
+  profile: core
+  summary: The authorization endpoint is not designed to be rendered inside an embedded user-agent or web view.
+  link: https://www.rfc-editor.org/rfc/rfc8252#section-8.12

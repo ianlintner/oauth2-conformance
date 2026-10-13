@@ -146,8 +146,13 @@ test('validate-schemas exits non-zero on an invalid data file', async () => {
 
 test('coverage --profile scopes the gate to one profile and still fails when it is uncovered', async () => {
   const args = ['coverage', '--scenarios', path.join(repoRoot, 'scenarios'), '--requirements', path.join(repoRoot, 'requirements'), '--profiles', path.join(repoRoot, 'profiles')];
-  const core = await cli([...args, '--profile', 'core', '--min', '100']);
+  // Contract v0.1 part 1/3 adds the core catalog before its scenarios (part 2/3
+  // restores the 100% gate), so assert the scoped gate wiring only: a floor the
+  // profile meets passes, and 100% fails while requirements are uncovered.
+  const core = await cli([...args, '--profile', 'core', '--min', '1']);
   assert.equal(core.code, 0, core.stdout + core.stderr);
+  const coreFull = await cli([...args, '--profile', 'core', '--min', '100']);
+  assert.equal(coreFull.code, 1, 'uncovered core requirements must fail a 100% gate');
   const all = await cli([...args, '--min', '100']);
   assert.equal(all.code, 1, 'draft-only profiles must not count as covered');
 });

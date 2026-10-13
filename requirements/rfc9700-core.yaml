@@ -1,0 +1,84 @@
+# RFC 9700 (OAuth 2.0 Security Best Current Practice) requirements for the core
+# profile: code replay, state handling, HTTPS enforcement and the prohibition of
+# the implicit and resource-owner-password grants.
+#
+# Source material: rust-oauth2-server tests/rfc9700_code_replay.rs,
+# tests/rfc9700_require_state.rs, tests/rfc9700_https_enforcement.rs
+# (see docs/ROADMAP.md, milestone v0.1 core).
+- id: RFC9700-2.1.1-code-replay-revokes-tokens
+  spec: RFC 9700
+  clause: "2.1.1"
+  level: MUST
+  profile: core
+  summary: Replaying an already-exchanged authorization code revokes every access and refresh token issued from the original exchange.
+  link: https://www.rfc-editor.org/rfc/rfc9700#section-2.1.1
+- id: RFC9700-2.1.1-code-replay-rejected
+  spec: RFC 9700
+  clause: "2.1.1"
+  level: MUST
+  profile: core
+  summary: A replayed authorization code is rejected with invalid_grant rather than issuing a second token set.
+  link: https://www.rfc-editor.org/rfc/rfc9700#section-2.1.1
+- id: RFC9700-4.7-require-state-configurable
+  spec: RFC 9700
+  clause: "4.7"
+  level: MAY
+  profile: core
+  summary: With state enforcement disabled the authorization endpoint accepts requests that carry no state parameter.
+  link: https://www.rfc-editor.org/rfc/rfc9700#section-4.7
+- id: RFC9700-4.7-require-state-rejects-missing
+  spec: RFC 9700
+  clause: "4.7"
+  level: MUST
+  profile: core
+  summary: With state enforcement enabled the authorization endpoint rejects requests that omit the state parameter.
+  link: https://www.rfc-editor.org/rfc/rfc9700#section-4.7
+- id: RFC9700-4.7-require-state-accepts-present
+  spec: RFC 9700
+  clause: "4.7"
+  level: MUST
+  profile: core
+  summary: With state enforcement enabled the authorization endpoint accepts requests that supply a state parameter.
+  link: https://www.rfc-editor.org/rfc/rfc9700#section-4.7
+- id: RFC9700-2.6-https-redirect
+  spec: RFC 9700
+  clause: "2.6"
+  level: MUST
+  profile: core
+  summary: With HTTPS enforcement enabled a plain-HTTP request is redirected permanently (308) to the corresponding HTTPS URL.
+  link: https://www.rfc-editor.org/rfc/rfc9700#section-2.6
+- id: RFC9700-2.6-https-enforcement-disableable
+  spec: RFC 9700
+  clause: "2.6"
+  level: MAY
+  profile: core
+  summary: HTTPS enforcement may be configured off, in which case a plain-HTTP request is served without redirection.
+  link: https://www.rfc-editor.org/rfc/rfc9700#section-2.6
+- id: RFC9700-2.6-forwarded-proto-trusted
+  spec: RFC 9700
+  clause: "2.6"
+  level: MUST
+  profile: core
+  summary: TLS terminated by a trusted upstream proxy is accepted via X-Forwarded-Proto without an HTTPS redirect loop.
+  link: https://www.rfc-editor.org/rfc/rfc9700#section-2.6
+- id: RFC9700-2.6-forwarded-proto-untrusted
+  spec: RFC 9700
+  clause: "2.6"
+  level: MUST
+  profile: core
+  summary: An untrusted X-Forwarded-Proto header does not bypass HTTPS enforcement, and the request is still redirected.
+  link: https://www.rfc-editor.org/rfc/rfc9700#section-2.6
+- id: RFC9700-2.1.2-implicit-grant-prohibited
+  spec: RFC 9700
+  clause: "2.1.2"
+  level: MUST NOT
+  profile: core
+  summary: The implicit grant (response_type token or id_token token) is not supported and authorization requests for it are rejected.
+  link: https://www.rfc-editor.org/rfc/rfc9700#section-2.1.2
+- id: RFC9700-2.4-ropc-prohibited
+  spec: RFC 9700
+  clause: "2.4"
+  level: MUST NOT
+  profile: core
+  summary: The resource owner password credentials grant is not supported and its grant_type is rejected as unsupported_grant_type.
+  link: https://www.rfc-editor.org/rfc/rfc9700#section-2.4
