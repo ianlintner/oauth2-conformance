@@ -36,6 +36,37 @@ Python port where its interface exists) passes.
 | core.hardening.code-single-use | RFC6749-4.1.3-code-single-use, RFC6749-10.5-code-single-use, RFC9700-2.1.1-code-replay-rejected, RFC9700-2.1.1-code-replay-revokes-tokens | Code acquisition plus a token-introspection revocation check (v0.2 token-lifecycle scope). |
 | core.authorize.require-state | RFC9700-4.7-require-state-* | Per-client `require_state` flag is not modelled in the seed schema. |
 
+## Hardening profile
+
+`profiles/hardening.yaml` lists RFC6749-4.1.3-wrong-redirect-uri and
+RFC9700-4.5-code-replay (both MUST) (RFC6749-4.1.3-invalid-client is a core requirement). Both
+scenarios are draft (no stable coverage, 0 stable of 2) because they need an
+authorization code; `coverage --profile hardening` reports them as PROVISIONAL
+ONLY, not uncovered, and `runner/test/coverage-gate.test.ts` fails if either
+loses its scenario.
+
+core.token.wrong-redirect-uri is the only scenario for
+RFC6749-4.1.3-wrong-redirect-uri. core.token.code-redirect-uri-mismatch cites a
+different requirement (RFC6749-4.1.3-redirect-uri-mismatch, core); both stay.
+Neither runs against a SUT until the runner gaps below land.
+
+## RFC6749-5.1-no-store attribution (contract decision needed)
+
+RFC 6749 section 5.1 states the Cache-Control no-store / Pragma no-cache MUST
+for responses containing tokens, credentials or other sensitive information,
+i.e. success responses. The section 5.2 error example shows the same headers
+but states no separate MUST. Scenario core.token.success-no-store is a genuine
+attribution of the MUST. core.token.error-no-store (file `no-store.yaml`) is
+stable and also cites RFC6749-5.1-no-store, so it treats an error-response
+header as an RFC MUST although the RFC does not say so; it is a conservative
+expectation (and checks only cache-control, not pragma).
+
+This is left unchanged here because re-levelling it would alter the stable
+core count. Decision for the contract owner: either (a) add a distinct
+requirement for error-response cacheability at level SHOULD/policy and
+re-attribute error-no-store to it, or (b) accept it as a conservative MUST.
+Until decided, do not read a failure of error-no-store as an RFC violation.
+
 ## Runner gap list (from coding part 2/3; carried into part 3/3)
 
 1. `login-and-authorize` returns the first 3xx, so a SUT that redirects an

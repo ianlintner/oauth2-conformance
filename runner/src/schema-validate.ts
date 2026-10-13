@@ -14,7 +14,7 @@ import { Ajv2020 } from 'ajv/dist/2020.js';
 import type { ValidateFunction } from 'ajv/dist/2020.js';
 import addFormatsModule from 'ajv-formats';
 
-export type DataKind = 'requirement' | 'profile' | 'scenario' | 'seed' | 'manifest';
+export type DataKind = 'requirement' | 'profile' | 'scenario' | 'seed' | 'manifest' | 'invariant';
 
 const SCHEMA_FILES: Record<DataKind, string> = {
   requirement: 'requirement.schema.json',
@@ -22,6 +22,7 @@ const SCHEMA_FILES: Record<DataKind, string> = {
   scenario: 'scenario.schema.json',
   seed: 'seed.schema.json',
   manifest: 'implementation-manifest.schema.json',
+  invariant: 'invariant.schema.json',
 };
 
 export interface SchemaViolation {
@@ -80,6 +81,7 @@ export function classify(root: string, file: string): DataKind | undefined {
   if (top === 'requirements') return 'requirement';
   if (top === 'profiles') return 'profile';
   if (top === 'scenarios') return 'scenario';
+  if (top === 'invariants') return 'invariant';
   if (top === 'examples' && name.startsWith('seed')) return 'seed';
   if (top === 'examples' && name.startsWith('conformance')) return 'manifest';
   return undefined;
@@ -90,7 +92,7 @@ export async function validateRepository(root: string): Promise<{ checked: numbe
   const validators = await loadValidators(path.join(root, 'schemas'));
   const violations: SchemaViolation[] = [];
   let checked = 0;
-  for (const dir of ['requirements', 'profiles', 'scenarios', 'examples']) {
+  for (const dir of ['requirements', 'profiles', 'scenarios', 'examples', 'invariants']) {
     for (const file of await walk(path.join(root, dir))) {
       const kind = classify(root, file);
       if (kind === undefined) continue;

@@ -34,6 +34,7 @@ const requirements = await loadRequirements(path.join(repoRoot, 'requirements'))
 const scenarios = await loadScenarios(path.join(repoRoot, 'scenarios'));
 const profiles = await loadProfiles(path.join(repoRoot, 'profiles'));
 const report = buildCoverage(requirements, scenarios, profiles, 'core');
+const hardeningReport = buildCoverage(requirements, scenarios, profiles, 'hardening');
 
 // The floor must match docs/core-coverage.md. Bump both together when part 3/3
 // promotes draft scenarios to stable; never lower it to green a bad PR.
@@ -66,6 +67,25 @@ test('every core MUST-NOT and MUST requirement is covered, provisional, or docum
     const hasAny = !uncovered.has(req.id) || provisional.has(req.id) || documented.has(req.id);
     assert.ok(hasAny, `core ${req.level} requirement ${req.id} has no scenario and no documented reason`);
   }
+});
+
+test('hardening profile leaves no requirement without a scenario, including wrong-redirect-uri', () => {
+  assert.equal(hardeningReport.unknownProfiles.length, 0, `unknown scenario profiles: ${hardeningReport.unknownProfiles.join(', ')}`);
+  assert.deepEqual(hardeningReport.uncovered, [], `hardening requirements with no scenario: ${hardeningReport.uncovered.join(', ')}`);
+  assert.equal(hardeningReport.dangling.length, 0, `dangling hardening scenario requirements: ${hardeningReport.dangling.join(', ')}`);
+  const entry = hardeningReport.requirements.find((r) => r.requirement === 'RFC6749-4.1.3-wrong-redirect-uri');
+  assert.ok(entry, 'RFC6749-4.1.3-wrong-redirect-uri must be a hardening requirement');
+  assert.ok(entry.stable.length + entry.provisional.length > 0, 'RFC6749-4.1.3-wrong-redirect-uri must be referenced by a scenario');
+});
+
+test('the wrong-redirect-uri scenario genuinely expects an invalid_grant rejection after a real authorization', () => {
+  const scenario = scenarios.find((s) => s.requirements.includes('RFC6749-4.1.3-wrong-redirect-uri'));
+  assert.ok(scenario, 'a scenario must cite RFC6749-4.1.3-wrong-redirect-uri');
+  assert.equal(scenario.profile, 'hardening');
+  const text = JSON.stringify(scenario.steps);
+  assert.match(text, /login-and-authorize/, 'the scenario must obtain a real authorization code, not use a placeholder');
+  assert.match(text, /attacker\.example/, 'the exchange must present a redirect_uri different from the authorization request');
+  assert.match(text, /invalid_grant/, 'the exchange must expect invalid_grant');
 });
 
 test('coverage CLI fails below --min, proving the gate is not green-by-skip', async () => {
