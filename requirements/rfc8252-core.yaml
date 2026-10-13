@@ -61,10 +61,11 @@
   profile: core
   summary: A claimed custom scheme redirect URI matches the registered value byte for byte, with no normalization.
   link: https://www.rfc-editor.org/rfc/rfc8252#section-7.1
-- id: RFC8252-8.12-no-embedded-user-agent
+- id: RFC8252-8.12-as-may-block-embedded-user-agent
   spec: RFC 8252
   clause: "8.12"
-  level: MUST NOT
+  level: MAY
   profile: core
-  summary: The authorization endpoint is not designed to be rendered inside an embedded user-agent or web view.
+  summary: An authorization server may detect and block authorization requests made from embedded user-agents.
   link: https://www.rfc-editor.org/rfc/rfc8252#section-8.12
+  notes: The MUST NOT in section 8.12 binds native apps (clients), not the server, so it is out of scope for server conformance. The server-side behavior is only a MAY; blocking is not required for conformance.

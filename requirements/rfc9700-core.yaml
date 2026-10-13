@@ -40,13 +40,22 @@
   profile: core
   summary: With state enforcement enabled the authorization endpoint accepts requests that supply a state parameter.
   link: https://www.rfc-editor.org/rfc/rfc9700#section-4.7
-- id: RFC9700-2.6-https-redirect
+- id: RFC9700-2.6-no-http-redirect-uri
   spec: RFC 9700
   clause: "2.6"
-  level: MUST
+  level: MUST NOT
   profile: core
-  summary: With HTTPS enforcement enabled a plain-HTTP request is redirected permanently (308) to the corresponding HTTPS URL.
+  summary: The authorization server does not allow redirection URIs using the http scheme, except native-client loopback redirects.
   link: https://www.rfc-editor.org/rfc/rfc9700#section-2.6
+  notes: The RFC prohibition is on redirection URIs (authorization responses over unencrypted connections), with the RFC 8252 section 7.3 loopback exception.
+- id: RFC9700-2.6-http-upgrade-redirect-308
+  spec: RFC 9700
+  clause: "2.6"
+  level: MAY
+  profile: core
+  summary: With HTTPS enforcement enabled a plain-HTTP request to the server is redirected permanently (308) to the corresponding HTTPS URL.
+  link: https://www.rfc-editor.org/rfc/rfc9700#section-2.6
+  notes: Implementation-specific policy. RFC 9700 does not prescribe an inbound HTTP-to-HTTPS redirect or the 308 status; it only forbids http redirection URIs. Renamed from RFC9700-2.6-https-redirect.
 - id: RFC9700-2.6-https-enforcement-disableable
   spec: RFC 9700
   clause: "2.6"
@@ -54,27 +63,31 @@
   profile: core
   summary: HTTPS enforcement may be configured off, in which case a plain-HTTP request is served without redirection.
   link: https://www.rfc-editor.org/rfc/rfc9700#section-2.6
-- id: RFC9700-2.6-forwarded-proto-trusted
+  notes: Implementation-specific configuration, not an RFC 9700 requirement; typically used for local development.
+- id: RFC9700-4.13-forwarded-proto-trusted
   spec: RFC 9700
-  clause: "2.6"
-  level: MUST
+  clause: "4.13"
+  level: MAY
   profile: core
   summary: TLS terminated by a trusted upstream proxy is accepted via X-Forwarded-Proto without an HTTPS redirect loop.
-  link: https://www.rfc-editor.org/rfc/rfc9700#section-2.6
-- id: RFC9700-2.6-forwarded-proto-untrusted
+  link: https://www.rfc-editor.org/rfc/rfc9700#section-4.13
+  notes: Implementation-specific proxy policy; RFC 9700 section 4.13 covers reverse-proxy header handling but does not define X-Forwarded-Proto behavior. Renamed from RFC9700-2.6-forwarded-proto-trusted.
+- id: RFC9700-4.13-forwarded-proto-untrusted
   spec: RFC 9700
-  clause: "2.6"
-  level: MUST
+  clause: "4.13"
+  level: SHOULD
   profile: core
   summary: An untrusted X-Forwarded-Proto header does not bypass HTTPS enforcement, and the request is still redirected.
-  link: https://www.rfc-editor.org/rfc/rfc9700#section-2.6
-- id: RFC9700-2.1.2-implicit-grant-prohibited
+  link: https://www.rfc-editor.org/rfc/rfc9700#section-4.13
+  notes: Derived from section 4.13, where a reverse proxy MUST sanitize inbound security-relevant headers; the server-side refusal to trust unsanitized headers is an implementation consequence, not a literal RFC server requirement. Renamed from RFC9700-2.6-forwarded-proto-untrusted.
+- id: RFC9700-2.1.2-implicit-grant-rejected-policy
   spec: RFC 9700
   clause: "2.1.2"
-  level: MUST NOT
+  level: MAY
   profile: core
-  summary: The implicit grant (response_type token or id_token token) is not supported and authorization requests for it are rejected.
+  summary: The server rejects authorization requests for the implicit grant (response_type token or id_token token).
   link: https://www.rfc-editor.org/rfc/rfc9700#section-2.1.2
+  notes: Local profile policy, not an RFC server requirement. RFC 9700 section 2.1.2 says clients SHOULD NOT use the implicit grant, unless token injection and leakage are mitigated. Rejection is the v0.1 core roadmap behavior; its status as a conformance policy needs owner approval. Renamed from RFC9700-2.1.2-implicit-grant-prohibited.
 - id: RFC9700-2.4-ropc-prohibited
   spec: RFC 9700
   clause: "2.4"

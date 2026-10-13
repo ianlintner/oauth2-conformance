@@ -102,7 +102,8 @@
   clause: "5.1"
   level: MUST
   profile: core
-  summary: Token endpoint success and error responses carry Cache-Control no-store, plus Pragma no-cache for HTTP/1.0 intermediaries.
+  summary: Token endpoint responses carrying tokens or other sensitive information include Cache-Control no-store and Pragma no-cache.
+  notes: Section 5.1 mandates these headers for responses containing tokens, credentials or other sensitive information (success responses); the section 5.2 error example also shows them but does not state a separate MUST. The stable scenario core.token.error-no-store asserts the error case as a conservative expectation; a success-response scenario and a decision on the error-case level are follow-ups for part 2/3 (t_201a2697).
   link: https://www.rfc-editor.org/rfc/rfc6749#section-5.1
 - id: RFC6749-5.2-error-format
   spec: RFC 6749
