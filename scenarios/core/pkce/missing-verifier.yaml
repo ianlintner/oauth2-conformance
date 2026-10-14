@@ -5,10 +5,9 @@ profile: core
 status: draft
 note: |
   Invariant INV-PKCE-BINDING.
-  Runner gaps (part 3/3): login-and-authorize returns the first 3xx, so against a
-  SUT that redirects unauthenticated requests to its login page it never submits
-  credentials; with.loginPath is not declared by the SUT contract. Until fixed the
-  authorization-code step cannot yield a code.
+  Runner gaps (part 3/3): with.loginPath is not declared by the SUT contract.
+  login-and-authorize now continues past the login redirect (PR 3), but this
+  scenario has not been re-verified against a seeded SUT and stays draft.
 steps:
   - id: auth
     use: login-and-authorize

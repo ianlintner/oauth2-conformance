@@ -11,10 +11,9 @@ note: |
   presents a different redirect_uri, expecting invalid_grant.
   core.token.code-redirect-uri-mismatch is a distinct requirement
   (RFC6749-4.1.3-redirect-uri-mismatch, core profile); both are intentionally kept.
-  Stays draft until the runner gap below is fixed (part 3/3): login-and-authorize
-  returns the first 3xx, so against a SUT that redirects unauthenticated requests
-  to its login page it never submits credentials, and with.loginPath is not
-  declared by the SUT contract. Until then no code can be obtained.
+  Stays draft: login-and-authorize now continues past the login redirect (PR 3),
+  but this scenario has not been re-verified against a seeded SUT, and
+  with.loginPath is not declared by the SUT contract (part 3/3).
 steps:
   - id: auth
     use: login-and-authorize

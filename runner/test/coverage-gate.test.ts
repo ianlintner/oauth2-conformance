@@ -100,7 +100,7 @@ test('the loopback any-port positives prove a code is issued at the wildcard por
   // from "redirected to login". The positive scenarios must drive the
   // authorization to completion and assert an issued code in the redirect,
   // which is the only evidence that the registered port was matched.
-  for (const id of ['core.native.loopback-ipv4-any-port', 'core.native.loopback-ipv6-any-port']) {
+  for (const id of ['core.native.loopback-ipv4-any-port', 'core.native.loopback-ipv6-any-port', 'core.native.registered-loopback-any-port']) {
     const scenario = native(id);
     assert.equal(scenario.status, 'stable');
     const text = JSON.stringify(scenario.steps);

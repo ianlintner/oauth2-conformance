@@ -31,8 +31,8 @@ Python port where its interface exists) passes.
 
 | Scenario | Requirements | Missing feature |
 |---|---|---|
-| core.authorize.code-issued | RFC6749-4.1.2-authorization-code-issued, RFC6749-4.1.2-state-echoed, RFC9207-2-iss-on-success, RFC9207-2.1-iss-form-urlencoded | login-and-authorize short-circuits on the login-page redirect; `with.loginPath` is not in the SUT contract; no raw-location/encoding assertion for the wire form of `iss`. |
-| core.token.* (code exchange, PKCE verify) | RFC6749-4.1.3-code-exchange-succeeds / -redirect-uri-mismatch / -invalid-client, RFC7636-4.1-verifier-length / 4.2-s256-supported / 4.3-* / 4.6-s256-verify | Authorization-code acquisition (login-and-authorize short-circuit), then a `{{code}}` interpolation into a token exchange. |
+| core.authorize.code-issued | RFC6749-4.1.2-authorization-code-issued, RFC6749-4.1.2-state-echoed, RFC9207-2-iss-on-success, RFC9207-2.1-iss-form-urlencoded | `with.loginPath` is not in the SUT contract; no raw-location/encoding assertion for the wire form of `iss`. `login-and-authorize` now acquires a code (PR 3), so the remaining gap for this scenario is the `iss` wire-form assertion, not the login redirect. |
+| core.token.* (code exchange, PKCE verify) | RFC6749-4.1.3-code-exchange-succeeds / -redirect-uri-mismatch / -invalid-client, RFC7636-4.1-verifier-length / 4.2-s256-supported / 4.3-* / 4.6-s256-verify | `{{code}}` interpolation into a token exchange after authorization-code acquisition. |
 | core.hardening.code-single-use | RFC6749-4.1.3-code-single-use, RFC6749-10.5-code-single-use, RFC9700-2.1.1-code-replay-rejected, RFC9700-2.1.1-code-replay-revokes-tokens | Code acquisition plus a token-introspection revocation check (v0.2 token-lifecycle scope). |
 | core.authorize.require-state | RFC9700-4.7-require-state-* | Per-client `require_state` flag is not modelled in the seed schema. |
 
@@ -69,9 +69,10 @@ Until decided, do not read a failure of error-no-store as an RFC violation.
 
 ## Runner gap list (from coding part 2/3; carried into part 3/3)
 
-1. `login-and-authorize` returns the first 3xx, so a SUT that redirects an
-   unauthenticated authorize request to its login page is reported as that
-   login redirect and credentials are never submitted.
+1. `login-and-authorize` now continues past the login redirect for the native
+   group (fixed in PR 3); it is still not part of the formal SUT contract, so
+   the broker scenarios that need a real code depend on the unseeded-PR
+   login/SUT interface landing in part 3/3.
 2. `with.loginPath` is not declared by the SUT contract (the Rust reference
    uses `/auth/login`).
 3. No `expect.redirect` raw-Location or form-urlencoding assertion, so the
@@ -83,20 +84,29 @@ Until decided, do not read a failure of error-no-store as an RFC violation.
 None of these are implemented in this card; each is deferred to part 3/3
 (t_26ac24c5).
 
-## Stable means wire-executable (PR 3 native reconciliation)
+## Native scenario stability (PR 3 native reconciliation)
 
-`stable` means the scenario was executed against the pinned Rust reference
-(seeded conformance-mode SUT) and passed; schema/fixture completeness alone is
-not enough. CI (`runner.yml`) still does not start a SUT, so wire execution is
-a manual/agent gate until a SUT job exists (part 3/3).
+`stable` means the fixture and schema are complete and the scenario is
+wire-checkable, not that CI executes it: CI (`runner.yml`) still does not start
+a SUT, so wire execution of the whole core set is a manual/agent gate until a
+SUT job exists (part 3/3). Within this card, the native group is the bounded
+set that must be wire-verified: each of the six scenarios below was executed
+against the pinned Rust reference (seeded conformance-mode SUT, PR 424) and
+passed. A bare 302 (e.g. to a login page) is not accepted as a pass; the
+positives require a code redirect back to the wildcarded host:port.
 
 Native group (RFC 8252 7.3 / 8.3), executed against the seeded Rust SUT (PR 424):
 
 | Scenario | Evidence |
 |---|---|
-| loopback-ipv4-any-port, loopback-ipv6-any-port | login-and-authorize now continues past the login redirect; asserts the redirect starts with `http://127.0.0.1:9999/cb?` / `http://[::1]:9999/cb?`, echoes state and captures a code (`expect.redirect.locationPrefix`). A bare 302 to the login page no longer passes. |
+| loopback-ipv4-any-port, loopback-ipv6-any-port, registered-loopback-any-port | login-and-authorize now continues past the login redirect; asserts the redirect starts with `http://127.0.0.1:9999/cb?` / `http://[::1]:9999/cb?` / `http://127.0.0.1:7777/cb?`, echoes state and captures a code (`expect.redirect.locationPrefix`). A bare 302 to the login page no longer passes. |
 | loopback-path-exact, loopback-scheme-exact, loopback-families-distinct | 400 invalid_request, never redirected (7.3 registered URI matching, only the port varies). |
 | localhost-no-wildcard | 400 invalid_request. Local policy: 8.3 says localhost is NOT RECOMMENDED and neither requires nor forbids the wildcard. Requirement level is MAY. |
+
+The other stable core scenarios are fixture/schema-complete but not all wire-pass:
+12 stable scenarios still fail against the live seeded SUT (see the "Reaching
+100%" list below); the 54.5% coverage figure counts them as stable coverage
+regardless. Fixing those is out of scope here (t_26ac24c5).
 
 ### Coverage ratchet
 

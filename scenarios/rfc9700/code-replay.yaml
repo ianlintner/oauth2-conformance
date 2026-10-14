@@ -7,9 +7,9 @@ note: |
   Obtains a real code, exchanges it successfully (200), then replays the same
   code and expects invalid_grant. The single-use rule itself is stated in
   RFC 6749 section 4.1.2 and RFC 9700 section 4.2.4; requirement ID kept for
-  stability. Stays draft until the part 3/3 runner gap is fixed:
-  login-and-authorize returns the first 3xx, so against a SUT that redirects
-  unauthenticated requests to its login page no code can be obtained.
+  stability. Stays draft: login-and-authorize now continues past
+  the login redirect (PR 3), but this scenario has not been re-verified against
+  a seeded SUT (part 3/3).
 steps:
   - id: auth
     use: login-and-authorize

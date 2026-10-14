@@ -8,11 +8,10 @@ note: |
   values are compared after decoding, so iss is expected as the decoded issuer
   from examples/seed.yaml; the raw form-urlencoding of iss on the wire
   (RFC9207-2.1) cannot be asserted yet.
-  Runner gaps (part 3/3): (1) login-and-authorize returns the first 3xx, so a
-  SUT that redirects an unauthenticated authorize to its login page is reported
-  as that login redirect and credentials are never submitted; (2) with.loginPath
-  is not part of the SUT contract (the reference uses /auth/login); (3) no
-  expect.redirect raw-location/encoding match for the wire form of iss.
+  Runner gaps (part 3/3): (1) with.loginPath is not part of the SUT contract
+  (the reference uses /auth/login; login-and-authorize already acquires a code
+  as of PR 3); (2) no expect.redirect raw-location/encoding match for the wire
+  form of iss.
 steps:
   - id: auth
     use: login-and-authorize
