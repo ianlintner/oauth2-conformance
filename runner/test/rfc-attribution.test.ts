@@ -6,11 +6,12 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { loadProfiles, loadRequirements } from '../src/loader.js';
+import { loadProfiles, loadRequirements, loadScenarios } from '../src/loader.js';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const requirements = await loadRequirements(path.join(repoRoot, 'requirements'));
 const profiles = await loadProfiles(path.join(repoRoot, 'profiles'));
+const scenarioDocs = await loadScenarios(path.join(repoRoot, 'scenarios'));
 const byId = new Map(requirements.map((r) => [r.id, r]));
 
 function get(id: string) {
@@ -53,4 +54,32 @@ test('every core profile entry resolves to a requirement', () => {
   const core = profiles.find((p) => p.id === 'core');
   assert.ok(core);
   for (const id of core.requirements) assert.ok(byId.has(id), `profile references unknown ${id}`);
+});
+
+test('RFC 9700 code replay: rejection is a MUST, token revocation is only a SHOULD, both sourced beyond 2.1.1', () => {
+  const rejected = get('RFC9700-2.1.1-code-replay-rejected');
+  assert.equal(rejected.level, 'MUST');
+  assert.match(rejected.notes ?? '', /RFC 6749 section 4\.1\.2/);
+  assert.match(rejected.notes ?? '', /RFC 9700 section 4\.2\.4/);
+  const revokes = get('RFC9700-2.1.1-code-replay-revokes-tokens');
+  assert.equal(revokes.level, 'SHOULD');
+  assert.match(revokes.summary, /\bshould\b/i);
+  assert.match(revokes.notes ?? '', /SHOULD revoke/);
+  assert.match(revokes.notes ?? '', /RFC 6749 section 4\.1\.2/);
+  assert.match(revokes.notes ?? '', /RFC 9700 section 4\.2\.4/);
+});
+
+test('RFC 7636 4.2 plain rejection is local S256-only policy, not an RFC-imposed MUST NOT', () => {
+  const r = get('RFC7636-4.2-plain-rejected');
+  assert.equal(r.clause, '4.2');
+  assert.notEqual(r.level, 'MUST NOT');
+  assert.notEqual(r.level, 'MUST');
+  assert.equal(r.level, 'MAY');
+  assert.match(r.notes ?? '', /Local profile policy/);
+  assert.match(r.notes ?? '', /does not prohibit/);
+  assert.match(r.notes ?? '', /section 4\.4\.1/);
+  const scenario = scenarioDocs.find((s) => s.requirements.includes('RFC7636-4.2-plain-rejected'));
+  assert.ok(scenario, 'a scenario must cite RFC7636-4.2-plain-rejected');
+  assert.match(scenario.note ?? '', /local (profile )?policy/i);
+  assert.doesNotMatch(scenario.note ?? '', /RFC[- ]mandated|MUST NOT/);
 });

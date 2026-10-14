@@ -1,5 +1,6 @@
 # RFC 7636 PKCE requirements for the core profile. The core profile is
-# S256-only: the plain code_challenge_method is a MUST NOT, not an option.
+# S256-only: rejecting the plain code_challenge_method is local profile policy
+# (RFC 7636 section 4.2 does not forbid servers from supporting plain).
 #
 # Source material: rust-oauth2-server tests/compliance_rfc7636.rs
 # (see docs/ROADMAP.md, milestone v0.1 core).
@@ -27,10 +28,11 @@
 - id: RFC7636-4.2-plain-rejected
   spec: RFC 7636
   clause: "4.2"
-  level: MUST NOT
+  level: MAY
   profile: core
   summary: The plain code_challenge_method is rejected; only S256 is accepted.
   link: https://www.rfc-editor.org/rfc/rfc7636#section-4.2
+  notes: Local profile policy (S256-only), not an RFC-imposed server MUST NOT. RFC 7636 section 4.2 makes S256 mandatory to implement on the server and permits clients to use plain only when they cannot support S256 and know out of band that the server supports it; it does not prohibit servers from supporting plain. Rejection with invalid_request follows RFC 7636 section 4.4.1 for a server that does not support the requested transformation. RFC 9700 section 2.1.1 only says clients SHOULD use a challenge method that does not expose the verifier (currently S256).
 - id: RFC7636-4.2-method-without-challenge
   spec: RFC 7636
   clause: "4.2"
