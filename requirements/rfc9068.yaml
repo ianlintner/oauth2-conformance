@@ -1,0 +1,98 @@
+# RFC 9068 (JWT Profile for OAuth 2.0 Access Tokens), JWKS and opaque
+# token requirements for the token-lifecycle profile. Source material: the
+# ROADMAP v0.2 row and rust-oauth2-server opaque_tokens test.
+- id: RFC9068-2.1-jwt-signed
+  spec: "RFC 9068"
+  clause: "2.1"
+  level: MUST
+  profile: token-lifecycle
+  summary: "A JWT access token is signed."
+  link: https://www.rfc-editor.org/rfc/rfc9068#section-2.1
+- id: RFC9068-2.1-jwt-alg-none
+  spec: "RFC 9068"
+  clause: "2.1"
+  level: MUST NOT
+  profile: token-lifecycle
+  summary: "A JWT access token does not use none as its signing algorithm."
+  link: https://www.rfc-editor.org/rfc/rfc9068#section-2.1
+- id: RFC9068-2.1-rs256-supported
+  spec: "RFC 9068"
+  clause: "2.1"
+  level: MUST
+  profile: token-lifecycle
+  summary: "The server includes RS256 among its supported signing algorithms."
+  link: https://www.rfc-editor.org/rfc/rfc9068#section-2.1
+- id: RFC9068-2.1-typ-header
+  spec: "RFC 9068"
+  clause: "2.1"
+  level: MUST
+  profile: token-lifecycle
+  summary: "A JWT access token carries a typ header identifying it as an access token (at+jwt)."
+  link: https://www.rfc-editor.org/rfc/rfc9068#section-2.1
+- id: RFC9068-2.2-required-claims
+  spec: "RFC 9068"
+  clause: "2.2"
+  level: MUST
+  profile: token-lifecycle
+  summary: "A JWT access token carries the iss, exp, aud, sub, client_id, iat and jti claims."
+  link: https://www.rfc-editor.org/rfc/rfc9068#section-2.2
+- id: RFC9068-2.2.3-scope-claim
+  spec: "RFC 9068"
+  clause: "2.2.3"
+  level: SHOULD
+  profile: token-lifecycle
+  summary: "When the request carried scope, the JWT access token includes a scope claim with the granted values."
+  link: https://www.rfc-editor.org/rfc/rfc9068#section-2.2.3
+- id: RFC9068-3-aud-matches-resource
+  spec: "RFC 9068"
+  clause: "3"
+  level: SHOULD
+  profile: token-lifecycle
+  summary: "When the request carried a resource parameter, the aud claim of the JWT access token has the same value."
+  link: https://www.rfc-editor.org/rfc/rfc9068#section-3
+- id: RFC9068-4-iss-matches-metadata
+  spec: "RFC 9068"
+  clause: "4"
+  level: MUST
+  profile: token-lifecycle
+  summary: "The iss claim of a JWT access token exactly matches the issuer value in the server's metadata."
+  link: https://www.rfc-editor.org/rfc/rfc9068#section-4
+- id: RFC9068-4-verifiable-with-jwks
+  spec: "RFC 9068"
+  clause: "4"
+  level: MUST
+  profile: token-lifecycle
+  summary: "A JWT access token signature verifies against a key published in the server's JWK Set."
+  link: https://www.rfc-editor.org/rfc/rfc9068#section-4
+  notes: "The validating resource server MUST use the keys provided by the authorization server (metadata jwks_uri); the related SHOULD to advertise jwks_uri is in RFC 8414 section 2. The property here is server-side verifiability, the observable of that MUST."
+- id: RFC7517-5-jwks-keys-array
+  spec: "RFC 7517"
+  clause: "5"
+  level: MUST
+  profile: token-lifecycle
+  summary: "The JWK Set document served at jwks_uri is a JSON object with a keys array of JWKs."
+  link: https://www.rfc-editor.org/rfc/rfc7517#section-5
+  notes: "Source: RFC 7517 section 5; jwks_uri is the discovery pointer from RFC 8414 section 2."
+- id: RFC7517-4.5-jwks-distinct-kid
+  spec: "RFC 7517"
+  clause: "4.5"
+  level: SHOULD
+  profile: token-lifecycle
+  summary: "Keys in the JWK Set use distinct kid values."
+  link: https://www.rfc-editor.org/rfc/rfc7517#section-4.5
+- id: RFC7517-4.5-jwks-rollover-overlap
+  spec: "RFC 7517"
+  clause: "4.5"
+  level: MAY
+  profile: token-lifecycle
+  summary: "During key rotation the JWK Set may publish old and new keys together so tokens signed with either verify until expiry."
+  link: https://www.rfc-editor.org/rfc/rfc7517#section-4.5
+  notes: "RFC 7517 section 4.5 mentions kid for choosing among keys during rollover; overlap duration is deployment policy."
+- id: RFC6749-1.4-opaque-access-token
+  spec: "RFC 6749"
+  clause: "1.4"
+  level: MAY
+  profile: token-lifecycle
+  summary: "An access token may be an opaque string whose state is resolved through introspection rather than by decoding it."
+  link: https://www.rfc-editor.org/rfc/rfc6749#section-1.4
+  notes: "RFC 6749 says the string is usually opaque to the client; the reference opaque_tokens test pins that opaque tokens issue and introspect successfully."
