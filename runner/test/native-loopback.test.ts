@@ -132,6 +132,49 @@ test('login-and-authorize logs in once per user per run and reuses the session (
   }
 });
 
+/** Scripted SUT for direct helper calls: cookie `sid=<user>` is valid only if listed in `valid`. */
+function scriptedSend(valid: Set<string>, log: string[]) {
+  return async (request: { method: string; url: string; headers?: Record<string, string>; body?: string }) => {
+    log.push(`${request.method} ${request.url}`);
+    if (request.method === 'POST') {
+      const user = new URLSearchParams(request.body ?? '').get('username') ?? '';
+      return { status: 303, headers: { 'set-cookie': `sid=${user}; Path=/`, location: '/' }, body: undefined, redirect: { location: '/', query: {}, fragment: {} } };
+    }
+    const cookie = request.headers?.cookie ?? '';
+    if (![...valid].some((sid) => cookie === sid)) {
+      return { status: 302, headers: { location: '/auth/login' }, body: undefined, redirect: { location: '/auth/login', query: {}, fragment: {} } };
+    }
+    const location = 'https://client.example/cb?code=x';
+    return { status: 302, headers: { location }, body: undefined, redirect: { location, query: { code: 'x' }, fragment: {} } };
+  };
+}
+
+const helperWith = (password: string) => ({ username: 'alice', password, loginPath: '/auth/login', authorizePath: '/oauth/authorize', query: { redirect_uri: 'https://client.example/cb' } });
+
+test('login-and-authorize does not reuse a session across different passwords for the same user', async () => {
+  const log: string[] = [];
+  const sessions = new Map<string, string>();
+  const send = scriptedSend(new Set(['sid=alice']), log);
+  await loginAndAuthorize({ scope: new Map(), with: helperWith('good'), send, sessions });
+  await loginAndAuthorize({ scope: new Map(), with: helperWith('other'), send, sessions });
+  assert.equal(log.filter((entry) => entry.startsWith('POST')).length, 2, log.join(' | '));
+});
+
+test('login-and-authorize logs in again when the cached session is stale', async () => {
+  const log: string[] = [];
+  const sessions = new Map<string, string>();
+  const valid = new Set(['sid=alice']);
+  const send = scriptedSend(valid, log);
+  await loginAndAuthorize({ scope: new Map(), with: helperWith('good'), send, sessions });
+  valid.clear();
+  valid.add('sid=alice');
+  const stale = [...sessions.keys()][0] as string;
+  sessions.set(stale, 'sid=expired');
+  const response = await loginAndAuthorize({ scope: new Map(), with: helperWith('good'), send, sessions });
+  assert.equal(response.redirect?.query.code, 'x');
+  assert.equal(log.filter((entry) => entry.startsWith('POST')).length, 2, log.join(' | '));
+});
+
 test('login-and-authorize fails loudly when the login step itself is refused (never returns a code-less redirect as success)', async () => {
   const { server, url } = await fakeSut({ maxLogins: 0 });
   try {

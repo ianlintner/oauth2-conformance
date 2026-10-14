@@ -4,7 +4,9 @@ requirements: [RFC7636-4.2-method-without-challenge]
 profile: core
 status: reference-deviation
 note: |
-  INV-S256-ONLY. Rust answers 400 JSON invalid_request.
+  INV-S256-ONLY. A code_challenge_method without a code_challenge must be
+  rejected (RFC 7636 4.4.1, missing code_challenge when PKCE is required).
+  Rust answers 400 JSON invalid_request.
 steps:
   - id: authorize
     request:

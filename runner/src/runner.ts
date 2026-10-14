@@ -61,7 +61,7 @@ export interface HelperContext {
   send(request: { method: string; url: string; headers: Record<string, string>; body?: string }): Promise<import('./compare.js').ActualResponse>;
   scope: Map<string, string>;
   with: Record<string, unknown>;
-  /** Run-wide login sessions (username -> cookie), shared by every scenario in one run. */
+  /** Run-wide login sessions (loginPath\0username\0password -> cookie), shared by every scenario in one run. */
   sessions?: Map<string, string>;
 }
 

@@ -50,15 +50,18 @@ export async function loginAndAuthorize(context: HelperContext): Promise<import(
 
   const loginPath = typeof context.with.loginPath === 'string' ? context.with.loginPath : '/login';
 
-  // Reuse the run's session for this user: SUTs rate-limit logins (the Rust
-  // reference refuses after ~8 per IP/user), so one login per user per run.
-  const cachedCookie = context.sessions?.get(username);
+  // Reuse the run's session for this user+password at this login path: SUTs
+  // rate-limit logins (the Rust reference refuses after ~8 per IP/user), so one
+  // login per user per run. The key includes the password so a scenario that
+  // logs in with bad credentials never reuses a valid session from a prior step.
+  const sessionKey = `${loginPath}\u0000${username}\u0000${password}`;
+  const cachedCookie = context.sessions?.get(sessionKey);
   if (cachedCookie !== undefined) {
     const reused = await context.send({ method: 'GET', url: authorizeUrl, headers: { cookie: cachedCookie } });
     const reusedLocation = reused.redirect?.location;
     const needsLogin = reused.status >= 300 && reused.status < 400 && reusedLocation !== undefined && isLoginRedirect(reusedLocation, loginPath);
     if (!needsLogin) return reused;
-    context.sessions?.delete(username);
+    context.sessions?.delete(sessionKey);
   }
 
   const authorize = await context.send({
@@ -98,7 +101,7 @@ export async function loginAndAuthorize(context: HelperContext): Promise<import(
   }
 
   const loginCookie = cookieFrom(login, cookie);
-  if (loginCookie !== undefined) context.sessions?.set(username, loginCookie);
+  if (loginCookie !== undefined) context.sessions?.set(sessionKey, loginCookie);
   return context.send({
     method: 'GET',
     url: authorizeUrl,

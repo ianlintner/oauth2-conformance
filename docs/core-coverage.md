@@ -49,15 +49,27 @@ the stable set and are absent from the CI ratchet.
 
 ## Reference deviations (RFC wins over Rust)
 
-Eight scenarios fail against the Rust reference for RFC-grounded reasons.
-Each is `status: reference-deviation`; none is demoted to draft.
+Eight scenarios fail against the Rust reference. Seven fail for RFC-grounded
+reasons and one (`core.pkce.plain-method-rejected`) enforces local S256-only
+policy whose rejection is not an RFC MUST (see the note below). Each is
+`status: reference-deviation`; none is demoted to draft.
 
 | Scenario | RFC basis | Rust behavior |
 |---|---|---|
 | core.authorize.error-redirect-iss, response-type-missing, response-type-unsupported | RFC 6749 4.1.2.1 (error returned by redirect once client_id and redirect_uri validate); RFC 9207 2 (iss on error) | 400 JSON on the authorize endpoint, no redirect. |
-| core.pkce.missing-challenge, method-without-challenge, plain-method-rejected | RFC 7636 4.4.1 (error returned per RFC 6749 4.1.2.1) | 400 JSON on the authorize endpoint, no redirect. |
+| core.pkce.missing-challenge, method-without-challenge | RFC 7636 4.4.1 (when PKCE is required, a missing `code_challenge` yields invalid_request on the redirect) | 400 JSON on the authorize endpoint, no redirect. |
 | core.token.basic-auth-success | RFC 6749 2.3.1 (client id and secret MUST be form-urlencoded before Basic encoding) | 401 for the form-urlencoded form; accepts the raw unencoded form. |
 | core.token.dual-auth-rejected | RFC 6749 2.3 (clients MUST NOT use more than one authentication method), 5.2 invalid_request | 200 when credentials arrive in both header and body. |
+
+core.pkce.plain-method-rejected is a deliberate exception: rejecting `plain`
+altogether is the reference's local S256-only policy (RFC 7636 4.2 makes `plain`
+a server MAY to support), not an RFC MUST. It is kept as `reference-deviation`
+rather than `stable` because the reference does not itself pass it, and rather
+than `draft` because the fixture is a correct conformance check for the profile's
+S256-only stance. Its `method-without-challenge` sibling's cited requirement
+(RFC7636-4.2-method-without-challenge) does not cover a method sent without a
+challenge; the RFC basis is RFC 7636 4.4.1 (missing `code_challenge` when PKCE
+is required), listed above.
 
 ## Hardening profile
 
