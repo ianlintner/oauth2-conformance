@@ -148,6 +148,9 @@ export function compareResponse(expect: ScenarioExpectation, actual: ActualRespo
       if (expect.redirect.location !== undefined && parsed.location !== expect.redirect.location) {
         diffs.push({ path: 'redirect.location', expected: expect.redirect.location, actual: parsed.location, reason: 'redirect target differs' });
       }
+      if (expect.redirect.locationPrefix !== undefined && !parsed.location.startsWith(expect.redirect.locationPrefix)) {
+        diffs.push({ path: 'redirect.location', expected: `${expect.redirect.locationPrefix}*`, actual: parsed.location, reason: 'redirect target does not start with the expected prefix' });
+      }
       for (const [key, value] of Object.entries(expect.redirect.query ?? {})) {
         const found = parsed.query[key];
         if (found === undefined) {

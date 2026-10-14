@@ -42,4 +42,4 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm conformance validate-schemas --root ..
       - run: pnpm conformance validate --scenarios ../scenarios --requirements ../requirements --profiles ../profiles
-      - run: pnpm conformance coverage --scenarios ../scenarios --requirements ../requirements --profiles ../profiles --profile core --min 54
+      - run: pnpm conformance coverage --scenarios ../scenarios --requirements ../requirements --profiles ../profiles --profile core --min 54.5

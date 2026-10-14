@@ -8,7 +8,7 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, writeFile, mkdir } from 'node:fs/promises';
+import { mkdtemp, writeFile, mkdir, readFile, cp, unlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
@@ -35,6 +35,12 @@ const scenarios = await loadScenarios(path.join(repoRoot, 'scenarios'));
 const profiles = await loadProfiles(path.join(repoRoot, 'profiles'));
 const report = buildCoverage(requirements, scenarios, profiles, 'core');
 const hardeningReport = buildCoverage(requirements, scenarios, profiles, 'hardening');
+
+const native = (id: string) => {
+  const s = scenarios.find((scenario) => scenario.id === id);
+  assert.ok(s, `missing native scenario ${id}`);
+  return s;
+};
 
 // The floor must match docs/core-coverage.md. Bump both together when part 3/3
 // promotes draft scenarios to stable; never lower it to green a bad PR.
@@ -88,6 +94,31 @@ test('the wrong-redirect-uri scenario genuinely expects an invalid_grant rejecti
   assert.match(text, /invalid_grant/, 'the exchange must expect invalid_grant');
 });
 
+test('the loopback any-port positives prove a code is issued at the wildcard port, not just a login redirect', () => {
+  // A bare `status: 302` on an unauthenticated authorize is satisfied by the
+  // login-page redirect, so it cannot distinguish "accepted the wildcard port"
+  // from "redirected to login". The positive scenarios must drive the
+  // authorization to completion and assert an issued code in the redirect,
+  // which is the only evidence that the registered port was matched.
+  for (const id of ['core.native.loopback-ipv4-any-port', 'core.native.loopback-ipv6-any-port']) {
+    const scenario = native(id);
+    assert.equal(scenario.status, 'stable');
+    const text = JSON.stringify(scenario.steps);
+    assert.match(text, /login-and-authorize/, `${id} must drive login-and-authorize to completion`);
+    assert.match(text, /redirect\.query\.code/, `${id} must capture the issued authorization code`);
+    assert.match(text, /locationPrefix/, `${id} must pin the redirect target host:port`);
+  }
+});
+
+test('the RFC 8252 7.3 / 8.3 localhost and family-distinct negatives really reject', () => {
+  for (const id of ['core.native.loopback-path-exact', 'core.native.loopback-scheme-exact', 'core.native.loopback-families-distinct', 'core.native.localhost-no-wildcard']) {
+    const scenario = native(id);
+    assert.equal(scenario.status, 'stable');
+    const text = JSON.stringify(scenario.steps);
+    assert.match(text, /"status":400|status:400/, `${id} must expect a rejection`);
+  }
+});
+
 test('coverage CLI fails below --min, proving the gate is not green-by-skip', async () => {
   const dir = await mkdtemp(path.join(tmpdir(), 'cov-'));
   await mkdir(path.join(dir, 'scenarios'), { recursive: true });
@@ -97,4 +128,25 @@ test('coverage CLI fails below --min, proving the gate is not green-by-skip', as
   );
   const result = await cli(['coverage', '--scenarios', path.join(dir, 'scenarios'), '--requirements', path.join(repoRoot, 'requirements'), '--profiles', path.join(repoRoot, 'profiles'), '--profile', 'core', '--min', '100']);
   assert.notEqual(result.code, 0, 'coverage --min 100 with only a draft scenario must fail');
+});
+
+test('CI ratchet equals the recorded floor and a missing stable fixture turns it red (RED->GREEN)', async () => {
+  const workflow = await readFile(path.join(repoRoot, '.github', 'workflows', 'runner.yml'), 'utf8');
+  const match = /coverage .*--profile core --min ([0-9.]+)/.exec(workflow);
+  assert.ok(match, 'runner.yml must gate core coverage with --min');
+  const ciMin = Number(match[1]);
+  const exactFloor = Math.round((CORE_STABLE_FLOOR / report.totalRequirements) * 1000) / 10;
+  assert.equal(ciMin, exactFloor, `CI --min ${ciMin} must equal the truthful floor ${CORE_STABLE_FLOOR}/${report.totalRequirements} = ${exactFloor}% (no slack that lets a fixture vanish)`);
+  assert.ok(report.coveragePercent >= ciMin, 'current coverage must satisfy the CI ratchet (GREEN)');
+
+  const args = (dir: string) => ['coverage', '--scenarios', dir, '--requirements', path.join(repoRoot, 'requirements'), '--profiles', path.join(repoRoot, 'profiles'), '--profile', 'core', '--min', String(ciMin)];
+  const green = await cli(args(path.join(repoRoot, 'scenarios')));
+  assert.equal(green.code, 0, green.stdout + green.stderr);
+
+  const copy = await mkdtemp(path.join(tmpdir(), 'cov-missing-'));
+  await cp(path.join(repoRoot, 'scenarios'), copy, { recursive: true });
+  await unlink(path.join(copy, 'core', 'native', 'loopback-ipv4-any-port.yaml'));
+  const red = await cli(args(copy));
+  assert.notEqual(red.code, 0, 'removing a stable fixture must fail the CI ratchet');
+  assert.match(red.stderr, /below the required/);
 });

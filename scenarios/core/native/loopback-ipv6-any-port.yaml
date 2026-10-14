@@ -4,12 +4,15 @@ requirements: [RFC8252-7.3-loopback-ipv6-any-port]
 profile: core
 status: stable
 note: |
-  INV-LOOPBACK-PORT-WILDCARD. Registered http://[::1]/cb must accept http://[::1]:9999/cb.
+  INV-LOOPBACK-PORT-WILDCARD. Registered http://[::1]/cb must accept http://[::1]:9999/cb. The runner logs in and asserts the authorization redirect is issued back to the wildcarded host:port with a code.
 steps:
   - id: authorize
-    request:
-      method: GET
-      path: /oauth/authorize
+    use: login-and-authorize
+    with:
+      username: alice
+      password: test-only-password
+      loginPath: /auth/login
+      authorizePath: /oauth/authorize
       query:
         response_type: code
         client_id: client-loopback-v6
@@ -19,3 +22,9 @@ steps:
         code_challenge_method: S256
     expect:
       status: 302
+      redirect:
+        locationPrefix: "http://[::1]:9999/cb?"
+        query:
+          state: s-xyz
+    capture:
+      code: redirect.query.code

@@ -82,3 +82,45 @@ Until decided, do not read a failure of error-no-store as an RFC violation.
 
 None of these are implemented in this card; each is deferred to part 3/3
 (t_26ac24c5).
+
+## Stable means wire-executable (PR 3 native reconciliation)
+
+`stable` means the scenario was executed against the pinned Rust reference
+(seeded conformance-mode SUT) and passed; schema/fixture completeness alone is
+not enough. CI (`runner.yml`) still does not start a SUT, so wire execution is
+a manual/agent gate until a SUT job exists (part 3/3).
+
+Native group (RFC 8252 7.3 / 8.3), executed against the seeded Rust SUT (PR 424):
+
+| Scenario | Evidence |
+|---|---|
+| loopback-ipv4-any-port, loopback-ipv6-any-port | login-and-authorize now continues past the login redirect; asserts the redirect starts with `http://127.0.0.1:9999/cb?` / `http://[::1]:9999/cb?`, echoes state and captures a code (`expect.redirect.locationPrefix`). A bare 302 to the login page no longer passes. |
+| loopback-path-exact, loopback-scheme-exact, loopback-families-distinct | 400 invalid_request, never redirected (7.3 registered URI matching, only the port varies). |
+| localhost-no-wildcard | 400 invalid_request. Local policy: 8.3 says localhost is NOT RECOMMENDED and neither requires nor forbids the wildcard. Requirement level is MAY. |
+
+### Coverage ratchet
+
+Core coverage is 30/55 = 54.5%. CI gates `--min 54.5` (exactly the recorded
+floor, `CORE_STABLE_FLOOR = 30`); `runner/test/coverage-gate.test.ts` proves a
+removed stable fixture fails the gate. This is a ratchet, not the 100% the
+parent acceptance (t_201a2697) requires. Reaching 100% (t_26ac24c5) needs:
+
+- the 25 uncovered core requirements: draft scenarios listed above (code
+  acquisition, token exchange, PKCE verify, code single-use/replay, require-state
+  seed flag) promoted to stable after passing on a seeded SUT, plus the five
+  documented MAY/policy non-coverage rows either covered or removed from the
+  core denominator by a contract decision (they are not waived here);
+- a CI job that builds the Rust SUT with conformance mode, seeds it
+  (`examples/seed.yaml`) and runs `conformance run --profile core`, since the
+  stable set is not currently execution-checked in CI;
+- fixing the 12 stable scenarios that fail against the live seeded SUT today
+  (authorize error bodies, metadata issuer, pkce missing/plain, token basic-auth,
+  dual-auth, error-no-store, unsupported-grant-type); these are outside this card
+  and need status/fixture/reference reconciliation.
+
+### Citation discrepancy (follow-up, ids unchanged)
+
+`RFC9700-4.5-code-replay` (hardening) cites RFC 9700 section 4.5, which is
+"Authorization Code Injection". Code replay rejection is RFC 6749 4.1.2 /
+10.5 and RFC 9700 2.1.1 / 4.2.4 (the core scenario already cites 2.1.1). A
+separate requirement follow-up should re-cite or re-id it.
