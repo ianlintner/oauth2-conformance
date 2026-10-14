@@ -1,0 +1,85 @@
+# RFC 7662 (Token Introspection) requirements for the token-lifecycle profile.
+# Source material: rust-oauth2-server compliance_rfc7662_7009,
+# opaque_tokens and rfc9700_introspection_pii tests.
+- id: RFC7662-2.1-caller-authentication
+  spec: "RFC 7662"
+  clause: "2.1"
+  level: MUST
+  profile: token-lifecycle
+  summary: "The introspection endpoint requires authentication or authorization of the calling protected resource."
+  link: https://www.rfc-editor.org/rfc/rfc7662#section-2.1
+  notes: "Anonymous introspection (a deployment option in the reference server) is a deviation from this MUST unless explicitly enabled and scoped, see RFC7662-5-anonymous-introspection-strips-subject."
+- id: RFC7662-2.1-basic-client-authentication
+  spec: "RFC 7662"
+  clause: "2.1"
+  level: MAY
+  profile: token-lifecycle
+  summary: "The introspection endpoint accepts HTTP Basic client credentials as the caller authentication."
+  link: https://www.rfc-editor.org/rfc/rfc7662#section-2.1
+  notes: "RFC 7662 leaves the credential form out of scope; client_secret_basic is the profile's chosen test method."
+- id: RFC7662-2.2-active-true
+  spec: "RFC 7662"
+  clause: "2.2"
+  level: MUST
+  profile: token-lifecycle
+  summary: "Introspecting a valid, unexpired, unrevoked token returns active: true."
+  link: https://www.rfc-editor.org/rfc/rfc7662#section-2.2
+- id: RFC7662-2.2-inactive-false
+  spec: "RFC 7662"
+  clause: "2.2"
+  level: MUST
+  profile: token-lifecycle
+  summary: "Introspecting an invalid, expired, revoked or unknown token returns active: false."
+  link: https://www.rfc-editor.org/rfc/rfc7662#section-2.2
+- id: RFC7662-2.2-inactive-no-detail
+  spec: "RFC 7662"
+  clause: "2.2"
+  level: SHOULD NOT
+  profile: token-lifecycle
+  summary: "An inactive-token response carries no information beyond active: false."
+  link: https://www.rfc-editor.org/rfc/rfc7662#section-2.2
+- id: RFC7662-2.2-cross-client-inactive
+  spec: "RFC 7662"
+  clause: "2.2"
+  level: MUST
+  profile: token-lifecycle
+  summary: "A token the caller is not allowed to introspect, such as one issued to another client, is reported as active: false."
+  link: https://www.rfc-editor.org/rfc/rfc7662#section-2.2
+- id: RFC7662-2.2-active-metadata-fields
+  spec: "RFC 7662"
+  clause: "2.2"
+  level: MAY
+  profile: token-lifecycle
+  summary: "An active-token response may carry scope, client_id and token_type."
+  link: https://www.rfc-editor.org/rfc/rfc7662#section-2.2
+  notes: "These members are OPTIONAL in RFC 7662; the reference server returns them and the profile pins that behaviour."
+- id: RFC7662-4-revoked-token-inactive
+  spec: "RFC 7662"
+  clause: "4"
+  level: MUST
+  profile: token-lifecycle
+  summary: "A token revoked through the revocation endpoint is subsequently reported inactive by introspection."
+  link: https://www.rfc-editor.org/rfc/rfc7662#section-4
+- id: RFC7662-4-expiry-checked
+  spec: "RFC 7662"
+  clause: "4"
+  level: MUST
+  profile: token-lifecycle
+  summary: "An expired token is reported inactive by introspection."
+  link: https://www.rfc-editor.org/rfc/rfc7662#section-4
+- id: RFC7662-5-anonymous-introspection-strips-subject
+  spec: "RFC 7662"
+  clause: "5"
+  level: MUST
+  profile: token-lifecycle
+  summary: "An anonymous introspection response omits the subject identity members (username, sub) while keeping lifecycle members."
+  link: https://www.rfc-editor.org/rfc/rfc7662#section-5
+  notes: "Privacy rule from RFC 7662 section 5 applied to the reference server's public_introspection option."
+- id: RFC7662-2.2-owner-introspection-keeps-identity
+  spec: "RFC 7662"
+  clause: "2.2"
+  level: MAY
+  profile: token-lifecycle
+  summary: "An authenticated, authorized caller still receives the identity members (sub, client_id) for the token."
+  link: https://www.rfc-editor.org/rfc/rfc7662#section-2.2
+  notes: "sub is OPTIONAL in RFC 7662 section 2.2; this requirement guards against over-stripping in the PII control."

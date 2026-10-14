@@ -1,0 +1,75 @@
+# RFC 7009 (Token Revocation) requirements for the token-lifecycle profile.
+# Source material: rust-oauth2-server compliance_rfc7662_7009 tests.
+- id: RFC7009-2-refresh-revocation-supported
+  spec: "RFC 7009"
+  clause: "2"
+  level: MUST
+  profile: token-lifecycle
+  summary: "The revocation endpoint supports revoking refresh tokens."
+  link: https://www.rfc-editor.org/rfc/rfc7009#section-2
+- id: RFC7009-2-access-revocation-supported
+  spec: "RFC 7009"
+  clause: "2"
+  level: SHOULD
+  profile: token-lifecycle
+  summary: "The revocation endpoint supports revoking access tokens."
+  link: https://www.rfc-editor.org/rfc/rfc7009#section-2
+- id: RFC7009-2.1-client-authentication
+  spec: "RFC 7009"
+  clause: "2.1"
+  level: MUST
+  profile: token-lifecycle
+  summary: "A revocation request is accepted only with valid client credentials (or client_id for a public client)."
+  link: https://www.rfc-editor.org/rfc/rfc7009#section-2.1
+  notes: "Lowercase prose in RFC 7009 sections 2.1 and 5 rather than a keyword; treated as MUST because section 5 relies on it against token guessing."
+- id: RFC7009-2.1-token-owned-by-client
+  spec: "RFC 7009"
+  clause: "2.1"
+  level: MUST
+  profile: token-lifecycle
+  summary: "A revocation request for a token issued to a different client is refused and does not revoke the token."
+  link: https://www.rfc-editor.org/rfc/rfc7009#section-2.1
+  notes: "Lowercase prose in RFC 7009 sections 2.1 and 5; see client-authentication note."
+- id: RFC7009-2.1-hint-mismatch-searches-all
+  spec: "RFC 7009"
+  clause: "2.1"
+  level: MUST
+  profile: token-lifecycle
+  summary: "When token_type_hint does not match the token, the server still finds and revokes the token."
+  link: https://www.rfc-editor.org/rfc/rfc7009#section-2.1
+- id: RFC7009-2.1-revocation-immediate
+  spec: "RFC 7009"
+  clause: "2.1"
+  level: MUST
+  profile: token-lifecycle
+  summary: "A revoked token cannot be used again after the revocation response."
+  link: https://www.rfc-editor.org/rfc/rfc7009#section-2.1
+  notes: "RFC 7009 section 2.1 says invalidation is immediate (lowercase prose) while acknowledging propagation delay; scenarios on a single node should allow none."
+- id: RFC7009-2.1-refresh-revocation-cascades
+  spec: "RFC 7009"
+  clause: "2.1"
+  level: SHOULD
+  profile: token-lifecycle
+  summary: "Revoking a refresh token also invalidates access tokens issued from the same grant."
+  link: https://www.rfc-editor.org/rfc/rfc7009#section-2.1
+- id: RFC7009-2.1-access-revocation-may-cascade
+  spec: "RFC 7009"
+  clause: "2.1"
+  level: MAY
+  profile: token-lifecycle
+  summary: "Revoking an access token may also revoke the associated refresh token."
+  link: https://www.rfc-editor.org/rfc/rfc7009#section-2.1
+- id: RFC7009-2.2-success-200
+  spec: "RFC 7009"
+  clause: "2.2"
+  level: MUST
+  profile: token-lifecycle
+  summary: "A successful revocation returns HTTP 200."
+  link: https://www.rfc-editor.org/rfc/rfc7009#section-2.2
+- id: RFC7009-2.2-invalid-token-200
+  spec: "RFC 7009"
+  clause: "2.2"
+  level: MUST
+  profile: token-lifecycle
+  summary: "A revocation request for an unknown or already invalid token still returns HTTP 200."
+  link: https://www.rfc-editor.org/rfc/rfc7009#section-2.2

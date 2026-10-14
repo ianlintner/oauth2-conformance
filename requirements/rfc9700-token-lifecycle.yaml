@@ -1,0 +1,55 @@
+# RFC 9700 and RFC 7523 requirements for the token-lifecycle profile:
+# refresh token protection and client-assertion jti replay. Source material:
+# rust-oauth2-server rfc9700_jti_replay test and ROADMAP v0.2 row.
+- id: RFC9700-2.2.2-public-refresh-rotated-or-bound
+  spec: "RFC 9700"
+  clause: "2.2.2"
+  level: MUST
+  profile: token-lifecycle
+  summary: "A refresh token issued to a public client is either sender-constrained or rotated on every use."
+  link: https://www.rfc-editor.org/rfc/rfc9700#section-2.2.2
+- id: RFC9700-4.14.2-rotated-refresh-invalidated
+  spec: "RFC 9700"
+  clause: "4.14.2"
+  level: SHOULD
+  profile: token-lifecycle
+  summary: "When refresh token rotation is used, each refresh response carries a new refresh token and the previous one is invalidated."
+  link: https://www.rfc-editor.org/rfc/rfc9700#section-4.14.2
+- id: RFC9700-4.14.2-rotated-reuse-revokes-family
+  spec: "RFC 9700"
+  clause: "4.14.2"
+  level: SHOULD
+  profile: token-lifecycle
+  summary: "Presenting an already-rotated refresh token revokes the currently active refresh token of the same grant."
+  link: https://www.rfc-editor.org/rfc/rfc9700#section-4.14.2
+  notes: "RFC 9700 describes this as how rotation exposes theft; the server cannot tell which party replayed it."
+- id: RFC9700-4.14.2-refresh-inactivity-expiry
+  spec: "RFC 9700"
+  clause: "4.14.2"
+  level: SHOULD
+  profile: token-lifecycle
+  summary: "A refresh token expires after a period of client inactivity."
+  link: https://www.rfc-editor.org/rfc/rfc9700#section-4.14.2
+- id: RFC9700-4.14.2-refresh-revoked-on-security-event
+  spec: "RFC 9700"
+  clause: "4.14.2"
+  level: MAY
+  profile: token-lifecycle
+  summary: "The server may revoke refresh tokens on security events such as password change or logout."
+  link: https://www.rfc-editor.org/rfc/rfc9700#section-4.14.2
+- id: RFC7523-3-client-assertion-jti-replay-rejected
+  spec: "RFC 7523"
+  clause: "3"
+  level: MAY
+  profile: token-lifecycle
+  summary: "A JWT client assertion whose jti was already used within its validity window is rejected with invalid_client."
+  link: https://www.rfc-editor.org/rfc/rfc7523#section-3
+  notes: "RFC 7523 section 3 makes jti replay protection optional (MAY). The reference test cites RFC 9700 section 2.5 and labels it a MUST; that is a stricter local profile, recorded here as a MAY per the RFC text."
+- id: RFC7523-3-client-assertion-fresh-jti-accepted
+  spec: "RFC 7523"
+  clause: "3"
+  level: MAY
+  profile: token-lifecycle
+  summary: "A client assertion with a jti not previously seen from that client is still accepted."
+  link: https://www.rfc-editor.org/rfc/rfc7523#section-3
+  notes: "Negative control for the replay guard: a replay check must not reject distinct assertions."

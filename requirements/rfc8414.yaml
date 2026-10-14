@@ -1,0 +1,72 @@
+# RFC 8414 (Authorization Server Metadata) requirements for the
+# token-lifecycle profile, plus the OpenID Connect Discovery userinfo
+# member the reference test covers. Source material: rust-oauth2-server
+# compliance_rfc8414 tests.
+- id: RFC8414-3.2-metadata-200
+  spec: "RFC 8414"
+  clause: "3.2"
+  level: MUST
+  profile: token-lifecycle
+  summary: "A metadata request to the well-known URI returns HTTP 200 with a JSON metadata document."
+  link: https://www.rfc-editor.org/rfc/rfc8414#section-3.2
+- id: RFC8414-3.3-issuer-identical
+  spec: "RFC 8414"
+  clause: "3.3"
+  level: MUST
+  profile: token-lifecycle
+  summary: "The issuer value in the metadata is identical to the issuer identifier the metadata URL was derived from."
+  link: https://www.rfc-editor.org/rfc/rfc8414#section-3.3
+- id: RFC8414-2-authorization-endpoint
+  spec: "RFC 8414"
+  clause: "2"
+  level: MUST
+  profile: token-lifecycle
+  summary: "The metadata includes authorization_endpoint when the server supports the authorization endpoint."
+  link: https://www.rfc-editor.org/rfc/rfc8414#section-2
+- id: RFC8414-2-token-endpoint
+  spec: "RFC 8414"
+  clause: "2"
+  level: MUST
+  profile: token-lifecycle
+  summary: "The metadata includes token_endpoint."
+  link: https://www.rfc-editor.org/rfc/rfc8414#section-2
+- id: RFC8414-2-response-types-supported
+  spec: "RFC 8414"
+  clause: "2"
+  level: MUST
+  profile: token-lifecycle
+  summary: "The metadata includes response_types_supported."
+  link: https://www.rfc-editor.org/rfc/rfc8414#section-2
+  notes: "The reference test additionally expects code in the list; that follows from the server supporting the authorization code grant."
+- id: RFC8414-2-grant-types-supported
+  spec: "RFC 8414"
+  clause: "2"
+  level: MAY
+  profile: token-lifecycle
+  summary: "The metadata may list grant_types_supported, and any list includes authorization_code when the server supports it."
+  link: https://www.rfc-editor.org/rfc/rfc8414#section-2
+  notes: "OPTIONAL in RFC 8414 (default authorization_code and implicit)."
+- id: RFC8414-2-token-endpoint-auth-methods
+  spec: "RFC 8414"
+  clause: "2"
+  level: MAY
+  profile: token-lifecycle
+  summary: "The metadata may list token_endpoint_auth_methods_supported, and any list includes client_secret_basic."
+  link: https://www.rfc-editor.org/rfc/rfc8414#section-2
+  notes: "OPTIONAL in RFC 8414 (default client_secret_basic)."
+- id: RFC9700-2.1.1-metadata-advertises-s256
+  spec: "RFC 9700"
+  clause: "2.1.1"
+  level: SHOULD
+  profile: token-lifecycle
+  summary: "The metadata publishes code_challenge_methods_supported and includes S256."
+  link: https://www.rfc-editor.org/rfc/rfc9700#section-2.1.1
+  notes: "RFC 8414 defines the member as OPTIONAL; RFC 9700 recommends publishing it so clients can detect PKCE support. The reference test labels this a MUST."
+- id: OIDCDISC-3-userinfo-endpoint
+  spec: "OpenID Connect Discovery 1.0"
+  clause: "3"
+  level: SHOULD
+  profile: token-lifecycle
+  summary: "A server that offers a UserInfo endpoint publishes its URL as userinfo_endpoint in the provider metadata."
+  link: https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata
+  notes: "The reference test labels this a MUST; userinfo_endpoint is RECOMMENDED in the discovery spec. Full OIDC coverage belongs to the v0.3 oidc profile."
