@@ -166,8 +166,6 @@ test('login-and-authorize logs in again when the cached session is stale', async
   const valid = new Set(['sid=alice']);
   const send = scriptedSend(valid, log);
   await loginAndAuthorize({ scope: new Map(), with: helperWith('good'), send, sessions });
-  valid.clear();
-  valid.add('sid=alice');
   const stale = [...sessions.keys()][0] as string;
   sessions.set(stale, 'sid=expired');
   const response = await loginAndAuthorize({ scope: new Map(), with: helperWith('good'), send, sessions });

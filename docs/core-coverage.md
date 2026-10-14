@@ -12,10 +12,12 @@ Scenario statuses used by the core profile:
 
 - `stable`: fixture complete and passing against the pinned Rust reference.
   Counts toward the coverage gate.
-- `reference-deviation`: fixture complete and RFC-correct, but the Rust
-  reference fails it. The RFC wins over Rust, so the scenario is kept, the
-  runner defers it (not a failure, not stable coverage) and the justification is
-  recorded below. It becomes `stable` when Rust is fixed.
+- `reference-deviation`: fixture complete and correct against the profile's
+  conformance stance, but the Rust reference fails it. The RFC wins over Rust,
+  so the scenario is kept, the runner defers it (not a failure, not stable
+  coverage) and the justification is recorded below. It becomes `stable` when
+  Rust is fixed. (Most are RFC-correct fixtures; `core.pkce.plain-method-rejected`
+  instead encodes local S256-only policy, an explicit exception noted below.)
 - `draft`: needs a runner/SUT-interface feature or a contract decision.
 
 ## Documented non-coverage (no scenario by design)
@@ -62,14 +64,16 @@ policy whose rejection is not an RFC MUST (see the note below). Each is
 | core.token.dual-auth-rejected | RFC 6749 2.3 (clients MUST NOT use more than one authentication method), 5.2 invalid_request | 200 when credentials arrive in both header and body. |
 
 core.pkce.plain-method-rejected is a deliberate exception: rejecting `plain`
-altogether is the reference's local S256-only policy (RFC 7636 4.2 makes `plain`
-a server MAY to support), not an RFC MUST. It is kept as `reference-deviation`
+altogether is the profile's local S256-only policy (RFC 7636 4.2 makes `plain` a
+server MAY to support), not an RFC MUST. It is kept as `reference-deviation`
 rather than `stable` because the reference does not itself pass it, and rather
 than `draft` because the fixture is a correct conformance check for the profile's
-S256-only stance. Its `method-without-challenge` sibling's cited requirement
-(RFC7636-4.2-method-without-challenge) does not cover a method sent without a
-challenge; the RFC basis is RFC 7636 4.4.1 (missing `code_challenge` when PKCE
-is required), listed above.
+S256-only stance. Its `method-without-challenge` sibling's cited clause is
+miscast: `requirements/rfc7636-core.yaml` pins it to RFC 7636 4.2, but section
+4.2 defines the transformation methods and does not state that a method sent
+without a `code_challenge` must fail; the actual basis is RFC 7636 4.4.1
+(missing `code_challenge` when PKCE is required), listed above. That requirement
+citation is a follow-up to re-cite or re-id.
 
 ## Hardening profile
 
