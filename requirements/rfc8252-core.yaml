@@ -41,12 +41,12 @@
   link: https://www.rfc-editor.org/rfc/rfc8252#section-7.3
 - id: RFC8252-7.3-localhost-no-wildcard
   spec: RFC 8252
-  clause: "7.3"
-  level: MUST
+  clause: "8.3"
+  level: MAY
   profile: core
-  summary: The hostname localhost is not a loopback literal and does not receive the any-port exception.
-  link: https://www.rfc-editor.org/rfc/rfc8252#section-7.3
-  notes: RFC 8252 section 7.3 permits the exception for the loopback literal; section 8.3 advises against assuming it for the localhost hostname.
+  summary: A redirect URI registered on the hostname localhost is matched exactly, without the loopback any-port exception (local strictness).
+  link: https://www.rfc-editor.org/rfc/rfc8252#section-8.3
+  notes: Local profile policy, not an RFC-imposed server MUST. RFC 8252 section 7.3 states the MUST for any port only for loopback IP literal redirect URIs (127.0.0.1 and [::1]). Section 8.3 says localhost redirects function similarly to loopback IP redirects but that using localhost is NOT RECOMMENDED; it does not require or prohibit a server from applying the any-port exception to localhost. This profile conservatively keeps localhost registrations exact-match. The ID keeps its 7.3 prefix for stability.
 - id: RFC8252-7.3-non-loopback-exact
   spec: RFC 8252
   clause: "7.3"

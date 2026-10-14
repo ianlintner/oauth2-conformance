@@ -73,7 +73,7 @@
 
 - id: INV-LOOPBACK-FAMILIES-DISTINCT
   profile: core
-  summary: IPv4 and IPv6 loopback registrations are distinct and do not cross-match; localhost is not a loopback literal.
+  summary: IPv4 and IPv6 loopback registrations are distinct and do not cross-match; localhost registrations stay exact-match as local profile policy (RFC 8252 section 8.3).
   requirement: RFC8252-7.3-loopback-families-distinct
 
 - id: INV-REDIRECT-EXACT-MATCH

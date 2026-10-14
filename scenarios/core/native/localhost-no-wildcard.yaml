@@ -3,7 +3,12 @@ title: The localhost hostname does not receive the loopback port wildcard
 requirements: [RFC8252-7.3-localhost-no-wildcard]
 profile: core
 status: stable
-note: INV-LOOPBACK-FAMILIES-DISTINCT. localhost is not a loopback literal; a request for http://localhost:9999/cb must not match the http://localhost/cb registration.
+note: |
+  Local profile policy (conservative localhost strictness), not an RFC-imposed MUST.
+  RFC 8252 section 7.3 requires the any-port exception only for loopback IP literals;
+  section 8.3 says localhost is NOT RECOMMENDED and neither requires nor prohibits
+  the exception for it. This profile keeps the http://localhost/cb registration exact,
+  so a request for http://localhost:9999/cb is refused with invalid_request.
 steps:
   - id: authorize
     request:
