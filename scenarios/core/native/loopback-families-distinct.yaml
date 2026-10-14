@@ -1,0 +1,21 @@
+id: core.native.loopback-families-distinct
+title: IPv4 and IPv6 loopback registrations do not cross-match
+requirements: [RFC8252-7.3-loopback-families-distinct]
+profile: core
+status: stable
+note: INV-LOOPBACK-FAMILIES-DISTINCT. A request for http://[::1]:9999/cb must not match the 127.0.0.1 registration.
+steps:
+  - id: authorize
+    request:
+      method: GET
+      path: /oauth/authorize
+      query:
+        response_type: code
+        client_id: client-loopback-v4
+        redirect_uri: "http://[::1]:9999/cb"
+        state: s-v4-as-v6
+        code_challenge: E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM
+        code_challenge_method: S256
+    expect:
+      status: 400
+      json: { error: invalid_request }

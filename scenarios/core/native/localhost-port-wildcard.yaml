@@ -1,0 +1,30 @@
+id: core.native.registered-loopback-any-port
+title: RFC 6749 registered-URI matching admits the RFC 8252 loopback any-port exception
+requirements: [RFC6749-3.1.2-localhost-port-wildcard]
+profile: core
+status: stable
+note: |
+  INV-LOOPBACK-PORT-WILDCARD. Same wildcard as RFC 8252 section 7.3, stated against the RFC 6749 3.1.2 registered-URI rule; a different port (7777) from the rfc8252 scenarios. The runner logs in and requires the code redirect back to the wildcarded host:port, so a bare redirect to the login page does not pass.
+steps:
+  - id: authorize
+    use: login-and-authorize
+    with:
+      username: alice
+      password: test-only-password
+      loginPath: /auth/login
+      authorizePath: /oauth/authorize
+      query:
+        response_type: code
+        client_id: client-loopback-v4
+        redirect_uri: "http://127.0.0.1:7777/cb"
+        state: s-xyz
+        code_challenge: E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM
+        code_challenge_method: S256
+    expect:
+      status: 302
+      redirect:
+        locationPrefix: "http://127.0.0.1:7777/cb?"
+        query:
+          state: s-xyz
+    capture:
+      code: redirect.query.code

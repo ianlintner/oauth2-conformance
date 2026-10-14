@@ -1,10 +1,68 @@
+# Reference seed for the core profile scenarios. Scenarios under scenarios/core/
+# assume exactly these clients, secrets and issuer (see contract/sut-interface.md).
+# All credentials are test-only and valid only in conformance mode.
 issuer: http://localhost:8080
 clients:
+  # Confidential client, HTTP Basic auth.
+  # Basic header: base64("client-a:test-only-secret").
   - client_id: client-a
     client_secret: test-only-secret
     token_endpoint_auth_method: client_secret_basic
     redirect_uris: [https://client.example/callback]
     grant_types: [authorization_code, refresh_token]
+  # Fixture client for token-endpoint scenarios that need a 200 without a live
+  # authorization code. client_credentials is outside the core profile; this
+  # client only supplies a successful token response.
+  # Basic header: base64("client-cc:test-only-cc-secret").
+  - client_id: client-cc
+    client_secret: test-only-cc-secret
+    token_endpoint_auth_method: client_secret_basic
+    redirect_uris: [https://client.example/callback]
+    grant_types: [client_credentials]
+  # Confidential client whose secret needs form-urlencoding in a Basic header
+  # (RFC 6749 section 2.3.1). The secret is the literal string  p@ss:w+rd %
+  # Basic header: base64("client-enc:" + form-urlencode(secret)) =
+  # base64("client-enc:p%40ss%3Aw%2Brd+%25").
+  - client_id: client-enc
+    client_secret: "p@ss:w+rd %"
+    token_endpoint_auth_method: client_secret_basic
+    redirect_uris: [https://client.example/callback]
+    grant_types: [authorization_code, client_credentials]
+  # Public client; PKCE is the only protection, no secret.
+  - client_id: client-public
+    public: true
+    token_endpoint_auth_method: none
+    redirect_uris: [https://client.example/callback]
+    grant_types: [authorization_code]
+  # RFC 8252 native clients: IPv4 loopback, IPv6 loopback, localhost hostname
+  # and a claimed private-use scheme, all public.
+  - client_id: client-loopback-v4
+    public: true
+    token_endpoint_auth_method: none
+    redirect_uris: ["http://127.0.0.1/cb"]
+    grant_types: [authorization_code]
+  - client_id: client-loopback-v6
+    public: true
+    token_endpoint_auth_method: none
+    redirect_uris: ["http://[::1]/cb"]
+    grant_types: [authorization_code]
+  - client_id: client-localhost
+    public: true
+    token_endpoint_auth_method: none
+    redirect_uris: ["http://localhost/cb"]
+    grant_types: [authorization_code]
+  - client_id: client-native-scheme
+    public: true
+    token_endpoint_auth_method: none
+    redirect_uris: ["com.example.app:/oauth2redirect"]
+    grant_types: [authorization_code]
 users:
   - username: alice
     password: test-only-password
+    auto_approve_clients:
+      - client-a
+      - client-enc
+      - client-public
+      - client-loopback-v4
+      - client-loopback-v6
+      - client-native-scheme

@@ -1,0 +1,21 @@
+id: core.native.non-loopback-exact
+title: A non-loopback redirect URI requires an exact match with no port wildcarding
+requirements: [RFC8252-7.3-non-loopback-exact]
+profile: core
+status: stable
+note: INV-REDIRECT-EXACT-MATCH. A request for https://client.example:9999/callback must not match the registered https://client.example/callback. Reuses client-a with an error path so the mismatch is observable.
+steps:
+  - id: authorize
+    request:
+      method: GET
+      path: /oauth/authorize
+      query:
+        response_type: code
+        client_id: client-a
+        redirect_uri: "https://client.example:9999/callback"
+        state: s-nonloopback
+        code_challenge: E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM
+        code_challenge_method: S256
+    expect:
+      status: 400
+      json: { error: invalid_request }

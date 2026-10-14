@@ -1,0 +1,42 @@
+id: core.pkce.verifier-as-challenge
+title: Sending the challenge string as the verifier is rejected
+requirements: [RFC7636-4.3-verifier-as-challenge]
+profile: core
+status: draft
+note: |
+  Invariant INV-PKCE-BINDING. Comparison is against S256(verifier); the challenge value itself is not a valid verifier.
+  Runner gaps (part 3/3): with.loginPath is not declared by the SUT contract.
+  login-and-authorize now continues past the login redirect (PR 3), but this
+  scenario has not been re-verified against a seeded SUT and stays draft.
+steps:
+  - id: auth
+    use: login-and-authorize
+    with:
+      username: alice
+      password: test-only-password
+      loginPath: /auth/login
+      authorizePath: /oauth/authorize
+      query:
+        response_type: code
+        client_id: client-public
+        redirect_uri: https://client.example/callback
+        state: s-gen
+        code_challenge: E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM
+        code_challenge_method: S256
+    expect:
+      status: 302
+    capture:
+      code: redirect.query.code
+  - id: token
+    request:
+      method: POST
+      path: /oauth/token
+      form:
+        grant_type: authorization_code
+        code: "{{code}}"
+        client_id: client-public
+        redirect_uri: https://client.example/callback
+        code_verifier: E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM
+    expect:
+      status: 400
+      json: { error: invalid_grant }

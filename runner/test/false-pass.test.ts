@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
-import { mkdtemp, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { cp, mkdtemp, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { parse } from 'yaml';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -134,7 +134,7 @@ test('schema validation rejects invalid scenarios', async () => {
 test('validate-schemas exits non-zero on an invalid data file', async () => {
   const root = await mkdtemp(path.join(tmpdir(), 'vs-'));
   await mkdir(path.join(root, 'schemas'));
-  for (const name of ['requirement', 'profile', 'scenario', 'seed', 'implementation-manifest']) {
+  for (const name of ['requirement', 'profile', 'scenario', 'seed', 'implementation-manifest', 'invariant']) {
     await writeFile(path.join(root, 'schemas', `${name}.schema.json`), await (await import('node:fs/promises')).readFile(path.join(repoRoot, 'schemas', `${name}.schema.json`)));
   }
   await mkdir(path.join(root, 'scenarios'));
@@ -142,6 +142,51 @@ test('validate-schemas exits non-zero on an invalid data file', async () => {
   const result = await cli(['validate-schemas', '--root', root]);
   assert.equal(result.code, 1, result.stdout + result.stderr);
   assert.match(result.stderr, /INVALID/);
+});
+
+test('schema validation rejects invalid invariants', async () => {
+  const validators = await loadValidators(path.join(repoRoot, 'schemas'));
+  const good = { id: 'INV-CODE-SINGLE-USE', profile: 'core', summary: 'A code is redeemed once.', requirement: 'RFC6749-4.1.3-code-single-use' };
+  assert.deepEqual(checkDocument(validators, 'invariant', [good]), []);
+  assert.notEqual(checkDocument(validators, 'invariant', [{ ...good, id: 'not-an-invariant-id' }]).length, 0);
+  assert.notEqual(checkDocument(validators, 'invariant', [{ id: good.id, profile: 'core' }]).length, 0);
+  assert.notEqual(checkDocument(validators, 'invariant', [{ ...good, extra: true }]).length, 0);
+  assert.notEqual(checkDocument(validators, 'invariant', good).length, 0, 'an invariants file is a list');
+  assert.notEqual(checkDocument(validators, 'invariant', []).length, 0, 'an invariants file must not be empty');
+});
+
+test('validate-schemas validates invariants files: valid passes, malformed fails', async () => {
+  const root = await mkdtemp(path.join(tmpdir(), 'vsi-'));
+  await mkdir(path.join(root, 'schemas'));
+  for (const name of ['requirement', 'profile', 'scenario', 'seed', 'implementation-manifest', 'invariant']) {
+    await writeFile(path.join(root, 'schemas', `${name}.schema.json`), await readFile(path.join(repoRoot, 'schemas', `${name}.schema.json`)));
+  }
+  await mkdir(path.join(root, 'invariants'));
+  await writeFile(path.join(root, 'invariants', 'core.yaml'), '- id: INV-OK-ONE\n  profile: core\n  summary: Fine invariant.\n  requirement: RFC6749-4.1.3-code-single-use\n');
+  const ok = await cli(['validate-schemas', '--root', root]);
+  assert.equal(ok.code, 0, ok.stdout + ok.stderr);
+  assert.match(ok.stdout, /OK \(1 files\)/, 'the invariants file must be counted as checked');
+  await writeFile(path.join(root, 'invariants', 'core.yaml'), '- id: bad id\n  profile: core\n');
+  const bad = await cli(['validate-schemas', '--root', root]);
+  assert.equal(bad.code, 1, bad.stdout + bad.stderr);
+  assert.match(bad.stderr, /INVALID invariants[/\\]core\.yaml/);
+});
+
+test('repository invariants/core.yaml is checked by validateRepository', async () => {
+  const before = await validateRepository(repoRoot);
+  const maskRoot = await mkdtemp(path.join(tmpdir(), 'vrepo-'));
+  const mask = (rel: string) => path.join(maskRoot, rel);
+  for (const rel of ['schemas', 'requirements', 'profiles', 'scenarios', 'examples', 'invariants']) {
+    await cp(path.join(repoRoot, rel), mask(rel), { recursive: true });
+  }
+  await writeFile(mask('invariants/core.yaml'), '- id: INV-BROKEN\n  profile: core\n');
+  const broken = await validateRepository(maskRoot);
+  assert.equal(broken.checked, before.checked, 'the same number of files must be checked');
+  assert.notEqual(broken.violations.length, 0, 'the malformed invariant must produce a violation');
+  assert.ok(
+    broken.violations.some((v) => v.file.startsWith('invariants') && v.kind === 'invariant'),
+    `expected an invariant violation, got ${JSON.stringify(broken.violations.map((v) => `${v.kind}:${v.file}`))}`,
+  );
 });
 
 test('coverage --profile scopes the gate to one profile and still fails when it is uncovered', async () => {

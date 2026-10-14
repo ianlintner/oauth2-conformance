@@ -1,21 +1,48 @@
 id: core.token.wrong-redirect-uri
-title: Token exchange with a mismatched redirect_uri is rejected
+title: Token exchange with a redirect_uri that differs from authorization is rejected
 requirements: [RFC6749-4.1.3-wrong-redirect-uri]
 profile: hardening
 status: draft
+note: |
+  Hardening MUST RFC6749-4.1.3-wrong-redirect-uri (restored; the earlier version
+  was deleted when core.token.code-redirect-uri-mismatch was added, leaving the
+  requirement uncovered). Unlike the original placeholder-code draft this obtains
+  a real authorization code bound to https://client.example/callback and then
+  presents a different redirect_uri, expecting invalid_grant.
+  core.token.code-redirect-uri-mismatch is a distinct requirement
+  (RFC6749-4.1.3-redirect-uri-mismatch, core profile); both are intentionally kept.
+  Stays draft: login-and-authorize now continues past the login redirect (PR 3),
+  but this scenario has not been re-verified against a seeded SUT, and
+  with.loginPath is not declared by the SUT contract (part 3/3).
 steps:
+  - id: auth
+    use: login-and-authorize
+    with:
+      username: alice
+      password: test-only-password
+      loginPath: /auth/login
+      authorizePath: /oauth/authorize
+      query:
+        response_type: code
+        client_id: client-a
+        redirect_uri: https://client.example/callback
+        state: s-wrong-redirect
+        code_challenge: E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM
+        code_challenge_method: S256
+    expect:
+      status: 302
+    capture:
+      code: redirect.query.code
   - id: token
     request:
       method: POST
       path: /oauth/token
+      headers: { authorization: "Basic Y2xpZW50LWE6dGVzdC1vbmx5LXNlY3JldA==" }
       form:
         grant_type: authorization_code
         code: "{{code}}"
-        client_id: client-a
         redirect_uri: https://attacker.example/callback
+        code_verifier: dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk
     expect:
       status: 400
       json: { error: invalid_grant }
-note: |
-  Requires live authorization setup and client registration to obtain a code
-  with known redirect properties; no executable endpoint setup exists yet.

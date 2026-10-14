@@ -1,0 +1,23 @@
+id: core.authorize.client-id-missing
+title: Authorization request without client_id is rejected
+requirements: [RFC6749-4.1.1-client-id-required]
+profile: core
+status: stable
+note: |
+  RFC 6749 4.1.2.1: with a missing client identifier the server informs the
+  resource owner and MUST NOT redirect. The RFC does not fix an error body
+  format here (the Rust reference renders a 400 text page), so only the
+  non-redirect 400 is asserted, not a JSON error.
+steps:
+  - id: authorize
+    request:
+      method: GET
+      path: /oauth/authorize
+      query:
+        response_type: code
+        redirect_uri: https://client.example/callback
+        state: s-no-client
+        code_challenge: E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM
+        code_challenge_method: S256
+    expect:
+      status: 400

@@ -25,6 +25,18 @@ function cookieFrom(response: { headers: Record<string, string> }, previous?: st
   return previous;
 }
 
+/**
+ * True when `location` is the SUT's own login step: a same-origin relative
+ * target (path starts with `/`, not `//`) whose pathname equals the contract
+ * login path (or the common `/login`, `/auth/login`). Absolute redirects go to
+ * the client and are the final authorization response.
+ */
+function isLoginRedirect(location: string, loginPath: string): boolean {
+  if (!location.startsWith('/') || location.startsWith('//')) return false;
+  const pathname = location.split(/[?#]/, 1)[0] ?? '';
+  return pathname === loginPath || pathname.endsWith('/login');
+}
+
 export async function loginAndAuthorize(context: HelperContext): Promise<import('./compare.js').ActualResponse> {
   const username = requireString(context.with.username, 'username');
   const password = requireString(context.with.password, 'password');
@@ -42,13 +54,16 @@ export async function loginAndAuthorize(context: HelperContext): Promise<import(
     headers: {},
   });
 
+  const loginPath = typeof context.with.loginPath === 'string' ? context.with.loginPath : '/login';
+
   // A SUT that needs no interactive login (granted consent) redirects straight
-  // back to the client; report that response rather than guessing a login form.
-  if (authorize.status >= 300 && authorize.status < 400 && authorize.redirect !== undefined) {
+  // back to the client; report that response. A redirect to the SUT's own
+  // login step (a same-origin relative target at loginPath) is NOT the final
+  // authorization response: continue by submitting credentials.
+  if (authorize.status >= 300 && authorize.status < 400 && authorize.redirect !== undefined && !isLoginRedirect(authorize.redirect.location, loginPath)) {
     return authorize;
   }
 
-  const loginPath = typeof context.with.loginPath === 'string' ? context.with.loginPath : '/login';
   const cookie = cookieFrom(authorize);
   const body = new URLSearchParams({ username, password }).toString();
   const login = await context.send({

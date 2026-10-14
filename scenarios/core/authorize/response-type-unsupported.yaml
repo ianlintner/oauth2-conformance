@@ -1,0 +1,25 @@
+id: core.authorize.response-type-unsupported
+title: Implicit-flow response_type is rejected with unsupported_response_type
+requirements: [RFC6749-4.1.1-response-type-unsupported, RFC9700-2.1.2-implicit-grant-rejected-policy]
+profile: core
+status: stable
+note: |
+  Invariant INV-NO-IMPLICIT. response_type=token must never return an access
+  token in the redirect. RFC 6749 section 4.1.2.1 specifies the error on the
+  redirect URI; the Rust reference answers 400 invalid_request (part 3/3
+  records the deviation if it persists). RFC9700-2.1.2 rejection is a local
+  policy (MAY) pending owner approval.
+steps:
+  - id: authorize
+    request:
+      method: GET
+      path: /oauth/authorize
+      query:
+        response_type: token
+        client_id: client-a
+        redirect_uri: https://client.example/callback
+        state: s-implicit
+    expect:
+      status: 302
+      redirect:
+        query: { error: unsupported_response_type, state: s-implicit }

@@ -1,0 +1,18 @@
+id: core.token.error-format
+title: A token endpoint error is a JSON object with an error field on the RFC status
+requirements: [RFC6749-5.2-error-format]
+profile: core
+status: stable
+note: |
+  INV-ERROR-RESPONSE-SHAPE. RFC 6749 section 5.2 defines the JSON error object
+  (error, optional error_description, error_uri) and the status (400 unless
+  stated otherwise). Asserts the JSON shape of an unsupported grant_type error.
+steps:
+  - id: token
+    request:
+      method: POST
+      path: /oauth/token
+      form: { grant_type: urn:example:bogus }
+    expect:
+      status: 400
+      jsonSchema: { type: object, required: [error] }

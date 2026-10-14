@@ -1,0 +1,22 @@
+id: core.token.success-no-store
+title: A successful token response is not cacheable
+requirements: [RFC6749-5.1-no-store]
+profile: core
+status: stable
+note: |
+  INV-TOKEN-RESPONSE-NOT-CACHEABLE. RFC 6749 section 5.1 mandates
+  Cache-Control: no-store and Pragma: no-cache on responses carrying tokens.
+  client_credentials supplies the success path without a live code.
+steps:
+  - id: token
+    request:
+      method: POST
+      path: /oauth/token
+      headers: { authorization: "Basic Y2xpZW50LWNjOnRlc3Qtb25seS1jYy1zZWNyZXQ=" }
+      form: { grant_type: client_credentials }
+    expect:
+      status: 200
+      headers: { cache-control: no-store, pragma: no-cache }
+      jsonSchema:
+        type: object
+        required: [access_token, token_type]

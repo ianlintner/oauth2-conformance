@@ -8,10 +8,11 @@
 - id: RFC9700-2.1.1-code-replay-revokes-tokens
   spec: RFC 9700
   clause: "2.1.1"
-  level: MUST
+  level: SHOULD
   profile: core
-  summary: Replaying an already-exchanged authorization code revokes every access and refresh token issued from the original exchange.
+  summary: Replaying an already-exchanged authorization code should revoke every access and refresh token issued from the original exchange.
   link: https://www.rfc-editor.org/rfc/rfc9700#section-2.1.1
+  notes: Revocation on replay is a SHOULD, not a MUST. RFC 6749 section 4.1.2 says the authorization server SHOULD revoke (when possible) all tokens previously issued based on a code redeemed twice, and RFC 9700 section 4.2.4 repeats that it SHOULD revoke them. RFC 9700 section 2.1.1 itself does not state this requirement; the id and clause are kept for stability.
 - id: RFC9700-2.1.1-code-replay-rejected
   spec: RFC 9700
   clause: "2.1.1"
@@ -19,6 +20,7 @@
   profile: core
   summary: A replayed authorization code is rejected with invalid_grant rather than issuing a second token set.
   link: https://www.rfc-editor.org/rfc/rfc9700#section-2.1.1
+  notes: The MUST comes from RFC 6749 section 4.1.2 (an authorization code used more than once MUST be denied) and RFC 9700 section 4.2.4 (codes MUST be invalidated after first use), not from section 2.1.1; the id and clause are kept for stability. The invalid_grant code is the RFC 6749 section 5.2 error for an invalid grant.
 - id: RFC9700-4.7-require-state-configurable
   spec: RFC 9700
   clause: "4.7"

@@ -1,0 +1,24 @@
+id: core.authorize.response-type-missing
+title: Authorization request without response_type is rejected via the redirect URI
+requirements: [RFC6749-4.1.1-response-type-required]
+profile: core
+status: stable
+note: |
+  RFC 6749 section 4.1.2.1: with a valid client and redirect_uri the error is
+  returned as invalid_request on the redirect URI. The Rust reference answers
+  400 instead (part 3/3 records the deviation if it persists).
+steps:
+  - id: authorize
+    request:
+      method: GET
+      path: /oauth/authorize
+      query:
+        client_id: client-a
+        redirect_uri: https://client.example/callback
+        state: s-no-response-type
+        code_challenge: E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM
+        code_challenge_method: S256
+    expect:
+      status: 302
+      redirect:
+        query: { error: invalid_request, state: s-no-response-type }

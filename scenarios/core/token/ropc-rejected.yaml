@@ -1,0 +1,22 @@
+id: core.token.ropc-rejected
+title: The resource owner password credentials grant is rejected as unsupported_grant_type
+requirements: [RFC9700-2.4-ropc-prohibited]
+profile: core
+status: stable
+note: |
+  Invariant INV-NO-ROPC. RFC 9700 section 2.4 prohibits the ROPC grant; the
+  server returns unsupported_grant_type for the password grant_type.
+steps:
+  - id: token
+    request:
+      method: POST
+      path: /oauth/token
+      form:
+        grant_type: password
+        username: alice
+        password: test-only-password
+        client_id: client-a
+        client_secret: test-only-secret
+    expect:
+      status: 400
+      json: { error: unsupported_grant_type }

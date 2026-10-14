@@ -1,0 +1,14 @@
+id: core.authorize.metadata-issuer
+title: Published metadata issuer equals the iss value used in authorization responses
+requirements: [RFC9207-2.3-iss-matches-metadata-issuer]
+profile: core
+status: stable
+note: |
+  Invariant INV-ISS-MATCHES-METADATA. Together with core.authorize.error-redirect-iss
+  (iss == http://localhost:8080) this proves iss equals metadata issuer.
+steps:
+  - id: metadata
+    request: { method: GET, path: /.well-known/oauth-authorization-server }
+    expect:
+      status: 200
+      json: { issuer: "http://localhost:8080" }

@@ -35,6 +35,8 @@ export interface ScenarioExpectation {
   jsonSchema?: Record<string, unknown>;
   redirect?: {
     location?: string;
+    /** Redirect Location must start with this literal prefix (e.g. scheme://host:port/path?). */
+    locationPrefix?: string;
     query?: Record<string, string>;
     fragment?: Record<string, string>;
   };
@@ -120,6 +122,7 @@ export function parseExpectation(input: unknown, label: string): ScenarioExpecta
     const raw = record(expect.redirect, `${label}.redirect`);
     redirect = {
       ...(raw.location !== undefined ? { location: stringAt(raw.location, `${label}.redirect.location`) } : {}),
+      ...(raw.locationPrefix !== undefined ? { locationPrefix: stringAt(raw.locationPrefix, `${label}.redirect.locationPrefix`) } : {}),
       ...(raw.query !== undefined ? { query: strings(raw.query, `${label}.redirect.query`) } : {}),
       ...(raw.fragment !== undefined ? { fragment: strings(raw.fragment, `${label}.redirect.fragment`) } : {}),
     };
@@ -156,6 +159,7 @@ function parseStep(input: unknown, index: number): ScenarioStep {
       id,
       use: stringAt(step.use, `${label}.use`),
       ...(step.with !== undefined ? { with: record(step.with, `${label}.with`) } : {}),
+      ...(step.expect !== undefined ? { expect: parseExpectation(step.expect, `${label}.expect`) } : {}),
       ...(step.capture !== undefined ? { capture: parseCapture(step.capture, `${label}.capture`) } : {}),
     };
   }

@@ -1,0 +1,21 @@
+id: core.authorize.unknown-client
+title: Authorization request for an unknown client_id is rejected with invalid_client
+requirements: [RFC6749-4.1.1-unknown-client]
+profile: core
+status: stable
+note: RFC 6749 does not fix the HTTP status for an unredirectable authorization error; 401 follows the Rust reference and requirement text (invalid_client).
+steps:
+  - id: authorize
+    request:
+      method: GET
+      path: /oauth/authorize
+      query:
+        response_type: code
+        client_id: no-such-client
+        redirect_uri: https://client.example/callback
+        state: s-unknown-client
+        code_challenge: E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM
+        code_challenge_method: S256
+    expect:
+      status: 401
+      json: { error: invalid_client }

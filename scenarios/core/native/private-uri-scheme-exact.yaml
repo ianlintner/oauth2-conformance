@@ -1,0 +1,21 @@
+id: core.native.private-uri-scheme-exact
+title: A claimed private-use scheme redirect URI matches byte for byte
+requirements: [RFC8252-7.1-private-uri-scheme-exact]
+profile: core
+status: stable
+note: INV-REDIRECT-EXACT-MATCH. A request differing from the registered com.example.app:/oauth2redirect (here a different path) must not match.
+steps:
+  - id: authorize
+    request:
+      method: GET
+      path: /oauth/authorize
+      query:
+        response_type: code
+        client_id: client-native-scheme
+        redirect_uri: "com.example.app:/other"
+        state: s-scheme
+        code_challenge: E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM
+        code_challenge_method: S256
+    expect:
+      status: 400
+      json: { error: invalid_request }

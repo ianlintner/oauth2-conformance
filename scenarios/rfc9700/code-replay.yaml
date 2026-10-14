@@ -3,20 +3,54 @@ title: Replaying an already-exchanged authorization code is rejected
 requirements: [RFC9700-4.5-code-replay]
 profile: hardening
 status: draft
+note: |
+  Obtains a real code, exchanges it successfully (200), then replays the same
+  code and expects invalid_grant. The single-use rule itself is stated in
+  RFC 6749 section 4.1.2 and RFC 9700 section 4.2.4; requirement ID kept for
+  stability. Stays draft: login-and-authorize now continues past
+  the login redirect (PR 3), but this scenario has not been re-verified against
+  a seeded SUT (part 3/3).
 steps:
-  - id: token
+  - id: auth
+    use: login-and-authorize
+    with:
+      username: alice
+      password: test-only-password
+      loginPath: /auth/login
+      authorizePath: /oauth/authorize
+      query:
+        response_type: code
+        client_id: client-a
+        redirect_uri: https://client.example/callback
+        state: s-code-replay
+        code_challenge: E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM
+        code_challenge_method: S256
+    expect:
+      status: 302
+    capture:
+      code: redirect.query.code
+  - id: exchange
     request:
       method: POST
       path: /oauth/token
+      headers: { authorization: "Basic Y2xpZW50LWE6dGVzdC1vbmx5LXNlY3JldA==" }
       form:
         grant_type: authorization_code
         code: "{{code}}"
-        client_id: client-a
         redirect_uri: https://client.example/callback
-        code_verifier: matching-verifier
+        code_verifier: dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk
+    expect:
+      status: 200
+  - id: replay
+    request:
+      method: POST
+      path: /oauth/token
+      headers: { authorization: "Basic Y2xpZW50LWE6dGVzdC1vbmx5LXNlY3JldA==" }
+      form:
+        grant_type: authorization_code
+        code: "{{code}}"
+        redirect_uri: https://client.example/callback
+        code_verifier: dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk
     expect:
       status: 400
       json: { error: invalid_grant }
-note: |
-  Requires live setup to obtain a code, exchange it successfully, replay the
-  same code, and verify it is rejected.

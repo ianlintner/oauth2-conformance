@@ -1,0 +1,30 @@
+id: core.native.loopback-ipv6-any-port
+title: An [::1] redirect URI matches any port at request time
+requirements: [RFC8252-7.3-loopback-ipv6-any-port]
+profile: core
+status: stable
+note: |
+  INV-LOOPBACK-PORT-WILDCARD. Registered http://[::1]/cb must accept http://[::1]:9999/cb. The runner logs in and asserts the authorization redirect is issued back to the wildcarded host:port with a code.
+steps:
+  - id: authorize
+    use: login-and-authorize
+    with:
+      username: alice
+      password: test-only-password
+      loginPath: /auth/login
+      authorizePath: /oauth/authorize
+      query:
+        response_type: code
+        client_id: client-loopback-v6
+        redirect_uri: "http://[::1]:9999/cb"
+        state: s-xyz
+        code_challenge: E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM
+        code_challenge_method: S256
+    expect:
+      status: 302
+      redirect:
+        locationPrefix: "http://[::1]:9999/cb?"
+        query:
+          state: s-xyz
+    capture:
+      code: redirect.query.code

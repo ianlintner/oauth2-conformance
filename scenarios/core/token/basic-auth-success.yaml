@@ -1,0 +1,23 @@
+id: core.token.basic-auth-success
+title: A client authenticating with HTTP Basic succeeds and returns a token
+requirements: [RFC6749-2.3.1-basic-auth-urlencoded]
+profile: core
+status: stable
+note: |
+  INV-BASIC-AUTH-FORM-ENCODED. client-enc's secret is the literal p@ss:w+rd %,
+  so RFC 6749 2.3.1 requires the header to carry
+  base64("client-enc:p%40ss%3Aw%2Brd+%25"). Uses client_credentials so no live
+  authorization code is required; the grant itself is outside the core profile
+  and only supplies a successful token response.
+steps:
+  - id: token
+    request:
+      method: POST
+      path: /oauth/token
+      headers: { authorization: "Basic Y2xpZW50LWVuYzpwJTQwc3MlM0F3JTJCcmQrJTI1" }
+      form: { grant_type: client_credentials }
+    expect:
+      status: 200
+      jsonSchema:
+        type: object
+        required: [access_token, token_type]

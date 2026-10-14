@@ -1,0 +1,35 @@
+id: core.authorize.code-issued
+title: A successful authorization response carries code, the echoed state and iss
+requirements: [RFC6749-4.1.2-authorization-code-issued, RFC6749-4.1.2-state-echoed, RFC9207-2-iss-on-success, RFC9207-2.1-iss-form-urlencoded]
+profile: core
+status: draft
+note: |
+  Invariants INV-CODE-ENTROPY, INV-ISS-ON-AUTHORIZE-RESPONSE. Redirect query
+  values are compared after decoding, so iss is expected as the decoded issuer
+  from examples/seed.yaml; the raw form-urlencoding of iss on the wire
+  (RFC9207-2.1) cannot be asserted yet.
+  Runner gaps (part 3/3): (1) with.loginPath is not part of the SUT contract
+  (the reference uses /auth/login; login-and-authorize already acquires a code
+  as of PR 3); (2) no expect.redirect raw-location/encoding match for the wire
+  form of iss.
+steps:
+  - id: auth
+    use: login-and-authorize
+    with:
+      username: alice
+      password: test-only-password
+      loginPath: /auth/login
+      authorizePath: /oauth/authorize
+      query:
+        response_type: code
+        client_id: client-a
+        redirect_uri: https://client.example/callback
+        state: s-happy
+        code_challenge: E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM
+        code_challenge_method: S256
+    expect:
+      status: 302
+      redirect:
+        query: { state: s-happy, iss: "http://localhost:8080" }
+    capture:
+      code: redirect.query.code
