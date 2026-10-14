@@ -17,6 +17,7 @@
   profile: token-lifecycle
   summary: "A client_credentials request from an authenticated client yields an access token response containing access_token and token_type."
   link: https://www.rfc-editor.org/rfc/rfc6749#section-4.4.3
+  notes: "access_token REQUIRED in the response (4.4.3 defers to 5.1); the grant has no refresh token, so the 5.1 members and their REQUIRED status come from section 5.1."
 - id: RFC6749-4.4.3-cc-no-refresh-token
   spec: "RFC 6749"
   clause: "4.4.3"
@@ -31,6 +32,7 @@
   profile: token-lifecycle
   summary: "A valid refresh_token grant from the owning client yields a new access token response."
   link: https://www.rfc-editor.org/rfc/rfc6749#section-6
+  notes: "Issuance is lowercase prose in section 6 ('issues an access token'); the MUST-to-verify the grant comes from the binding obligations and invalid_grant at 5.2."
 - id: RFC6749-6-refresh-client-authentication
   spec: "RFC 6749"
   clause: "6"
@@ -52,6 +54,7 @@
   profile: token-lifecycle
   summary: "A refresh request that omits scope is treated as requesting the originally granted scope."
   link: https://www.rfc-editor.org/rfc/rfc6749#section-6
+  notes: "Phrased in lowercase in section 6 ('if omitted is treated as equal'); treated as MUST because a broader scope is rejected as invalid_scope."
 - id: RFC6749-6-refresh-rotated-scope-identical
   spec: "RFC 6749"
   clause: "6"
@@ -82,3 +85,4 @@
   profile: token-lifecycle
   summary: "An unknown, expired or revoked refresh token is rejected with an invalid_grant error response."
   link: https://www.rfc-editor.org/rfc/rfc6749#section-5.2
+  notes: "Section 5.2 defines invalid_grant; the rule that an invalid refresh token yields it follows from section 6, where the server issues an access token only if the grant is valid and authorized."

@@ -74,7 +74,7 @@
   profile: token-lifecycle
   summary: "An anonymous introspection response omits the subject identity members (username, sub) while keeping lifecycle members."
   link: https://www.rfc-editor.org/rfc/rfc7662#section-5
-  notes: "Privacy rule from RFC 7662 section 5 applied to the reference server's public_introspection option."
+  notes: "RFC 7662 section 5 requires measures to prevent PII disclosure without a keyword on stripping specifically; omitting username/sub is one permitted (simplest) measure. The reference test exercises exactly this."
 - id: RFC7662-2.2-owner-introspection-keeps-identity
   spec: "RFC 7662"
   clause: "2.2"

@@ -1,6 +1,10 @@
 # RFC 6750 (Bearer Token Usage) requirements for the token-lifecycle profile.
 # Source material: rust-oauth2-server compliance_rfc6750 tests, exercised
 # through the userinfo resource (see docs/ROADMAP.md, v0.2).
+# Two Rust assertions are deliberately not catalogued here because they are
+# OpenID Connect UserInfo behaviour, not RFC 6750: a valid bearer token
+# yields the owner's sub, and a client_credentials token (no resource owner)
+# is refused by userinfo. They belong to the v0.3 oidc profile.
 - id: RFC6750-2.1-bearer-authorization-header
   spec: "RFC 6750"
   clause: "2.1"
@@ -15,6 +19,7 @@
   profile: token-lifecycle
   summary: "A protected-resource request without credentials is rejected with 401 and a WWW-Authenticate header."
   link: https://www.rfc-editor.org/rfc/rfc6750#section-3
+  notes: "Section 3 requires the WWW-Authenticate header (MUST); the 401 status is the value used in the section 3.1 examples and the reference test (cited at 3.1)."
 - id: RFC6750-3-challenge-scheme-bearer
   spec: "RFC 6750"
   clause: "3"
@@ -29,6 +34,7 @@
   profile: token-lifecycle
   summary: "A request with an invalid access token is rejected with 401 and a Bearer challenge carrying error=\"invalid_token\"."
   link: https://www.rfc-editor.org/rfc/rfc6750#section-3.1
+  notes: "The error attribute is SHOULD in section 3; the 401 status is SHOULD in section 3.1. The reference test labels the whole thing MUST."
 - id: RFC6750-3.1-invalid-token-body-error
   spec: "RFC 6750"
   clause: "3.1"

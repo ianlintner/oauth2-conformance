@@ -30,6 +30,7 @@
   profile: token-lifecycle
   summary: "The metadata includes token_endpoint."
   link: https://www.rfc-editor.org/rfc/rfc8414#section-2
+  notes: "REQUIRED unless only the implicit grant type is supported, in which case token_endpoint is omitted."
 - id: RFC8414-2-response-types-supported
   spec: "RFC 8414"
   clause: "2"

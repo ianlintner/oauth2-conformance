@@ -66,6 +66,7 @@
   profile: token-lifecycle
   summary: "A successful revocation returns HTTP 200."
   link: https://www.rfc-editor.org/rfc/rfc7009#section-2.2
+  notes: "Lowercase prose ('responds with HTTP status code 200') in section 2.2."
 - id: RFC7009-2.2-invalid-token-200
   spec: "RFC 7009"
   clause: "2.2"
@@ -73,3 +74,4 @@
   profile: token-lifecycle
   summary: "A revocation request for an unknown or already invalid token still returns HTTP 200."
   link: https://www.rfc-editor.org/rfc/rfc7009#section-2.2
+  notes: "Lowercase prose in section 2.2; the note explicitly makes invalid-token requests non-errors."

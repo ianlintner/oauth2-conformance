@@ -15,6 +15,7 @@
   profile: token-lifecycle
   summary: "When refresh token rotation is used, each refresh response carries a new refresh token and the previous one is invalidated."
   link: https://www.rfc-editor.org/rfc/rfc9700#section-4.14.2
+  notes: "Section 4.14.2 describes rotation without a keyword on this sentence; the SHOULD reflects the recommended protection method whose outer obligation (2.2.2) is a MUST for public clients."
 - id: RFC9700-4.14.2-rotated-reuse-revokes-family
   spec: "RFC 9700"
   clause: "4.14.2"
@@ -22,7 +23,7 @@
   profile: token-lifecycle
   summary: "Presenting an already-rotated refresh token revokes the currently active refresh token of the same grant."
   link: https://www.rfc-editor.org/rfc/rfc9700#section-4.14.2
-  notes: "RFC 9700 describes this as how rotation exposes theft; the server cannot tell which party replayed it."
+  notes: "Behaviour is descriptive in 4.14.2 with no keyword; SHOULD reflects the protection method, not a MUST. The server cannot tell which party replayed it."
 - id: RFC9700-4.14.2-refresh-inactivity-expiry
   spec: "RFC 9700"
   clause: "4.14.2"

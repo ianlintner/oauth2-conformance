@@ -64,6 +64,7 @@
   profile: token-lifecycle
   summary: "A JWT access token signature verifies against a key published in the server's JWK Set."
   link: https://www.rfc-editor.org/rfc/rfc9068#section-4
+  notes: "The validating resource server MUST use the keys provided by the authorization server (metadata jwks_uri); the related SHOULD to advertise jwks_uri is in RFC 8414 section 2. The property here is server-side verifiability, the observable of that MUST."
 - id: RFC7517-5-jwks-keys-array
   spec: "RFC 7517"
   clause: "5"
