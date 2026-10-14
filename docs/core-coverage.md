@@ -26,14 +26,15 @@ these remain outside the stable set and are absent from the CI ratchet.
 ## Draft scenarios awaiting part 3/3 runner/SUT extensions
 
 Each cites the feature it needs and the runner gap. Promote to `stable` when
-the listed gap lands (see the part-3/3 card) and the Rust reference (and the
-Python port where its interface exists) passes.
+the listed gap lands (see the part-3/3 card) and the scenario passes wire
+execution against the Rust reference (and the Python port where its interface
+exists).
 
 | Scenario | Requirements | Missing feature |
 |---|---|---|
 | core.authorize.code-issued | RFC6749-4.1.2-authorization-code-issued, RFC6749-4.1.2-state-echoed, RFC9207-2-iss-on-success, RFC9207-2.1-iss-form-urlencoded | `with.loginPath` is not in the SUT contract; no raw-location/encoding assertion for the wire form of `iss`. `login-and-authorize` now acquires a code (PR 3), so the remaining gap for this scenario is the `iss` wire-form assertion, not the login redirect. |
 | core.token.* (code exchange, PKCE verify) | RFC6749-4.1.3-code-exchange-succeeds / -redirect-uri-mismatch / -invalid-client, RFC7636-4.1-verifier-length / 4.2-s256-supported / 4.3-* / 4.6-s256-verify | `{{code}}` interpolation into a token exchange after authorization-code acquisition. |
-| core.hardening.code-single-use | RFC6749-4.1.3-code-single-use, RFC6749-10.5-code-single-use, RFC9700-2.1.1-code-replay-rejected, RFC9700-2.1.1-code-replay-revokes-tokens | Code acquisition plus a token-introspection revocation check (v0.2 token-lifecycle scope). |
+| core.hardening.code-single-use | RFC6749-4.1.3-code-single-use, RFC6749-10.5-code-single-use, RFC9700-2.1.1-code-replay-rejected, RFC9700-2.1.1-code-replay-revokes-tokens | A token-introspection revocation check (v0.2 token-lifecycle scope). Code acquisition is handled by login-and-authorize (PR 3); only the follow-up introspection capture is missing. |
 | core.authorize.require-state | RFC9700-4.7-require-state-* | Per-client `require_state` flag is not modelled in the seed schema. |
 
 ## Hardening profile
@@ -48,7 +49,7 @@ loses its scenario.
 core.token.wrong-redirect-uri is the only scenario for
 RFC6749-4.1.3-wrong-redirect-uri. core.token.code-redirect-uri-mismatch cites a
 different requirement (RFC6749-4.1.3-redirect-uri-mismatch, core); both stay.
-Neither runs against a SUT until the runner gaps below land.
+Neither runs against a SUT until the remaining runner gaps below land.
 
 ## RFC6749-5.1-no-store attribution (contract decision needed)
 
@@ -69,10 +70,10 @@ Until decided, do not read a failure of error-no-store as an RFC violation.
 
 ## Runner gap list (from coding part 2/3; carried into part 3/3)
 
-1. `login-and-authorize` now continues past the login redirect for the native
-   group (fixed in PR 3); it is still not part of the formal SUT contract, so
-   the broker scenarios that need a real code depend on the unseeded-PR
-   login/SUT interface landing in part 3/3.
+1. `login-and-authorize` now continues past the login redirect (runner-wide,
+   fixed in PR 3). The login form path/fields it posts to are still not part of
+   the formal SUT contract (see item 2), so scenarios that need a real code
+   remain draft until part 3/3 declares the login interface.
 2. `with.loginPath` is not declared by the SUT contract (the Rust reference
    uses `/auth/login`).
 3. No `expect.redirect` raw-Location or form-urlencoding assertion, so the
@@ -90,10 +91,12 @@ None of these are implemented in this card; each is deferred to part 3/3
 wire-checkable, not that CI executes it: CI (`runner.yml`) still does not start
 a SUT, so wire execution of the whole core set is a manual/agent gate until a
 SUT job exists (part 3/3). Within this card, the native group is the bounded
-set that must be wire-verified: each of the six scenarios below was executed
-against the pinned Rust reference (seeded conformance-mode SUT, PR 424) and
-passed. A bare 302 (e.g. to a login page) is not accepted as a pass; the
-positives require a code redirect back to the wildcarded host:port.
+set that must be wire-verified: the six scenarios named in this card (plus the
+registered-loopback-any-port positive and the two other native scenarios,
+non-loopback-exact and private-uri-scheme-exact) were executed against the
+pinned Rust reference (seeded conformance-mode SUT, PR 424): 9/9 native pass.
+A bare 302 (e.g. to a login page) is not accepted as a pass; the positives
+require a code redirect back to the wildcarded host:port.
 
 Native group (RFC 8252 7.3 / 8.3), executed against the seeded Rust SUT (PR 424):
 
@@ -124,9 +127,15 @@ parent acceptance (t_201a2697) requires. Reaching 100% (t_26ac24c5) needs:
   (`examples/seed.yaml`) and runs `conformance run --profile core`, since the
   stable set is not currently execution-checked in CI;
 - fixing the 12 stable scenarios that fail against the live seeded SUT today
-  (authorize error bodies, metadata issuer, pkce missing/plain, token basic-auth,
-  dual-auth, error-no-store, unsupported-grant-type); these are outside this card
-  and need status/fixture/reference reconciliation.
+  (full `conformance run --profile core`: executed=43 passed=27 failed=12
+  deferred=4): core.authorize.client-id-missing, error-redirect-iss,
+  metadata-issuer, response-type-missing, response-type-unsupported;
+  core.pkce.method-without-challenge, missing-challenge, plain-method-rejected;
+  core.token.basic-auth-success, dual-auth-rejected, error-no-store,
+  unsupported-grant-type. Several fail because the seeded SUT's issuer is
+  127.0.0.1:18181, not localhost:8080, or because the reference returns 400
+  instead of an error redirect; these are outside this card and need
+  status/fixture/reference reconciliation.
 
 ### Citation discrepancy (follow-up, ids unchanged)
 

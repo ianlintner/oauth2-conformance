@@ -100,13 +100,18 @@ test('the loopback any-port positives prove a code is issued at the wildcard por
   // from "redirected to login". The positive scenarios must drive the
   // authorization to completion and assert an issued code in the redirect,
   // which is the only evidence that the registered port was matched.
-  for (const id of ['core.native.loopback-ipv4-any-port', 'core.native.loopback-ipv6-any-port', 'core.native.registered-loopback-any-port']) {
+  const expectedPrefix: Record<string, string> = {
+    'core.native.loopback-ipv4-any-port': 'http://127.0.0.1:9999/cb?',
+    'core.native.loopback-ipv6-any-port': 'http://[::1]:9999/cb?',
+    'core.native.registered-loopback-any-port': 'http://127.0.0.1:7777/cb?',
+  };
+  for (const [id, prefix] of Object.entries(expectedPrefix)) {
     const scenario = native(id);
     assert.equal(scenario.status, 'stable');
     const text = JSON.stringify(scenario.steps);
     assert.match(text, /login-and-authorize/, `${id} must drive login-and-authorize to completion`);
     assert.match(text, /redirect\.query\.code/, `${id} must capture the issued authorization code`);
-    assert.match(text, /locationPrefix/, `${id} must pin the redirect target host:port`);
+    assert.ok(text.includes(`"locationPrefix":${JSON.stringify(prefix)}`), `${id} must pin the redirect to ${prefix}`);
   }
 });
 
