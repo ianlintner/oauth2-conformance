@@ -132,7 +132,9 @@ parent acceptance (t_201a2697) requires. Reaching 100% (t_26ac24c5) needs:
 ### Live stable failures, classified (t_373273ab)
 
 Measured on a freshly started seeded Rust SUT (PR 424), in conformance mode,
-with `OAUTH2_PUBLIC_URL=http://localhost:8080` so its issuer equals the seed's
+with the public URL set to `http://localhost:8080` (`OAUTH2_PUBLIC_URL` and
+`OAUTH2_SERVER_PUBLIC_BASE_URL` were both set; which one the reference honours
+was not isolated) so its issuer equals the seed's
 `issuer`; full `conformance run --profile core`:
 executed=43 passed=31 failed=9 deferred=3. Reproduced on two fresh SUT
 instances. The earlier reported 27/12/4 was not reproducible: when the card
