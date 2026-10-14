@@ -2,7 +2,7 @@ id: core.pkce.verifier-as-challenge
 title: Sending the challenge string as the verifier is rejected
 requirements: [RFC7636-4.3-verifier-as-challenge]
 profile: core
-status: draft
+status: stable
 note: |
   Invariant INV-PKCE-BINDING. Comparison is against S256(verifier); the challenge value itself is not a valid verifier.
   Runner gaps (part 3/3): with.loginPath is not declared by the SUT contract.

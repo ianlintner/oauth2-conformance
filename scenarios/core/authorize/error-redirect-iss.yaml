@@ -2,7 +2,7 @@ id: core.authorize.error-redirect-iss
 title: Authorization error delivered by redirect carries the issuer identifier
 requirements: [RFC9207-2-iss-on-error]
 profile: core
-status: stable
+status: reference-deviation
 note: |
   Invariant INV-ISS-ON-AUTHORIZE-RESPONSE. Literal issuer is the one in
   examples/seed.yaml. redirect.query values are compared after decoding.

@@ -2,7 +2,7 @@ id: core.pkce.missing-challenge
 title: An authorization request without code_challenge is rejected
 requirements: [RFC7636-4.1-code-challenge-required]
 profile: core
-status: stable
+status: reference-deviation
 note: |
   INV-S256-ONLY. RFC 7636 4.4.1: a server that requires PKCE returns the authorization error response invalid_request on the redirect URI. The Rust reference answers 400 JSON; part 3/3 records the deviation if it persists.
 steps:

@@ -44,7 +44,7 @@ const native = (id: string) => {
 
 // The floor must match docs/core-coverage.md. Bump both together when part 3/3
 // promotes draft scenarios to stable; never lower it to green a bad PR.
-const CORE_STABLE_FLOOR = 30;
+const CORE_STABLE_FLOOR = 36;
 
 test('core profile covers its documented stable floor and has no dangling/unknown references', () => {
   assert.equal(report.unknownProfiles.length, 0, `unknown scenario profiles: ${report.unknownProfiles.join(', ')}`);
@@ -65,6 +65,8 @@ test('every core MUST-NOT and MUST requirement is covered, provisional, or docum
     'RFC9700-2.6-https-enforcement-disableable',
     'RFC9700-4.13-forwarded-proto-trusted',
     'RFC9700-4.13-forwarded-proto-untrusted',
+    // Owner-gated runner extension gap, documented under "Still-uncovered requirements".
+    'RFC9207-2.1-iss-form-urlencoded',
   ]);
   const uncovered = new Set(report.uncovered);
   const provisional = new Set(report.provisional);
