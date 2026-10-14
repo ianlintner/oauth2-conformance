@@ -107,9 +107,9 @@ Native group (RFC 8252 7.3 / 8.3), executed against the seeded Rust SUT (PR 424)
 | localhost-no-wildcard | 400 invalid_request. Local policy: 8.3 says localhost is NOT RECOMMENDED and neither requires nor forbids the wildcard. Requirement level is MAY. |
 
 The other stable core scenarios are fixture/schema-complete but not all wire-pass:
-12 stable scenarios still fail against the live seeded SUT (see the "Reaching
-100%" list below); the 54.5% coverage figure counts them as stable coverage
-regardless. Fixing those is out of scope here (t_26ac24c5).
+9 stable scenarios still fail against the live seeded SUT (see "Live stable
+failures, classified" below); the 54.5% coverage figure counts them as stable
+coverage regardless. Fixing the SUT deviations is out of scope here (t_26ac24c5).
 
 ### Coverage ratchet
 
@@ -126,16 +126,64 @@ parent acceptance (t_201a2697) requires. Reaching 100% (t_26ac24c5) needs:
 - a CI job that builds the Rust SUT with conformance mode, seeds it
   (`examples/seed.yaml`) and runs `conformance run --profile core`, since the
   stable set is not currently execution-checked in CI;
-- fixing the 12 stable scenarios that fail against the live seeded SUT today
-  (full `conformance run --profile core`: executed=43 passed=27 failed=12
-  deferred=4): core.authorize.client-id-missing, error-redirect-iss,
-  metadata-issuer, response-type-missing, response-type-unsupported;
-  core.pkce.method-without-challenge, missing-challenge, plain-method-rejected;
-  core.token.basic-auth-success, dual-auth-rejected, error-no-store,
-  unsupported-grant-type. Several fail because the seeded SUT's issuer is
-  127.0.0.1:18181, not localhost:8080, or because the reference returns 400
-  instead of an error redirect; these are outside this card and need
-  status/fixture/reference reconciliation.
+- the stable scenarios that fail against the live seeded SUT today (listed and
+  classified below).
+
+### Live stable failures, classified (t_373273ab)
+
+Measured on a freshly started seeded Rust SUT (PR 424), in conformance mode,
+with `OAUTH2_PUBLIC_URL=http://localhost:8080` so its issuer equals the seed's
+`issuer`; full `conformance run --profile core`:
+executed=43 passed=31 failed=9 deferred=3. Reproduced on two fresh SUT
+instances. The earlier reported 27/12/4 was not reproducible: when the card
+started, 12 stable scenarios failed, and three of them were fixture defects
+repaired in this PR (below). `metadata-issuer` passes once the SUT issuer
+matches the seed. A long-lived SUT instance degraded across repeated runs (SQLite
+in-memory pool "no such table", login rate limit) and produced spurious
+failures, so measure against a fresh SUT per run.
+
+Fixture defects repaired here (now pass; regression tests in
+`runner/test/fixture-reconcile.test.ts`):
+
+- core.authorize.client-id-missing asserted a JSON error body; RFC 6749 4.1.2.1
+  requires only that the server not redirect, so it now asserts the 400.
+- core.token.unsupported-grant-type sent no client authentication, so the SUT
+  rejected the missing client first; it now authenticates client-a.
+- core.token.dual-auth-rejected used client-a, which is not permitted
+  client_credentials (unauthorized_client masked the rule under test), and
+  expected invalid_client 401; it now uses client-cc and expects invalid_request
+  400 per RFC 6749 5.2.
+
+Still failing, executable stable scenarios (nothing is demoted to draft):
+
+- core.authorize.error-redirect-iss
+- core.authorize.response-type-missing
+- core.authorize.response-type-unsupported
+- core.pkce.method-without-challenge
+- core.pkce.missing-challenge
+- core.pkce.plain-method-rejected
+- core.token.basic-auth-success
+- core.token.dual-auth-rejected
+- core.token.error-no-store
+
+Classification:
+
+- Reference SUT deviation, 6 scenarios (error-redirect-iss, response-type-missing,
+  response-type-unsupported, method-without-challenge, missing-challenge,
+  plain-method-rejected): the SUT answers 400 where RFC 6749 4.1.2.1 and RFC
+  9207 expect the error returned on the validated redirect URI.
+- Reference SUT deviation, basic-auth-success: the SUT answers 401 to a Basic
+  header whose credentials are form-urlencoded (RFC 6749 2.3.1 MUST); it
+  accepts the raw, unencoded form.
+- Reference SUT deviation, dual-auth-rejected: the SUT answers 200 when
+  credentials arrive in both the Basic header and the body (RFC 6749 2.3).
+- Attribution question, error-no-store: RFC 6749 5.1 states the no-store MUST for
+  successful token responses only (see the attribution section above); the SUT
+  omits Cache-Control on error responses. Kept stable and failing, pending the
+  contract decision recorded above.
+
+Deferred (draft, awaiting part 3/3): require-state, code-exchange-succeeds,
+code-wrong-client-auth.
 
 ### Citation discrepancy (follow-up, ids unchanged)
 

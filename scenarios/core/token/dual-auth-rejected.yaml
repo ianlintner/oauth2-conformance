@@ -5,18 +5,21 @@ profile: core
 status: stable
 note: |
   Invariant INV-CLIENT-SINGLE-AUTH-METHOD. A client MUST NOT use more than one
-  authentication method in one request (RFC 6749 section 2.3). Expected error
-  follows section 5.2 (invalid_client, 401).
+  authentication method in one request (RFC 6749 section 2.3). client-cc is
+  permitted client_credentials, so the single-method rule is what is tested
+  (client-a is not, and would answer unauthorized_client first). RFC 6749
+  section 5.2 lists multiple credentials / more than one authentication
+  mechanism under invalid_request (400).
 steps:
   - id: token
     request:
       method: POST
       path: /oauth/token
-      headers: { authorization: "Basic Y2xpZW50LWE6dGVzdC1vbmx5LXNlY3JldA==" }
+      headers: { authorization: "Basic Y2xpZW50LWNjOnRlc3Qtb25seS1jYy1zZWNyZXQ=" }
       form:
         grant_type: client_credentials
-        client_id: client-a
-        client_secret: test-only-secret
+        client_id: client-cc
+        client_secret: test-only-cc-secret
     expect:
-      status: 401
-      json: { error: invalid_client }
+      status: 400
+      json: { error: invalid_request }

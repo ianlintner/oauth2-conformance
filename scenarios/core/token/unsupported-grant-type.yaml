@@ -3,11 +3,15 @@ title: Unsupported grant type is rejected
 requirements: [RFC6749-5.2-unsupported-grant-type]
 profile: core
 status: stable
+note: |
+  The request authenticates client-a (Basic client-a:test-only-secret) so the
+  grant type is what is rejected, not a missing client identity.
 steps:
   - id: token
     request:
       method: POST
       path: /oauth/token
+      headers: { authorization: "Basic Y2xpZW50LWE6dGVzdC1vbmx5LXNlY3JldA==" }
       form: { grant_type: urn:example:bogus }
     expect:
       status: 400
