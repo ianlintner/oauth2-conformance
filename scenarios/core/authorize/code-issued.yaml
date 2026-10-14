@@ -1,8 +1,8 @@
 id: core.authorize.code-issued
 title: A successful authorization response carries code, the echoed state and iss
-requirements: [RFC6749-4.1.2-authorization-code-issued, RFC6749-4.1.2-state-echoed, RFC9207-2-iss-on-success, RFC9207-2.1-iss-form-urlencoded]
+requirements: [RFC6749-4.1.2-authorization-code-issued, RFC6749-4.1.2-state-echoed, RFC9207-2-iss-on-success]
 profile: core
-status: draft
+status: stable
 note: |
   Invariants INV-CODE-ENTROPY, INV-ISS-ON-AUTHORIZE-RESPONSE. Redirect query
   values are compared after decoding, so iss is expected as the decoded issuer

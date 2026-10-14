@@ -48,13 +48,24 @@ export async function loginAndAuthorize(context: HelperContext): Promise<import(
   }
   const authorizeUrl = query.size > 0 ? `${authorizePath}?${query.toString()}` : authorizePath;
 
+  const loginPath = typeof context.with.loginPath === 'string' ? context.with.loginPath : '/login';
+
+  // Reuse the run's session for this user: SUTs rate-limit logins (the Rust
+  // reference refuses after ~8 per IP/user), so one login per user per run.
+  const cachedCookie = context.sessions?.get(username);
+  if (cachedCookie !== undefined) {
+    const reused = await context.send({ method: 'GET', url: authorizeUrl, headers: { cookie: cachedCookie } });
+    const reusedLocation = reused.redirect?.location;
+    const needsLogin = reused.status >= 300 && reused.status < 400 && reusedLocation !== undefined && isLoginRedirect(reusedLocation, loginPath);
+    if (!needsLogin) return reused;
+    context.sessions?.delete(username);
+  }
+
   const authorize = await context.send({
     method: 'GET',
     url: authorizeUrl,
     headers: {},
   });
-
-  const loginPath = typeof context.with.loginPath === 'string' ? context.with.loginPath : '/login';
 
   // A SUT that needs no interactive login (granted consent) redirects straight
   // back to the client; report that response. A redirect to the SUT's own
@@ -78,8 +89,16 @@ export async function loginAndAuthorize(context: HelperContext): Promise<import(
   if (login.status >= 400) {
     throw new Error(`login-and-authorize: SUT login failed with status ${login.status}`);
   }
+  // A refused login (bad credentials, throttling) is redirected back to the
+  // login form with `error=`; surfacing it here keeps a code-less redirect
+  // from being mistaken for an authorization result.
+  const loginLocation = login.redirect?.location;
+  if (loginLocation !== undefined && isLoginRedirect(loginLocation, loginPath) && /[?&]error=/.test(loginLocation)) {
+    throw new Error(`login-and-authorize: SUT login refused (${loginLocation})`);
+  }
 
   const loginCookie = cookieFrom(login, cookie);
+  if (loginCookie !== undefined) context.sessions?.set(username, loginCookie);
   return context.send({
     method: 'GET',
     url: authorizeUrl,

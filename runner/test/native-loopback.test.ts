@@ -25,10 +25,17 @@ interface FakeSut {
 }
 
 /** Seeded-SUT stand-in: unauthenticated authorize -> login redirect; login sets a cookie; authenticated authorize issues a code. */
-async function fakeSut(options: { dropPort?: boolean } = {}): Promise<FakeSut> {
+async function fakeSut(options: { dropPort?: boolean; maxLogins?: number; logins?: { count: number } } = {}): Promise<FakeSut> {
+  const logins = options.logins ?? { count: 0 };
   const server = createServer((req, res) => {
     const url = new URL(req.url ?? '/', 'http://sut.invalid');
     if (url.pathname === '/auth/login' && req.method === 'POST') {
+      logins.count += 1;
+      if (options.maxLogins !== undefined && logins.count > options.maxLogins) {
+        res.writeHead(303, { location: '/auth/login?error=too_many_attempts' });
+        res.end();
+        return;
+      }
       res.writeHead(303, { 'set-cookie': 'sid=abc; Path=/', location: '/' });
       res.end();
       return;
@@ -110,6 +117,30 @@ test('login-and-authorize still returns an immediate redirect back to the client
   });
   assert.equal(sent.length, 1);
   assert.equal(response.redirect?.query.code, 'x');
+});
+
+test('login-and-authorize logs in once per user per run and reuses the session (SUT login rate limits)', async () => {
+  const logins = { count: 0 };
+  const { server, url } = await fakeSut({ maxLogins: 2, logins });
+  try {
+    const scenarios = Array.from({ length: 6 }, (_v, i) => ({ ...anyPortScenario(), id: `test.native.any-port-${i}` }));
+    const report = await runScenarios(scenarios, { baseUrl: url, implementation: 'fake', contract: '0.1.0', helpers: { 'login-and-authorize': loginAndAuthorize } });
+    assert.equal(report.passed, 6, JSON.stringify(report.results.map((r) => r.diffs)));
+    assert.equal(logins.count, 1);
+  } finally {
+    server.close();
+  }
+});
+
+test('login-and-authorize fails loudly when the login step itself is refused (never returns a code-less redirect as success)', async () => {
+  const { server, url } = await fakeSut({ maxLogins: 0 });
+  try {
+    const report = await runScenarios([anyPortScenario()], { baseUrl: url, implementation: 'fake', contract: '0.1.0', helpers: { 'login-and-authorize': loginAndAuthorize } });
+    assert.equal(report.failed, 1);
+    assert.match(report.results[0]?.error ?? '', /too_many_attempts/);
+  } finally {
+    server.close();
+  }
 });
 
 test('locationPrefix: matching prefix passes, other host/port/path fails, missing Location fails', () => {

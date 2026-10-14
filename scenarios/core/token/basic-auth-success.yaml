@@ -2,7 +2,7 @@ id: core.token.basic-auth-success
 title: A client authenticating with HTTP Basic succeeds and returns a token
 requirements: [RFC6749-2.3.1-basic-auth-urlencoded]
 profile: core
-status: stable
+status: reference-deviation
 note: |
   INV-BASIC-AUTH-FORM-ENCODED. client-enc's secret is the literal p@ss:w+rd %,
   so RFC 6749 2.3.1 requires the header to carry

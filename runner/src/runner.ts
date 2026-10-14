@@ -61,6 +61,8 @@ export interface HelperContext {
   send(request: { method: string; url: string; headers: Record<string, string>; body?: string }): Promise<import('./compare.js').ActualResponse>;
   scope: Map<string, string>;
   with: Record<string, unknown>;
+  /** Run-wide login sessions (username -> cookie), shared by every scenario in one run. */
+  sessions?: Map<string, string>;
 }
 
 export type ScenarioHelper = (context: HelperContext) => Promise<import('./compare.js').ActualResponse>;
@@ -102,6 +104,7 @@ export async function runScenarios(scenarios: Scenario[], options: RunOptions): 
   const startedAt = new Date().toISOString();
   const selected = selectScenarios(scenarios, options);
   const results: ScenarioResult[] = [];
+  const sessions = new Map<string, string>();
 
   for (const scenario of selected) {
     const scope = new Map<string, string>();
@@ -123,6 +126,7 @@ export async function runScenarios(scenarios: Scenario[], options: RunOptions): 
               ),
             scope,
             with: step.with ?? {},
+            sessions,
           });
         } else {
           const request = buildRequest(step, scope);

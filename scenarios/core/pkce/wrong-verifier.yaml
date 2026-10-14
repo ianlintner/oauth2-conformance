@@ -2,7 +2,7 @@ id: core.pkce.wrong-verifier
 title: A non-matching verifier is rejected invalid_grant
 requirements: [RFC7636-4.3-verifier-mismatch]
 profile: core
-status: draft
+status: stable
 note: |
   Invariant INV-PKCE-BINDING.
   Runner gaps (part 3/3): with.loginPath is not declared by the SUT contract.

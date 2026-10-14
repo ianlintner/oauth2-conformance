@@ -2,7 +2,7 @@ id: core.pkce.plain-method-rejected
 title: The plain code_challenge_method is rejected
 requirements: [RFC7636-4.2-plain-rejected]
 profile: core
-status: stable
+status: reference-deviation
 note: |
   INV-S256-ONLY. Local profile policy: core is S256-only, so plain is rejected with invalid_request (RFC 7636 4.4.1, unsupported transformation). RFC 7636 4.2 does not itself prohibit servers from supporting plain. Rust answers 400 JSON.
 steps:

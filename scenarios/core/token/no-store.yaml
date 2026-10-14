@@ -2,7 +2,7 @@ id: core.token.error-no-store
 title: Token error responses are not cacheable
 requirements: [RFC6749-5.1-no-store]
 profile: core
-status: stable
+status: draft
 note: |
   Conservative expectation: RFC 6749 5.1 states the no-store MUST for responses
   carrying tokens (success); the 5.2 error example shows the header but states no

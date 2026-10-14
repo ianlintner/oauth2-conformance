@@ -1,8 +1,8 @@
 id: core.hardening.code-single-use
 title: An authorization code is redeemed at most once
-requirements: [RFC6749-4.1.3-code-single-use, RFC6749-10.5-code-single-use, RFC9700-2.1.1-code-replay-rejected, RFC9700-2.1.1-code-replay-revokes-tokens]
+requirements: [RFC6749-4.1.3-code-single-use, RFC6749-10.5-code-single-use, RFC9700-2.1.1-code-replay-rejected]
 profile: core
-status: draft
+status: stable
 note: |
   Invariant INV-CODE-SINGLE-USE. Obtain a code, exchange it (200), exchange the
   same code again (400 invalid_grant), then require that the tokens from the
