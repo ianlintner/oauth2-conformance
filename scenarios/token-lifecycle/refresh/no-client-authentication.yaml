@@ -40,7 +40,6 @@ steps:
     request:
       method: POST
       path: /oauth/token
-      headers: {"authorization":"Basic Y2xpZW50LWE6dGVzdC1vbmx5LXNlY3JldA=="}
       form: {"grant_type":"refresh_token","refresh_token":"{{rt}}"}
     expect:
       status: 401
