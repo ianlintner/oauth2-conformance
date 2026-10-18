@@ -1,0 +1,88 @@
+# RFC 6749 requirements for the token-lifecycle profile: the client
+# credentials grant and refresh token grant. Source material: ROADMAP v0.2
+# row; rust-oauth2-server token handler behaviour exercised by
+# compliance_rfc7662_7009 and opaque_tokens (see docs/ROADMAP.md).
+- id: RFC6749-4.4.2-cc-client-authenticates
+  spec: "RFC 6749"
+  clause: "4.4.2"
+  level: MUST
+  profile: token-lifecycle
+  summary: "A client_credentials token request is accepted only after the authorization server authenticates the client."
+  link: https://www.rfc-editor.org/rfc/rfc6749#section-4.4.2
+  notes: "Wrong or missing credentials yield invalid_client (RFC 6749 section 5.2, already covered in core)."
+- id: RFC6749-4.4.3-cc-issues-access-token
+  spec: "RFC 6749"
+  clause: "4.4.3"
+  level: MUST
+  profile: token-lifecycle
+  summary: "A client_credentials request from an authenticated client yields an access token response containing access_token and token_type."
+  link: https://www.rfc-editor.org/rfc/rfc6749#section-4.4.3
+  notes: "access_token REQUIRED in the response (4.4.3 defers to 5.1); the grant has no refresh token, so the 5.1 members and their REQUIRED status come from section 5.1."
+- id: RFC6749-4.4.3-cc-no-refresh-token
+  spec: "RFC 6749"
+  clause: "4.4.3"
+  level: SHOULD NOT
+  profile: token-lifecycle
+  summary: "A client_credentials access token response does not include a refresh token."
+  link: https://www.rfc-editor.org/rfc/rfc6749#section-4.4.3
+- id: RFC6749-6-refresh-issues-access-token
+  spec: "RFC 6749"
+  clause: "6"
+  level: MUST
+  profile: token-lifecycle
+  summary: "A valid refresh_token grant from the owning client yields a new access token response."
+  link: https://www.rfc-editor.org/rfc/rfc6749#section-6
+  notes: "Issuance is lowercase prose in section 6 ('issues an access token'); the MUST-to-verify the grant comes from the binding obligations and invalid_grant at 5.2."
+- id: RFC6749-6-refresh-client-authentication
+  spec: "RFC 6749"
+  clause: "6"
+  level: MUST
+  profile: token-lifecycle
+  summary: "A refresh_token request from a confidential client is accepted only with valid client authentication."
+  link: https://www.rfc-editor.org/rfc/rfc6749#section-6
+- id: RFC6749-6-refresh-scope-escalation
+  spec: "RFC 6749"
+  clause: "6"
+  level: MUST NOT
+  profile: token-lifecycle
+  summary: "A refresh request cannot obtain a scope beyond the one originally granted; a request for a broader scope is rejected with invalid_scope."
+  link: https://www.rfc-editor.org/rfc/rfc6749#section-6
+- id: RFC6749-6-refresh-omitted-scope-original
+  spec: "RFC 6749"
+  clause: "6"
+  level: MUST
+  profile: token-lifecycle
+  summary: "A refresh request that omits scope is treated as requesting the originally granted scope."
+  link: https://www.rfc-editor.org/rfc/rfc6749#section-6
+  notes: "Phrased in lowercase in section 6 ('if omitted is treated as equal'); treated as MUST because a broader scope is rejected as invalid_scope."
+- id: RFC6749-6-refresh-rotated-scope-identical
+  spec: "RFC 6749"
+  clause: "6"
+  level: MUST
+  profile: token-lifecycle
+  summary: "When a new refresh token is issued, its scope is identical to that of the refresh token presented."
+  link: https://www.rfc-editor.org/rfc/rfc6749#section-6
+- id: RFC6749-6-refresh-old-token-may-be-revoked
+  spec: "RFC 6749"
+  clause: "6"
+  level: MAY
+  profile: token-lifecycle
+  summary: "The server may revoke the presented refresh token when it issues a replacement; it is then rejected on reuse."
+  link: https://www.rfc-editor.org/rfc/rfc6749#section-6
+  notes: "RFC 6749 leaves rotation optional; the mandatory rotation rules for public clients are in RFC9700-2.2.2-public-refresh-rotated-or-bound."
+- id: RFC6749-10.4-refresh-bound-to-client
+  spec: "RFC 6749"
+  clause: "10.4"
+  level: MUST
+  profile: token-lifecycle
+  summary: "A refresh token presented by a client other than the one it was issued to is rejected."
+  link: https://www.rfc-editor.org/rfc/rfc6749#section-10.4
+  notes: "RFC 6749 section 6 repeats the binding; the MUST to maintain and verify it is in section 10.4."
+- id: RFC6749-5.2-refresh-invalid-grant
+  spec: "RFC 6749"
+  clause: "5.2"
+  level: MUST
+  profile: token-lifecycle
+  summary: "An unknown, expired or revoked refresh token is rejected with an invalid_grant error response."
+  link: https://www.rfc-editor.org/rfc/rfc6749#section-5.2
+  notes: "Section 5.2 defines invalid_grant; the rule that an invalid refresh token yields it follows from section 6, where the server issues an access token only if the grant is valid and authorized."
