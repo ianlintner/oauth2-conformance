@@ -2,7 +2,7 @@ id: core.authorize.response-type-missing
 title: Authorization request without response_type is rejected via the redirect URI
 requirements: [RFC6749-4.1.1-response-type-required]
 profile: core
-status: stable
+status: reference-deviation
 note: |
   RFC 6749 section 4.1.2.1: with a valid client and redirect_uri the error is
   returned as invalid_request on the redirect URI. The Rust reference answers

@@ -25,10 +25,17 @@ interface FakeSut {
 }
 
 /** Seeded-SUT stand-in: unauthenticated authorize -> login redirect; login sets a cookie; authenticated authorize issues a code. */
-async function fakeSut(options: { dropPort?: boolean } = {}): Promise<FakeSut> {
+async function fakeSut(options: { dropPort?: boolean; maxLogins?: number; logins?: { count: number } } = {}): Promise<FakeSut> {
+  const logins = options.logins ?? { count: 0 };
   const server = createServer((req, res) => {
     const url = new URL(req.url ?? '/', 'http://sut.invalid');
     if (url.pathname === '/auth/login' && req.method === 'POST') {
+      logins.count += 1;
+      if (options.maxLogins !== undefined && logins.count > options.maxLogins) {
+        res.writeHead(303, { location: '/auth/login?error=too_many_attempts' });
+        res.end();
+        return;
+      }
       res.writeHead(303, { 'set-cookie': 'sid=abc; Path=/', location: '/' });
       res.end();
       return;
@@ -110,6 +117,71 @@ test('login-and-authorize still returns an immediate redirect back to the client
   });
   assert.equal(sent.length, 1);
   assert.equal(response.redirect?.query.code, 'x');
+});
+
+test('login-and-authorize logs in once per user per run and reuses the session (SUT login rate limits)', async () => {
+  const logins = { count: 0 };
+  const { server, url } = await fakeSut({ maxLogins: 2, logins });
+  try {
+    const scenarios = Array.from({ length: 6 }, (_v, i) => ({ ...anyPortScenario(), id: `test.native.any-port-${i}` }));
+    const report = await runScenarios(scenarios, { baseUrl: url, implementation: 'fake', contract: '0.1.0', helpers: { 'login-and-authorize': loginAndAuthorize } });
+    assert.equal(report.passed, 6, JSON.stringify(report.results.map((r) => r.diffs)));
+    assert.equal(logins.count, 1);
+  } finally {
+    server.close();
+  }
+});
+
+/** Scripted SUT for direct helper calls: cookie `sid=<user>` is valid only if listed in `valid`. */
+function scriptedSend(valid: Set<string>, log: string[]) {
+  return async (request: { method: string; url: string; headers?: Record<string, string>; body?: string }) => {
+    log.push(`${request.method} ${request.url}`);
+    if (request.method === 'POST') {
+      const user = new URLSearchParams(request.body ?? '').get('username') ?? '';
+      return { status: 303, headers: { 'set-cookie': `sid=${user}; Path=/`, location: '/' }, body: undefined, redirect: { location: '/', query: {}, fragment: {} } };
+    }
+    const cookie = request.headers?.cookie ?? '';
+    if (![...valid].some((sid) => cookie === sid)) {
+      return { status: 302, headers: { location: '/auth/login' }, body: undefined, redirect: { location: '/auth/login', query: {}, fragment: {} } };
+    }
+    const location = 'https://client.example/cb?code=x';
+    return { status: 302, headers: { location }, body: undefined, redirect: { location, query: { code: 'x' }, fragment: {} } };
+  };
+}
+
+const helperWith = (password: string) => ({ username: 'alice', password, loginPath: '/auth/login', authorizePath: '/oauth/authorize', query: { redirect_uri: 'https://client.example/cb' } });
+
+test('login-and-authorize does not reuse a session across different passwords for the same user', async () => {
+  const log: string[] = [];
+  const sessions = new Map<string, string>();
+  const send = scriptedSend(new Set(['sid=alice']), log);
+  await loginAndAuthorize({ scope: new Map(), with: helperWith('good'), send, sessions });
+  await loginAndAuthorize({ scope: new Map(), with: helperWith('other'), send, sessions });
+  assert.equal(log.filter((entry) => entry.startsWith('POST')).length, 2, log.join(' | '));
+});
+
+test('login-and-authorize logs in again when the cached session is stale', async () => {
+  const log: string[] = [];
+  const sessions = new Map<string, string>();
+  const valid = new Set(['sid=alice']);
+  const send = scriptedSend(valid, log);
+  await loginAndAuthorize({ scope: new Map(), with: helperWith('good'), send, sessions });
+  const stale = [...sessions.keys()][0] as string;
+  sessions.set(stale, 'sid=expired');
+  const response = await loginAndAuthorize({ scope: new Map(), with: helperWith('good'), send, sessions });
+  assert.equal(response.redirect?.query.code, 'x');
+  assert.equal(log.filter((entry) => entry.startsWith('POST')).length, 2, log.join(' | '));
+});
+
+test('login-and-authorize fails loudly when the login step itself is refused (never returns a code-less redirect as success)', async () => {
+  const { server, url } = await fakeSut({ maxLogins: 0 });
+  try {
+    const report = await runScenarios([anyPortScenario()], { baseUrl: url, implementation: 'fake', contract: '0.1.0', helpers: { 'login-and-authorize': loginAndAuthorize } });
+    assert.equal(report.failed, 1);
+    assert.match(report.results[0]?.error ?? '', /too_many_attempts/);
+  } finally {
+    server.close();
+  }
 });
 
 test('locationPrefix: matching prefix passes, other host/port/path fails, missing Location fails', () => {

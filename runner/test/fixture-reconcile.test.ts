@@ -29,7 +29,7 @@ function basicCredentials(header: string | undefined): string {
 
 test('dual-auth-rejected uses a client permitted the grant, so the single-method rule is what is tested', () => {
   const s = scenario('core.token.dual-auth-rejected');
-  assert.equal(s.status, 'stable');
+  assert.equal(s.status, 'reference-deviation');
   const step = s.steps[0];
   assert.ok(step?.request);
   // client-a is not allowed client_credentials; the SUT answers unauthorized_client
@@ -78,19 +78,16 @@ test('RFC 8252 exact-match requirements cite section 8.4, where the server MUST 
   }
 });
 
-test('docs/core-coverage.md reports the measured live failures and the SUT launch conditions', async () => {
+test('docs/core-coverage.md records the measured live run and every reference deviation', async () => {
   const doc = await readFile(path.join(repoRoot, 'docs', 'core-coverage.md'), 'utf8');
   const match = /executed=43 passed=(\d+) failed=(\d+) deferred=(\d+)/.exec(doc);
   assert.ok(match, 'the measured live run line must be present');
-  const failed = Number(match[2]);
-  // Every stable scenario named in the failing list must exist and be stable; the
-  // count in the header must equal the number of names listed.
-  const list = /Still failing, executable stable scenarios[^\n]*\n\n((?:- core\.[^\n]+\n)+)/.exec(doc);
-  assert.ok(list, 'a bulleted list of failing stable scenario ids must follow');
+  assert.equal(Number(match[2]), 0, 'a recorded core run has no failures; deviations are deferred, not failing');
+  const list = /Reference-deviation scenarios[^\n]*\n\n((?:- core\.[^\n]+\n)+)/.exec(doc);
+  assert.ok(list, 'a bulleted list of reference-deviation scenario ids must follow');
   const ids = [...(list[1] ?? '').matchAll(/- (core\.[\w.-]+)/g)].map((m) => m[1] as string);
-  assert.equal(ids.length, failed, 'the listed failing scenarios must equal the failed count');
-  for (const id of ids) assert.equal(scenario(id).status, 'stable', `${id} must be a stable scenario`);
-  assert.ok(!ids.includes('core.authorize.metadata-issuer'), 'metadata-issuer passes when the SUT issuer is http://localhost:8080');
+  for (const id of ids) assert.equal(scenario(id).status, 'reference-deviation', `${id} must be reference-deviation`);
+  assert.equal(Number(match[3]), ids.length + 2, 'deferred = reference deviations plus two drafts (require-state, error-no-store)');
   assert.match(doc, /OAUTH2_PUBLIC_URL/, 'the SUT launch setting the fixtures assume must be documented');
   assert.match(doc, /rate limit/i, 'the SUT login rate limit that makes repeated runs flake must be documented');
 });

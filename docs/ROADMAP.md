@@ -38,9 +38,11 @@ Ordering: contract milestones are sequential. Ports run in parallel with each ot
 
 | Implementation | v0.1 | v0.2 | v0.3 | v0.4 | v0.5 | v0.6 | v0.7 |
 |---|---|---|---|---|---|---|---|
-| Rust (reference) | — | — | — | — | — | — | — |
+| Rust (reference) | dev | — | — | — | — | — | — |
 | Python | — | — | — | — | — | — | — |
 | TypeScript | — | — | — | — | — | — | — |
 | Go | — | — | — | — | — | — | — |
 
 `—` not yet claimed · `pass` claimed and passing in CI on main · `dev` passing with recorded deviations.
+
+Rust v0.1 is `dev`: measured manually against a freshly seeded SUT (core run: 33 pass, 0 fail, 8 reference deviations and 2 drafts deferred; see `docs/core-coverage.md`). CI does not yet start a SUT, so it is not `pass`. Python v0.1 is `—`: its repository has no conformance-mode SUT interface yet.

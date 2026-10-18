@@ -2,7 +2,7 @@ id: core.token.code-redirect-uri-mismatch
 title: A code exchange whose redirect_uri differs from authorization is rejected
 requirements: [RFC6749-4.1.3-redirect-uri-mismatch]
 profile: core
-status: draft
+status: stable
 note: |
   Invariant INV-CODE-REDIRECT-BINDING.
   Runner gaps (part 3/3): with.loginPath is not declared by the SUT contract.
