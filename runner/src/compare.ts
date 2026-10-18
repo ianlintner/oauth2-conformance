@@ -19,6 +19,14 @@
 
 import { NORMALIZED, normalizePayload } from './normalize.js';
 import type { ScenarioExpectation } from './scenario.js';
+import { interpolate } from './scenario.js';
+import { isAbsentMatcher, isContainsMatcher, isNonemptyMatcher } from './matchers.js';
+import { decodeJwtSegments, fieldAt } from './jwt.js';
+
+/** Minimal view of the run's captured-value scope (`Map<string, string>`). */
+export interface CaptureScope {
+  get(name: string): string | undefined;
+}
 
 export interface ActualResponse {
   status: number;
@@ -50,11 +58,42 @@ function isNormalized(value: unknown): boolean {
   return value === NORMALIZED;
 }
 
+/**
+ * Recursively resolve `{{name}}` references in `expect.json`/`expect.headers`
+ * string leaves against the run's capture scope, leaving matcher nodes and
+ * non-string values untouched. A string that contains no `{{...}}` reference
+ * is returned unchanged.
+ */
+function interpolateLeaves(value: unknown, scope?: CaptureScope): unknown {
+  if (scope === undefined) return value;
+  if (typeof value === 'string') return value.includes('{{') ? interpolate(value, scope) : value;
+  if (Array.isArray(value)) return value.map((entry) => interpolateLeaves(entry, scope));
+  if (typeof value === 'object' && value !== null) {
+    return Object.fromEntries(Object.entries(value as Record<string, unknown>).map(([key, entry]) => [key, interpolateLeaves(entry, scope)]));
+  }
+  return value;
+}
+
 /** Structural comparison where an expected `NORMALIZED` matches anything present. */
 function deepDiff(expected: unknown, actual: unknown, path: string, diffs: Diff[]): void {
   if (isNormalized(expected)) {
     if (actual === undefined) {
       diffs.push({ path, expected: '<nondeterministic value>', actual, reason: 'missing required field' });
+    }
+    return;
+  }
+  // Declarative matchers relax the otherwise-exact shape for RFC needs that a
+  // strict deep-equal cannot express. Matcher nodes appear only in `expect.json`.
+  if (isContainsMatcher(expected)) {
+    const needle = (expected as { $contains: unknown }).$contains;
+    if (!Array.isArray(actual) || !actual.includes(needle)) {
+      diffs.push({ path, expected: `$contains ${JSON.stringify(needle)}`, actual, reason: 'array does not contain the expected value' });
+    }
+    return;
+  }
+  if (isNonemptyMatcher(expected)) {
+    if (!Array.isArray(actual) || actual.length === 0) {
+      diffs.push({ path, expected: '$nonempty', actual, reason: 'expected a non-empty array' });
     }
     return;
   }
@@ -75,12 +114,19 @@ function deepDiff(expected: unknown, actual: unknown, path: string, diffs: Diff[
       return;
     }
     for (const [key, value] of Object.entries(expected as Record<string, unknown>)) {
-      const has = Object.prototype.hasOwnProperty.call(actual as Record<string, unknown>, key);
+      const actualObj = actual as Record<string, unknown>;
+      const has = Object.prototype.hasOwnProperty.call(actualObj, key);
+      if (isAbsentMatcher(value)) {
+        if (has) {
+          diffs.push({ path: path === '' ? key : `${path}.${key}`, expected: '$absent', actual: actualObj[key], reason: 'unexpected field present' });
+        }
+        continue;
+      }
       if (!has) {
         diffs.push({ path: path === '' ? key : `${path}.${key}`, expected: value, actual: undefined, reason: 'missing field' });
         continue;
       }
-      deepDiff(value, (actual as Record<string, unknown>)[key], path === '' ? key : `${path}.${key}`, diffs);
+      deepDiff(value, actualObj[key], path === '' ? key : `${path}.${key}`, diffs);
     }
     return;
   }
@@ -112,7 +158,7 @@ function parseRedirect(location: string): { location: string; query: Record<stri
   return { location, query, fragment };
 }
 
-export function compareResponse(expect: ScenarioExpectation, actual: ActualResponse): Diff[] {
+export function compareResponse(expect: ScenarioExpectation, actual: ActualResponse, scope?: CaptureScope): Diff[] {
   const diffs: Diff[] = [];
   if (actual.status !== expect.status) {
     diffs.push({
@@ -123,11 +169,12 @@ export function compareResponse(expect: ScenarioExpectation, actual: ActualRespo
     });
   }
   for (const [name, value] of Object.entries(expect.headers ?? {})) {
+    const expected = scope === undefined ? value : interpolate(value, scope);
     const found = headerValue(actual.headers, name);
     if (found === undefined) {
-      diffs.push({ path: `headers.${name}`, expected: value, actual: undefined, reason: 'missing header' });
-    } else if (found !== value) {
-      diffs.push({ path: `headers.${name}`, expected: value, actual: found, reason: 'header value differs' });
+      diffs.push({ path: `headers.${name}`, expected, actual: undefined, reason: 'missing header' });
+    } else if (found !== expected) {
+      diffs.push({ path: `headers.${name}`, expected, actual: found, reason: 'header value differs' });
     }
   }
 
@@ -135,7 +182,7 @@ export function compareResponse(expect: ScenarioExpectation, actual: ActualRespo
     if (actual.body === undefined) {
       diffs.push({ path: 'body', expected: expect.json, actual: undefined, reason: 'expected a JSON body' });
     } else {
-      deepDiff(normalizePayload(expect.json), normalizePayload(actual.body), '', diffs);
+      deepDiff(normalizePayload(interpolateLeaves(expect.json, scope)), normalizePayload(actual.body), '', diffs);
     }
   }
 
@@ -173,13 +220,40 @@ export function compareResponse(expect: ScenarioExpectation, actual: ActualRespo
   return diffs;
 }
 
-/** Extract a captured value from a response using `body.x`, `header.x`, `redirect.query.x`. */
-export function captureValue(expression: string, actual: ActualResponse): string | undefined {
+/**
+ * Extract a captured value from a response using `body.x`, `header.x`,
+ * `redirect.query.x`, or `jwt.<var>.<header|payload>.<field>` (decode the JWT
+ * held in an earlier-captured variable and read a header/payload field).
+ */
+export function captureValue(expression: string, actual: ActualResponse, scope?: CaptureScope): string | undefined {
   const dot = expression.indexOf('.');
-  const scope = expression.slice(0, dot);
+  const scope_ = expression.slice(0, dot);
   const rest = expression.slice(dot + 1);
-  if (scope === 'header') return headerValue(actual.headers, rest);
-  if (scope === 'redirect') {
+  if (scope_ === 'jwt') {
+    // jwt.<sourceVar>.<header|payload>.<field>
+    const sourceDot = rest.indexOf('.');
+    if (sourceDot === -1 || scope === undefined) return undefined;
+    const source = rest.slice(0, sourceDot);
+    const partAndField = rest.slice(sourceDot + 1);
+    const partDot = partAndField.indexOf('.');
+    if (partDot === -1) return undefined;
+    const part = partAndField.slice(0, partDot);
+    const field = partAndField.slice(partDot + 1);
+    if (part !== 'header' && part !== 'payload') return undefined;
+    const token = scope.get(source);
+    if (token === undefined) return undefined;
+    try {
+      const segments = decodeJwtSegments(token);
+      const value = fieldAt(part === 'header' ? segments.header : segments.payload, field);
+      if (value === undefined || value === null) return undefined;
+      if (typeof value === 'object') return undefined;
+      return String(value);
+    } catch {
+      return undefined;
+    }
+  }
+  if (scope_ === 'header') return headerValue(actual.headers, rest);
+  if (scope_ === 'redirect') {
     const redirect = actual.redirect ?? (headerValue(actual.headers, 'location') !== undefined ? parseRedirect(headerValue(actual.headers, 'location') as string) : undefined);
     if (redirect === undefined) return undefined;
     const segment = rest.startsWith('query.') ? redirect.query : rest.startsWith('fragment.') ? redirect.fragment : undefined;
@@ -187,7 +261,7 @@ export function captureValue(expression: string, actual: ActualResponse): string
     const key = rest.slice(rest.indexOf('.') + 1);
     return segment[key];
   }
-  if (scope === 'body') {
+  if (scope_ === 'body') {
     if (actual.body === null || typeof actual.body !== 'object') return undefined;
     let current: unknown = actual.body;
     for (const segment of rest.split('.')) {

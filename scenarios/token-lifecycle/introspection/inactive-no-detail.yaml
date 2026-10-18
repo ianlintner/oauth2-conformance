@@ -1,0 +1,16 @@
+id: token-lifecycle.introspection.inactive-no-detail
+title: "An inactive introspection result discloses no member other than active false"
+requirements: ["RFC7662-2.2-inactive-no-detail"]
+profile: token-lifecycle
+status: stable
+note: "INV-INTROSPECT-NO-LEAK-INACTIVE: an inactive response carries no member other than active. The $absent matcher (added in part 3/3) asserts the absence of a scope member; previously only active:false could be asserted."
+steps:
+  - id: introspect
+    request:
+      method: POST
+      path: /oauth/introspect
+      headers: {"authorization":"Basic Y2xpZW50LWE6dGVzdC1vbmx5LXNlY3JldA=="}
+      form: {"token":"not-a-real-token"}
+    expect:
+      status: 200
+      json: {"active":false,"scope":{"$absent":true}}

@@ -1,9 +1,9 @@
 id: token-lifecycle.jwt.metadata-response-types
-title: "Server metadata lists response_types_supported including code"
+title: "Server metadata advertises the supported response types, including code"
 requirements: ["RFC8414-2-response-types-supported"]
 profile: token-lifecycle
-status: draft
-note: "DRAFT: needs an array-contains matcher; array comparison is exact today, so this pins the reference SUT list [code, \"code id_token\"] and would fail an otherwise conforming server."
+status: stable
+note: "Asserts with the $contains matcher that response_types_supported is an array including code, proving a JWT access-token profile is paired with an authorization-code flow."
 steps:
   - id: metadata
     request:
@@ -11,4 +11,4 @@ steps:
       path: /.well-known/oauth-authorization-server
     expect:
       status: 200
-      json: {"response_types_supported":["code","code id_token"]}
+      json: {"response_types_supported":{"$contains":"code"}}

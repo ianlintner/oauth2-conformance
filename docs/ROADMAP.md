@@ -46,3 +46,5 @@ Ordering: contract milestones are sequential. Ports run in parallel with each ot
 `—` not yet claimed · `pass` claimed and passing in CI on main · `dev` passing with recorded deviations.
 
 Rust v0.1 is `dev`: measured manually against a freshly seeded SUT (core run: 33 pass, 0 fail, 8 reference deviations and 2 drafts deferred; see `docs/core-coverage.md`). CI does not yet start a SUT, so it is not `pass`. Python v0.1 is `—`: its repository has no conformance-mode SUT interface yet.
+
+Contract v0.2 (`token-lifecycle`) is delivered: 31 scenarios (25 stable, 6 `reference-deviation`), 12 invariants, and the part-3/3 runner extensions (JWT header/payload captures, `$contains`/`$nonempty`/`$absent` matchers, expect-interpolation) are on `main` (see `docs/token-lifecycle-coverage.md`). Ports may now pin the contract commit and begin the v0.2 milestone; the two owner-gated gaps (`RFC7662-4-expiry-checked`, `RFC9700-2.2.2-public-refresh-rotated-or-bound`) remain documented deferrals rather than blockable failures.

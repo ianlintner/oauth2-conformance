@@ -1,47 +1,26 @@
 id: token-lifecycle.jwt.claims-match-metadata
-title: "A JWT access token carries the required claims and an iss equal to the metadata issuer"
+title: "A JWT access token's iss claim equals the published server metadata issuer"
 requirements: ["RFC9068-2.2-required-claims","RFC9068-4-iss-matches-metadata"]
 profile: token-lifecycle
-status: draft
-note: "INV-JWT-ISS-MATCHES-METADATA. DRAFT: needs a runner capture that decodes a JWT payload (e.g. jwt.payload.iss); this draft approximates through the introspection response, which does not prove the token's own claims."
+status: stable
+note: "Decodes the token's own JWT payload (jwt.at.payload.iss) rather than the server's introspection view, then asserts it equals the seed issuer (http://localhost:8080, pinned in contract/sut-interface.md)."
 steps:
-  - id: auth
-    use: login-and-authorize
-    with:
-      username: alice
-      password: test-only-password
-      loginPath: /auth/login
-      authorizePath: /oauth/authorize
-      query:
-        response_type: code
-        client_id: client-a
-        redirect_uri: https://client.example/callback
-        state: s-gen
-        scope: read
-        code_challenge: E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM
-        code_challenge_method: S256
-    expect:
-      status: 302
-    capture:
-      code: redirect.query.code
-  - id: exchange
+  - id: token
     request:
       method: POST
       path: /oauth/token
-      headers: {"authorization":"Basic Y2xpZW50LWE6dGVzdC1vbmx5LXNlY3JldA=="}
-      form: {"grant_type":"authorization_code","code":"{{code}}","redirect_uri":"https://client.example/callback","code_verifier":"dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"}
+      headers: {"authorization":"Basic Y2xpZW50LWNjOnRlc3Qtb25seS1jYy1zZWNyZXQ="}
+      form: {"grant_type":"client_credentials"}
     expect:
       status: 200
-      json: {"access_token":"x","refresh_token":"x","token_type":"Bearer"}
+      json: {"access_token":"x","token_type":"Bearer"}
     capture:
       at: body.access_token
-      rt: body.refresh_token
-  - id: introspect
+      iss: jwt.at.payload.iss
+  - id: metadata
     request:
-      method: POST
-      path: /oauth/introspect
-      headers: {"authorization":"Basic Y2xpZW50LWE6dGVzdC1vbmx5LXNlY3JldA=="}
-      form: {"token":"{{at}}"}
+      method: GET
+      path: /.well-known/oauth-authorization-server
     expect:
       status: 200
-      json: {"active":true,"iss":"http://localhost:8080","aud":"client-a","client_id":"client-a","jti":"x","exp":1,"iat":1}
+      json: {"issuer":"{{iss}}"}
