@@ -1,0 +1,65 @@
+# Cross-scenario invariants for the token-lifecycle profile (contract v0.2).
+#
+# Same conventions as invariants/core.yaml: one requirement per invariant, ids
+# cited from scenario notes. Machine wiring into cross-run and trace checks
+# arrives with the runner extensions in part 3/3.
+
+- id: INV-REFRESH-ROTATION-REUSE
+  profile: token-lifecycle
+  summary: A rotated refresh token is invalid; presenting it again is rejected and revokes the replacement token as well.
+  requirement: RFC9700-4.14.2-rotated-reuse-revokes-family
+
+- id: INV-REFRESH-NO-SCOPE-ESCALATION
+  profile: token-lifecycle
+  summary: A refresh grant never yields a scope broader than the one originally granted.
+  requirement: RFC6749-6-refresh-scope-escalation
+
+- id: INV-REFRESH-CLIENT-BINDING
+  profile: token-lifecycle
+  summary: A refresh token is redeemable only by the client it was issued to.
+  requirement: RFC6749-10.4-refresh-bound-to-client
+
+- id: INV-CC-NO-REFRESH-TOKEN
+  profile: token-lifecycle
+  summary: A client_credentials response carries no refresh token.
+  requirement: RFC6749-4.4.3-cc-no-refresh-token
+
+- id: INV-REVOKED-TOKEN-DEAD
+  profile: token-lifecycle
+  summary: A revoked token is never again accepted, redeemed or reported active.
+  requirement: RFC7009-2.1-revocation-immediate
+
+- id: INV-REVOCATION-OWNER-ONLY
+  profile: token-lifecycle
+  summary: A client can revoke only tokens issued to it; revoking another client's token leaves that token usable.
+  requirement: RFC7009-2.1-token-owned-by-client
+
+- id: INV-INTROSPECT-CALLER-AUTH
+  profile: token-lifecycle
+  summary: Introspection requires an authenticated caller and discloses nothing to an unauthenticated one.
+  requirement: RFC7662-2.1-caller-authentication
+
+- id: INV-INTROSPECT-CROSS-CLIENT-INACTIVE
+  profile: token-lifecycle
+  summary: A client introspecting a token issued to another client is told it is inactive.
+  requirement: RFC7662-2.2-cross-client-inactive
+
+- id: INV-INTROSPECT-NO-LEAK-INACTIVE
+  profile: token-lifecycle
+  summary: An inactive introspection response carries no member other than active.
+  requirement: RFC7662-2.2-inactive-no-detail
+
+- id: INV-BEARER-CHALLENGE
+  profile: token-lifecycle
+  summary: A protected-resource 401 carries a WWW-Authenticate Bearer challenge with at most one realm, and error invalid_token only when a token was presented.
+  requirement: RFC6750-3-challenge-scheme-bearer
+
+- id: INV-JWT-ISS-MATCHES-METADATA
+  profile: token-lifecycle
+  summary: The iss claim of a JWT access token equals the issuer in the published server metadata.
+  requirement: RFC9068-4-iss-matches-metadata
+
+- id: INV-JWT-VERIFIABLE-WITH-JWKS
+  profile: token-lifecycle
+  summary: Every JWT access token verifies against a key published at jwks_uri.
+  requirement: RFC9068-4-verifiable-with-jwks

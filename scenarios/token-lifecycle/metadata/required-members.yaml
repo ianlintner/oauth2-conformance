@@ -1,0 +1,14 @@
+id: token-lifecycle.metadata.required-members
+title: "Server metadata returns 200 with the issuer and the authorization, token and userinfo endpoints"
+requirements: ["RFC8414-3.2-metadata-200","RFC8414-3.3-issuer-identical","RFC8414-2-authorization-endpoint","RFC8414-2-token-endpoint","OIDCDISC-3-userinfo-endpoint","RFC9700-2.1.1-metadata-advertises-s256"]
+profile: token-lifecycle
+status: stable
+note: "Endpoint URLs are pinned to the seed issuer http://localhost:8080 (contract/sut-interface.md). code_challenge_methods_supported is exactly [S256]: the core profile rejects plain."
+steps:
+  - id: metadata
+    request:
+      method: GET
+      path: /.well-known/oauth-authorization-server
+    expect:
+      status: 200
+      json: {"issuer":"http://localhost:8080","authorization_endpoint":"http://localhost:8080/oauth/authorize","token_endpoint":"http://localhost:8080/oauth/token","userinfo_endpoint":"http://localhost:8080/oauth/userinfo","code_challenge_methods_supported":["S256"]}

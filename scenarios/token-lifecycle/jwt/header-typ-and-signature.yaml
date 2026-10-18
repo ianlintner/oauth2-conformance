@@ -1,0 +1,16 @@
+id: token-lifecycle.jwt.header-typ-and-signature
+title: "A JWT access token header declares typ at+jwt and a real signing algorithm"
+requirements: ["RFC9068-2.1-jwt-signed","RFC9068-2.1-jwt-alg-none","RFC9068-2.1-typ-header","RFC9068-2.1-rs256-supported"]
+profile: token-lifecycle
+status: draft
+note: "DRAFT: needs a runner capture decoding the JWT header (jwt.header.typ, jwt.header.alg) and an array-contains matcher for RS256. The reference SUT signs with HS256 and typ at+JWT; the request below only issues the token."
+steps:
+  - id: token
+    request:
+      method: POST
+      path: /oauth/token
+      headers: {"authorization":"Basic Y2xpZW50LWNjOnRlc3Qtb25seS1jYy1zZWNyZXQ="}
+      form: {"grant_type":"client_credentials"}
+    expect:
+      status: 200
+      json: {"access_token":"x","token_type":"Bearer"}

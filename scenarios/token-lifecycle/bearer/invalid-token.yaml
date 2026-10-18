@@ -1,0 +1,16 @@
+id: token-lifecycle.bearer.invalid-token
+title: "An invalid access token gets 401 and a Bearer challenge with error=\"invalid_token\""
+requirements: ["RFC6750-3.1-invalid-token-error-attribute","RFC6750-3.1-invalid-token-body-error","RFC6750-3-challenge-scheme-bearer","RFC6750-3-realm-at-most-once"]
+profile: token-lifecycle
+status: stable
+note: "INV-BEARER-CHALLENGE."
+steps:
+  - id: userinfo
+    request:
+      method: GET
+      path: /oauth/userinfo
+      headers: {"authorization":"Bearer not-a-valid-token"}
+    expect:
+      status: 401
+      headers: {"www-authenticate":"Bearer error=\"invalid_token\""}
+      json: {"error":"invalid_token"}

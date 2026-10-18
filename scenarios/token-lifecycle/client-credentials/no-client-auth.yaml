@@ -1,0 +1,15 @@
+id: token-lifecycle.client-credentials.no-client-auth
+title: "A client_credentials request with no client authentication is rejected 401 invalid_client"
+requirements: ["RFC6749-4.4.2-cc-client-authenticates"]
+profile: token-lifecycle
+status: reference-deviation
+note: "RFC 6749 section 5.2 lists a request with no client authentication under invalid_client. The reference SUT answers 400 invalid_request (reference-deviation, to be raised against the SUT). The wrong-secret scenario keeps RFC6749-4.4.2 covered as stable."
+steps:
+  - id: token
+    request:
+      method: POST
+      path: /oauth/token
+      form: {"grant_type":"client_credentials"}
+    expect:
+      status: 401
+      json: {"error":"invalid_client"}

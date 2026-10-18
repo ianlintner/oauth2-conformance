@@ -1,0 +1,14 @@
+id: token-lifecycle.jwt.metadata-response-types
+title: "Server metadata lists response_types_supported including code"
+requirements: ["RFC8414-2-response-types-supported"]
+profile: token-lifecycle
+status: draft
+note: "DRAFT: needs an array-contains matcher; array comparison is exact today, so this pins the reference SUT list [code, \"code id_token\"] and would fail an otherwise conforming server."
+steps:
+  - id: metadata
+    request:
+      method: GET
+      path: /.well-known/oauth-authorization-server
+    expect:
+      status: 200
+      json: {"response_types_supported":["code","code id_token"]}

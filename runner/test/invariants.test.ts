@@ -36,7 +36,7 @@ test('invariant catalog is nonempty and well-formed', () => {
   assert.ok(invariants.length > 0, 'invariants/ must contain at least one invariant');
   for (const inv of invariants) {
     assert.match(inv.id, /^INV-[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+$/, `bad invariant id ${inv.id}`);
-    assert.equal(inv.profile, 'core');
+    assert.ok(inv.profile === 'core' || inv.profile === 'token-lifecycle', `unknown invariant profile ${inv.profile}`);
     assert.ok(requirementIds.has(inv.requirement), `invariant ${inv.id} cites unknown requirement ${inv.requirement}`);
   }
 });

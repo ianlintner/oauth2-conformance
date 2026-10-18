@@ -1,0 +1,14 @@
+id: token-lifecycle.jwt.verifiable-with-jwks
+title: "The JWK Set served at jwks_uri is a keys array that verifies issued JWT access tokens"
+requirements: ["RFC9068-4-verifiable-with-jwks","RFC7517-5-jwks-keys-array"]
+profile: token-lifecycle
+status: draft
+note: "INV-JWT-VERIFIABLE-WITH-JWKS. DRAFT: needs a runner array-nonempty matcher and JWT signature verification; the reference SUT currently serves {\"keys\":[]} while signing with HS256, so this fails against it."
+steps:
+  - id: jwks
+    request:
+      method: GET
+      path: /.well-known/jwks.json
+    expect:
+      status: 200
+      json: {"keys":[{"kty":"RSA"}]}
