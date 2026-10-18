@@ -1,0 +1,16 @@
+id: token-lifecycle.client-credentials.no-refresh-token
+title: "A client_credentials token response carries no refresh token"
+requirements: ["RFC6749-4.4.3-cc-no-refresh-token"]
+profile: token-lifecycle
+status: stable
+note: "INV-CC-NO-REFRESH-TOKEN: a client_credentials response carries no refresh token. The $absent matcher (added in part 3/3) asserts absence for the first time; previously this requirement could not be asserted."
+steps:
+  - id: token
+    request:
+      method: POST
+      path: /oauth/token
+      headers: {"authorization":"Basic Y2xpZW50LWNjOnRlc3Qtb25seS1jYy1zZWNyZXQ="}
+      form: {"grant_type":"client_credentials"}
+    expect:
+      status: 200
+      json: {"access_token":"x","token_type":"Bearer","refresh_token":{"$absent":true}}

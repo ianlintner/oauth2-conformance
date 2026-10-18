@@ -154,10 +154,10 @@ export async function runScenarios(scenarios: Scenario[], options: RunOptions): 
         steps += 1;
 
         if (step.expect !== undefined) {
-          diffs.push(...compareResponse(step.expect, actual).map((diff) => ({ ...diff, path: `${step.id}.${diff.path}` })));
+          diffs.push(...compareResponse(step.expect, actual, scope).map((diff) => ({ ...diff, path: `${step.id}.${diff.path}` })));
         }
         for (const [name, expression] of Object.entries(step.capture ?? {})) {
-          const value = captureValue(expression, actual);
+          const value = captureValue(expression, actual, scope);
           if (value === undefined) {
             diffs.push({ path: `${step.id}.capture.${name}`, expected: expression, actual: undefined, reason: 'capture expression found no value' });
           } else {

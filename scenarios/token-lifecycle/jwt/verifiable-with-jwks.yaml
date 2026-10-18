@@ -1,9 +1,9 @@
 id: token-lifecycle.jwt.verifiable-with-jwks
-title: "The JWK Set served at jwks_uri is a keys array that verifies issued JWT access tokens"
+title: "The JWK Set served at jwks_uri is a non-empty keys array that verifies issued JWT access tokens"
 requirements: ["RFC9068-4-verifiable-with-jwks","RFC7517-5-jwks-keys-array"]
 profile: token-lifecycle
-status: draft
-note: "INV-JWT-VERIFIABLE-WITH-JWKS. DRAFT: needs a runner array-nonempty matcher and JWT signature verification; the reference SUT currently serves {\"keys\":[]} while signing with HS256, so this fails against it."
+status: reference-deviation
+note: "INV-JWT-VERIFIABLE-WITH-JWKS. The reference serves an empty key set at /.well-known/jwks.json ({\"keys\":[]}) and signs with HS256, so RFC9068-4-verifiable-with-jwks (MUST: the token verifies against a published key) is not observed. RFC wins over the reference. The runner now asserts with $nonempty that keys is a non-empty array, but it cannot perform signature verification (a crypto/SUT concern), so full verification stays deferred. Recorded as a reference-deviation."
 steps:
   - id: jwks
     request:
@@ -11,4 +11,4 @@ steps:
       path: /.well-known/jwks.json
     expect:
       status: 200
-      json: {"keys":[{"kty":"RSA"}]}
+      json: {"keys":{"$nonempty":true}}

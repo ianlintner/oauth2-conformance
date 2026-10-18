@@ -1,13 +1,25 @@
-# token-lifecycle coverage (contract v0.2, part 2/3)
+# token-lifecycle coverage (contract v0.2, part 3/3)
 
 Scenarios live in `scenarios/token-lifecycle/`, invariants in
 `invariants/token-lifecycle.yaml`. Every scenario cites requirement ids from
-`requirements/*-token-lifecycle.yaml` and the other v0.2 catalogs. Only runner
-features that exist today are used; whatever a scenario needs beyond that is
-listed below and the scenario is `draft`.
+`requirements/*-token-lifecycle.yaml` and the other v0.2 catalogs.
 
-Measured against the Rust reference SUT: 25 stable scenarios pass, 4 are
-deferred (3 reference-deviation, 1 draft that also fails), 0 fail.
+Measured against the Rust reference SUT: 25 stable scenarios pass, 6 are
+`reference-deviation` (RFC wins over Rust), 0 fail.
+
+## Runner extensions added in part 3/3
+
+The four runner features this part scoped are implemented and unit-tested
+(`runner/test/matchers.test.ts`) plus the schema/validation plumbing:
+
+- JWT header/payload captures — `capture: <name>: jwt.<var>.<header|payload>.<field>`
+  decodes a previously-captured JWT and extracts a claim or header field.
+- `$contains` matcher — asserts an array member contains a value.
+- `$nonempty` matcher — asserts an array member is non-empty.
+- `$absent` matcher — asserts a member is absent (the first absence assertion).
+- `{{var}}` interpolation inside `expect.json` / `expect.headers` string values,
+  so a decoded claim (e.g. `jwt.at.payload.iss`) can be compared against a
+  response-observable field (e.g. the metadata `issuer`).
 
 ## Reference deviations (RFC wins over Rust)
 
@@ -20,22 +32,11 @@ basis, not the SUT behavior, is what the scenario asserts.
 | token-lifecycle.refresh.no-client-authentication | RFC6749-6-refresh-client-authentication (MUST) | RFC 6749 6: a confidential client authenticates on refresh. | 200 and the token rotates with no authentication. A real defect. |
 | token-lifecycle.client-credentials.no-client-auth | RFC6749-4.4.2-cc-client-authenticates (MUST) | RFC 6749 5.2: missing client authentication is invalid_client (401). | 400 invalid_request. |
 | token-lifecycle.revocation.refresh-cascades-to-access | RFC7009-2.1-refresh-revocation-cascades (SHOULD) | RFC 7009 2.1: SHOULD invalidate access tokens of the same grant. | Access token stays active. |
+| token-lifecycle.jwt.header-typ-and-signature | RFC9068-2.1-jwt-signed, -jwt-alg-none, -typ-header, -rs256-supported | RFC 9068 2.1: the token is signed, `typ` is `at+jwt`, `alg` is not `none`, and RS256 is included. | Signs HS256, so RS256 support is not observed. |
+| token-lifecycle.jwt.verifiable-with-jwks | RFC9068-4-verifiable-with-jwks, RFC7517-5-jwks-keys-array | RFC 9068 4 / RFC 7517 5: the token verifies against a key at `jwks_uri`, whose document is a keys array. | Serves `{"keys":[]}` while signing, so no token verifies against it. |
 
 `RFC6749-4.4.2` and `RFC6749-6-refresh-client-authentication` stay covered by
 stable wrong-secret scenarios; only the missing-credentials variants deviate.
-
-## Draft scenarios (runner or SUT feature missing)
-
-| Scenario | Requirements | Missing feature |
-|---|---|---|
-| token-lifecycle.jwt.claims-match-metadata | RFC9068-2.2-required-claims, RFC9068-4-iss-matches-metadata | Runner capture that decodes a JWT payload (e.g. `jwt.payload.iss`). The draft approximates through introspection, which proves the server's view, not the token's own claims. |
-| token-lifecycle.jwt.header-typ-and-signature | RFC9068-2.1-jwt-signed, -jwt-alg-none, -typ-header, -rs256-supported | JWT header decode capture, plus an array-contains matcher for the RS256 requirement. The SUT signs HS256 with typ `at+JWT`; the draft only issues a token. |
-| token-lifecycle.jwt.verifiable-with-jwks | RFC9068-4-verifiable-with-jwks, RFC7517-5-jwks-keys-array | Array-nonempty matcher and JWT signature verification. SUT gap too: it serves `{"keys":[]}` while signing, so this fails today. |
-| token-lifecycle.jwt.metadata-response-types | RFC8414-2-response-types-supported | Array-contains matcher. Array comparison is exact, so the draft pins the SUT list and would fail a conforming server. |
-
-Part 3/3 should add: JWT header/payload captures, array-contains and
-array-nonempty matchers, and an absent-member assertion (also needed for the
-two SHOULD NOT invariants below).
 
 ## MUST / MUST NOT requirements with no scenario
 
@@ -48,19 +49,23 @@ two SHOULD NOT invariants below).
 
 | Requirement | Level | Reason |
 |---|---|---|
-| RFC6749-4.4.3-cc-no-refresh-token | SHOULD NOT | Runner can assert presence, not absence, of a member. Invariant INV-CC-NO-REFRESH-TOKEN records it. |
-| RFC7662-2.2-inactive-no-detail | SHOULD NOT | Same absence-assertion gap. Invariant INV-INTROSPECT-NO-LEAK-INACTIVE records it. |
 | RFC7009-2.1-access-revocation-may-cascade | MAY | Optional behavior. |
-| RFC8414-2-grant-types-supported, -token-endpoint-auth-methods | MAY | Optional metadata; array-contains matcher missing anyway. |
-| RFC9068-2.2.3-scope-claim, RFC9068-3-aud-matches-resource | SHOULD | Need JWT payload decode (see drafts). |
+| RFC8414-2-grant-types-supported, -token-endpoint-auth-methods | MAY | Optional metadata. |
+| RFC9068-2.2.3-scope-claim, RFC9068-3-aud-matches-resource | SHOULD | Need JWT payload decode against a granted scope/resource; the token's own `scope`/`aud` claims are captured but not yet asserted inline. |
 | RFC7517-4.5-jwks-distinct-kid, -jwks-rollover-overlap | SHOULD / MAY | Need a populated JWKS and key rotation control. |
 | RFC6749-1.4-opaque-access-token | MAY | The SUT issues JWTs; opaque mode is not a SUT option. |
 | RFC9700-4.14.2-refresh-inactivity-expiry | SHOULD | Needs controllable clock. |
 | RFC9700-4.14.2-refresh-revoked-on-security-event | MAY | No SUT security-event trigger. |
 | RFC7523-3-client-assertion-* | MAY | No private_key_jwt client in the seed. |
 
+`RFC6749-4.4.3-cc-no-refresh-token` and `RFC7662-2.2-inactive-no-detail` (both
+SHOULD NOT) are now asserted with the `$absent` matcher in stable scenarios
+(`client-credentials/no-refresh-token.yaml` and
+`introspection/inactive-no-detail.yaml`) and are no longer uncovered.
+
 ## Invariants
 
 `invariants/token-lifecycle.yaml` names 12 invariants, each against one
-requirement. Like the core catalog they are declarative until part 3/3 wires
-them into trace checks; scenario notes cite them by id.
+requirement. Like the core catalog they are declarative; the runner has no
+trace layer yet, so invariants are cited by scenario notes rather than wired
+into trace checks (a future architecture-layer task).

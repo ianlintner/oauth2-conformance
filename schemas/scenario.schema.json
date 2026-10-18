@@ -62,7 +62,7 @@
           "propertyNames": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$" },
           "additionalProperties": {
             "type": "string",
-            "pattern": "^(?:redirect\\.(?:query|fragment)|body|header)\\.[^\\s]+$"
+            "pattern": "^(?:redirect\\.(?:query|fragment)|body|header|jwt\\.[A-Za-z_][A-Za-z0-9_]*\\.(?:header|payload))\\.[^\\s]+$"
           }
         }
       },

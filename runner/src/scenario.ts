@@ -140,8 +140,8 @@ function parseCapture(input: unknown, label: string): Record<string, string> {
   const capture = strings(input, label);
   for (const [name, expression] of Object.entries(capture)) {
     if (!ID_PATTERN.test(name)) throw new TypeError(`${label} requires valid variable names, got ${name}`);
-    if (!/^(?:redirect\.(?:query|fragment)|body|header)\.[^\s]+$/.test(expression)) {
-      throw new TypeError(`${label}.${name} must select redirect.query.*, redirect.fragment.*, body.* or header.*`);
+    if (!/^(?:redirect\.(?:query|fragment)|body|header|jwt\.[A-Za-z_][A-Za-z0-9_]*\.(?:header|payload))\.[^\s]+$/.test(expression)) {
+      throw new TypeError(`${label}.${name} must select redirect.query.*, redirect.fragment.*, body.*, header.* or jwt.<var>.<header|payload>.*`);
     }
   }
   return capture;
@@ -200,7 +200,7 @@ export function parseScenario(input: unknown): Scenario {
 }
 
 /** Resolve `{{name}}` (and `{{a.b}}`) references against a capture scope. */
-export function interpolate(value: string, scope: Map<string, string>, onMissing?: (name: string) => string): string {
+export function interpolate(value: string, scope: { get(name: string): string | undefined }, onMissing?: (name: string) => string): string {
   return value.replace(VAR_PATTERN, (_match, name: string) => {
     const found = scope.get(name);
     if (found !== undefined) return found;
