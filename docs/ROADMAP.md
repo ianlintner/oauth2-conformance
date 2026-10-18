@@ -22,7 +22,7 @@ Out of contract scope (implementation choices, not wire behavior): storage engin
 ## Flow per milestone
 
 1. **Contract card** writes requirements (stable IDs, MUST/SHOULD, clause links), scenarios and invariants for the profile, extends the runner/SUT interface only as needed, and validates against Rust and Python. Scenarios that fail on the reference are either a contract bug or a recorded `reference-deviation` with a Rust fix card.
-2. When the profile's scenarios are `stable` on `main`, ports may pin that contract **commit** in `conformance.yaml` and start; they do not wait for a tagged release. Tagged releases (OCI image, Action, npm) are cut at milestone boundaries with owner approval.
+2. When the profile's scenarios are `stable` on `main`, ports may pin that contract **commit** in `conformance.yaml` and start; they do not wait for a tagged release. `contract:` is either a tagged semver (`0.1.0`) or, before that tag exists, the full 40-hex commit SHA on `main` (see `examples/conformance-commit.yaml`). Tagged releases (OCI image, Action, npm) are cut at milestone boundaries with owner approval.
 3. **Port cards** (one per implementation per milestone) add the profile to `conformance.yaml` claims and make it pass in CI, or record a reviewed deviation with an `until` milestone. Ports that lack the feature implement it; ports that have it fix whatever the contract finds.
 4. A milestone closes when all four implementations claim the profile in CI on `main`.
 

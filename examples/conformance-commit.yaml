@@ -1,0 +1,8 @@
+# Pinned to an unreleased contract commit on main (ROADMAP.md flow step 2),
+# before a tagged release exists. The full 40-character lowercase commit SHA
+# is unambiguous against the semver form; replace it with the tagged version
+# once the milestone releases.
+implementation: example-server
+contract: 8d8efaeb40ae947f05630b74bae4958fc3f2c476
+profiles: [core]
+endpoint: http://localhost:8080
