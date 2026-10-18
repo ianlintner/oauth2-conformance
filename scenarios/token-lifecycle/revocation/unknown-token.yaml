@@ -1,0 +1,14 @@
+id: token-lifecycle.revocation.unknown-token
+title: "Revoking an unknown token still returns 200"
+requirements: ["RFC7009-2.2-invalid-token-200"]
+profile: token-lifecycle
+status: stable
+steps:
+  - id: revoke
+    request:
+      method: POST
+      path: /oauth/revoke
+      headers: {"authorization":"Basic Y2xpZW50LWE6dGVzdC1vbmx5LXNlY3JldA=="}
+      form: {"token":"not-a-real-token"}
+    expect:
+      status: 200

@@ -1,0 +1,15 @@
+id: token-lifecycle.refresh.unknown-token
+title: "An unknown refresh token is rejected invalid_grant"
+requirements: ["RFC6749-5.2-refresh-invalid-grant"]
+profile: token-lifecycle
+status: stable
+steps:
+  - id: unknown
+    request:
+      method: POST
+      path: /oauth/token
+      headers: {"authorization":"Basic Y2xpZW50LWE6dGVzdC1vbmx5LXNlY3JldA=="}
+      form: {"grant_type":"refresh_token","refresh_token":"not-a-real-refresh-token"}
+    expect:
+      status: 400
+      json: {"error":"invalid_grant"}

@@ -1,0 +1,58 @@
+id: token-lifecycle.refresh.issues-and-rotates
+title: "A refresh grant issues a new access and refresh token whose scope equals the original, twice in a chain"
+requirements: ["RFC6749-6-refresh-issues-access-token","RFC6749-6-refresh-omitted-scope-original","RFC6749-6-refresh-rotated-scope-identical"]
+profile: token-lifecycle
+status: stable
+note: "The second refresh uses the rotated token and omits scope, so a scope of read proves the rotated refresh token carries the original scope."
+steps:
+  - id: auth
+    use: login-and-authorize
+    with:
+      username: alice
+      password: test-only-password
+      loginPath: /auth/login
+      authorizePath: /oauth/authorize
+      query:
+        response_type: code
+        client_id: client-a
+        redirect_uri: https://client.example/callback
+        state: s-gen
+        scope: read
+        code_challenge: E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM
+        code_challenge_method: S256
+    expect:
+      status: 302
+    capture:
+      code: redirect.query.code
+  - id: exchange
+    request:
+      method: POST
+      path: /oauth/token
+      headers: {"authorization":"Basic Y2xpZW50LWE6dGVzdC1vbmx5LXNlY3JldA=="}
+      form: {"grant_type":"authorization_code","code":"{{code}}","redirect_uri":"https://client.example/callback","code_verifier":"dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"}
+    expect:
+      status: 200
+      json: {"access_token":"x","refresh_token":"x","token_type":"Bearer"}
+    capture:
+      at: body.access_token
+      rt: body.refresh_token
+  - id: refresh1
+    request:
+      method: POST
+      path: /oauth/token
+      headers: {"authorization":"Basic Y2xpZW50LWE6dGVzdC1vbmx5LXNlY3JldA=="}
+      form: {"grant_type":"refresh_token","refresh_token":"{{rt}}"}
+    expect:
+      status: 200
+      json: {"access_token":"x","refresh_token":"x","token_type":"Bearer","scope":"read"}
+    capture:
+      rt2: body.refresh_token
+  - id: refresh2
+    request:
+      method: POST
+      path: /oauth/token
+      headers: {"authorization":"Basic Y2xpZW50LWE6dGVzdC1vbmx5LXNlY3JldA=="}
+      form: {"grant_type":"refresh_token","refresh_token":"{{rt2}}"}
+    expect:
+      status: 200
+      json: {"access_token":"x","token_type":"Bearer","scope":"read"}

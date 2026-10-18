@@ -1,0 +1,16 @@
+id: token-lifecycle.client-credentials.issues-token
+title: "An authenticated client_credentials request yields an access token response"
+requirements: ["RFC6749-4.4.3-cc-issues-access-token"]
+profile: token-lifecycle
+status: stable
+note: "INV-CC-NO-REFRESH-TOKEN is not asserted here: the runner can only assert presence, not absence (see docs/token-lifecycle-coverage.md)."
+steps:
+  - id: token
+    request:
+      method: POST
+      path: /oauth/token
+      headers: {"authorization":"Basic Y2xpZW50LWNjOnRlc3Qtb25seS1jYy1zZWNyZXQ="}
+      form: {"grant_type":"client_credentials"}
+    expect:
+      status: 200
+      json: {"access_token":"x","token_type":"Bearer"}

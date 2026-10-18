@@ -1,0 +1,14 @@
+id: token-lifecycle.bearer.missing-token
+title: "A protected-resource request without credentials gets 401 and a bare Bearer challenge"
+requirements: ["RFC6750-3-missing-token-challenge","RFC6750-3-challenge-scheme-bearer","RFC6750-3-realm-at-most-once"]
+profile: token-lifecycle
+status: stable
+note: "INV-BEARER-CHALLENGE. The exact header value Bearer also shows the challenge has no realm param."
+steps:
+  - id: userinfo
+    request:
+      method: GET
+      path: /oauth/userinfo
+    expect:
+      status: 401
+      headers: {"www-authenticate":"Bearer"}

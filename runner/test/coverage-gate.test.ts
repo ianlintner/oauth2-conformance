@@ -35,6 +35,7 @@ const scenarios = await loadScenarios(path.join(repoRoot, 'scenarios'));
 const profiles = await loadProfiles(path.join(repoRoot, 'profiles'));
 const report = buildCoverage(requirements, scenarios, profiles, 'core');
 const hardeningReport = buildCoverage(requirements, scenarios, profiles, 'hardening');
+const tokenLifecycleReport = buildCoverage(requirements, scenarios, profiles, 'token-lifecycle');
 
 const native = (id: string) => {
   const s = scenarios.find((scenario) => scenario.id === id);
@@ -75,6 +76,29 @@ test('every core MUST-NOT and MUST requirement is covered, provisional, or docum
     const hasAny = !uncovered.has(req.id) || provisional.has(req.id) || documented.has(req.id);
     assert.ok(hasAny, `core ${req.level} requirement ${req.id} has no scenario and no documented reason`);
   }
+});
+
+test('every token-lifecycle MUST and MUST NOT requirement is covered, provisional, or documented', () => {
+  // The documented set is the two owner-gated runtime gaps in
+  // docs/token-lifecycle-coverage.md ("MUST / MUST NOT requirements with no
+  // scenario"). Everything else at MUST / MUST NOT must have at least a
+  // stable or draft scenario.
+  const documented = new Set([
+    'RFC7662-4-expiry-checked',
+    'RFC9700-2.2.2-public-refresh-rotated-or-bound',
+  ]);
+  const uncovered = new Set(tokenLifecycleReport.uncovered);
+  const provisional = new Set(tokenLifecycleReport.provisional);
+  for (const req of requirements.filter((r) => r.profile === 'token-lifecycle')) {
+    if (req.level !== 'MUST' && req.level !== 'MUST NOT') continue;
+    const hasAny = !uncovered.has(req.id) || provisional.has(req.id) || documented.has(req.id);
+    assert.ok(hasAny, `token-lifecycle ${req.level} requirement ${req.id} has no scenario and no documented reason`);
+  }
+});
+
+test('token-lifecycle profile has no dangling/unknown references', () => {
+  assert.equal(tokenLifecycleReport.unknownProfiles.length, 0, `unknown scenario profiles: ${tokenLifecycleReport.unknownProfiles.join(', ')}`);
+  assert.equal(tokenLifecycleReport.dangling.length, 0, `dangling scenario requirements: ${tokenLifecycleReport.dangling.join(', ')}`);
 });
 
 test('hardening profile leaves no requirement without a scenario, including wrong-redirect-uri', () => {

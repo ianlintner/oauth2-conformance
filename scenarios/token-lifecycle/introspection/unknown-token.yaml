@@ -1,0 +1,16 @@
+id: token-lifecycle.introspection.unknown-token
+title: "An unknown token introspects as active false"
+requirements: ["RFC7662-2.2-inactive-false"]
+profile: token-lifecycle
+status: stable
+note: "INV-INTROSPECT-NO-LEAK-INACTIVE is not asserted: the runner cannot assert absence of members."
+steps:
+  - id: introspect
+    request:
+      method: POST
+      path: /oauth/introspect
+      headers: {"authorization":"Basic Y2xpZW50LWE6dGVzdC1vbmx5LXNlY3JldA=="}
+      form: {"token":"not-a-real-token"}
+    expect:
+      status: 200
+      json: {"active":false}
