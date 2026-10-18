@@ -1,0 +1,154 @@
+# OpenID Connect Core 1.0 requirements for the oidc-basic profile.
+# Source material: rust-oauth2-server tests/compliance_oidc_core.rs and the
+# OIDC-specific tests in tests/rfc_compliance.rs (compliance_oidc_core,
+# rfc_compliance). Summaries are one line each; the clause link is canonical.
+- id: OIDC-3.1.3.1-id-token-on-openid-scope
+  spec: "OpenID Connect Core 1.0"
+  clause: "3.1.3.1"
+  level: MUST
+  profile: oidc-basic
+  summary: "An authorization code exchange whose granted scope includes openid returns an id_token in the token response."
+  link: https://openid.net/specs/openid-connect-core-1_0.html#TokenResponse
+- id: OIDC-3.1.3.1-no-id-token-without-openid-scope
+  spec: "OpenID Connect Core 1.0"
+  clause: "3.1.3.1"
+  level: MUST NOT
+  profile: oidc-basic
+  summary: "A code exchange whose granted scope omits openid returns no id_token member in the token response."
+  link: https://openid.net/specs/openid-connect-core-1_0.html#TokenResponse
+  notes: "OIDC Core 2 defines an OpenID Connect flow as one where openid is present in scope; a plain OAuth 2.0 authorization code response has no id_token."
+- id: OIDC-2-id-token-compact-jwt
+  spec: "OpenID Connect Core 1.0"
+  clause: "2"
+  level: MUST
+  profile: oidc-basic
+  summary: "The id_token is a JWT with exactly three dot-separated segments (header.payload.signature)."
+  link: https://openid.net/specs/openid-connect-core-1_0.html#IDToken
+- id: OIDC-2-id-token-sub
+  spec: "OpenID Connect Core 1.0"
+  clause: "2"
+  level: MUST
+  profile: oidc-basic
+  summary: "The id_token carries a non-empty sub claim identifying the authenticated end-user."
+  link: https://openid.net/specs/openid-connect-core-1_0.html#IDToken
+- id: OIDC-2-id-token-iss
+  spec: "OpenID Connect Core 1.0"
+  clause: "2"
+  level: MUST
+  profile: oidc-basic
+  summary: "The id_token iss claim is present and exactly matches the server's configured issuer identifier."
+  link: https://openid.net/specs/openid-connect-core-1_0.html#IDToken
+- id: OIDC-2-id-token-aud
+  spec: "OpenID Connect Core 1.0"
+  clause: "2"
+  level: MUST
+  profile: oidc-basic
+  summary: "The id_token aud claim contains the client_id of the relying party that requested it, as a string or array."
+  link: https://openid.net/specs/openid-connect-core-1_0.html#IDToken
+- id: OIDC-2-id-token-iat-exp
+  spec: "OpenID Connect Core 1.0"
+  clause: "2"
+  level: MUST
+  profile: oidc-basic
+  summary: "The id_token carries numeric iat and exp claims with exp strictly after iat."
+  link: https://openid.net/specs/openid-connect-core-1_0.html#IDToken
+- id: OIDC-3.1.2.1-nonce-echoed
+  spec: "OpenID Connect Core 1.0"
+  clause: "3.1.2.1"
+  level: MUST
+  profile: oidc-basic
+  summary: "A nonce supplied in the authorization request appears verbatim as the id_token nonce claim."
+  link: https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest
+- id: OIDC-3.1.2.1-prompt-none-login-required
+  spec: "OpenID Connect Core 1.0"
+  clause: "3.1.2.1"
+  level: MUST
+  profile: oidc-basic
+  summary: "prompt=none with no active session redirects back with error=login_required and the request state preserved."
+  link: https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest
+  notes: "The reference test also expects iss in the error redirect; that comes from RFC9207-2-iss-on-error (core profile), not OIDC Core."
+- id: OIDC-3.1.2.1-prompt-login-reauthenticates
+  spec: "OpenID Connect Core 1.0"
+  clause: "3.1.2.1"
+  level: MUST
+  profile: oidc-basic
+  summary: "prompt=login forces fresh end-user re-authentication even when an active session exists."
+  link: https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest
+- id: OIDC-3.1.2.1-max-age-reauthenticates
+  spec: "OpenID Connect Core 1.0"
+  clause: "3.1.2.1"
+  level: MUST
+  profile: oidc-basic
+  summary: "max_age=0 forces re-authentication when the session holds no auth_time or an auth_time that is not fresh."
+  link: https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest
+  notes: "OIDC Core requires re-authentication when the elapsed time exceeds max_age; the reference test treats a session without auth_time as stale."
+- id: OIDC-3.1.2.1-auth-time-claim
+  spec: "OpenID Connect Core 1.0"
+  clause: "3.1.2.1"
+  level: MUST
+  profile: oidc-basic
+  summary: "When max_age is requested the id_token includes an auth_time claim holding the end-user authentication time."
+  link: https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest
+  notes: "Sourced from OIDC Core 3.1.2.1 text, not yet measured by a reference test; proven only once a v0.3 scenario exists. auth_time is RECOMMENDED in 2."
+- id: OIDC-5.3-userinfo-sub
+  spec: "OpenID Connect Core 1.0"
+  clause: "5.3"
+  level: MUST
+  profile: oidc-basic
+  summary: "A UserInfo request carrying a valid bearer access token returns 200 with a JSON body whose sub matches the id_token subject."
+  link: https://openid.net/specs/openid-connect-core-1_0.html#UserInfo
+- id: OIDC-5.3-userinfo-missing-token-401
+  spec: "OpenID Connect Core 1.0"
+  clause: "5.3"
+  level: MUST
+  profile: oidc-basic
+  summary: "A UserInfo request without an access token returns 401 with a WWW-Authenticate header naming the Bearer scheme."
+  link: https://openid.net/specs/openid-connect-core-1_0.html#UserInfo
+- id: OIDC-5.4-userinfo-email-scope
+  spec: "OpenID Connect Core 1.0"
+  clause: "5.4"
+  level: MUST
+  profile: oidc-basic
+  summary: "UserInfo returns the email claim when the access token carries the email scope."
+  link: https://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims
+  notes: "Scope-driven claims are defined in OIDC Core 5.4; the reference test labels this a MUST for the oidc-basic profile."
+- id: OIDC-5.4-userinfo-profile-scope
+  spec: "OpenID Connect Core 1.0"
+  clause: "5.4"
+  level: MUST
+  profile: oidc-basic
+  summary: "UserInfo returns profile claims such as preferred_username when the access token carries the profile scope."
+  link: https://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims
+  notes: "Scope-driven claims are defined in OIDC Core 5.4; the reference test labels this a MUST for the oidc-basic profile."
+- id: OIDC-5.4-id-token-scope-claims
+  spec: "OpenID Connect Core 1.0"
+  clause: "5.4"
+  level: SHOULD
+  profile: oidc-basic
+  summary: "The id_token also carries scope-derived claims such as email and preferred_username when those scopes were granted."
+  link: https://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims
+  notes: "OIDC Core 5.4 makes these claims available to the id_token but does not require them; the reference test labels this a SHOULD."
+- id: OIDC-5.3-userinfo-rejects-client-credentials-token
+  spec: "OpenID Connect Core 1.0"
+  clause: "5.3"
+  level: MAY
+  profile: oidc-basic
+  summary: "A UserInfo request authenticated with a client credentials token, which represents no end-user, is rejected with 401."
+  link: https://openid.net/specs/openid-connect-core-1_0.html#UserInfo
+  notes: "Local profile policy: OIDC Core 5.3 requires an access token obtained through end-user authorization, which a client credentials token is not; the 401 rather than a 403 or an empty body is this contract's choice."
+- id: OIDCDISC-3-userinfo-endpoint
+  spec: "OpenID Connect Discovery 1.0"
+  clause: "3"
+  level: SHOULD
+  profile: oidc-basic
+  summary: "A server that offers a UserInfo endpoint publishes its URL as userinfo_endpoint in the provider metadata."
+  link: https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata
+  notes: "RECOMMENDED in discovery. Already catalogued for the token-lifecycle profile in requirements/rfc8414.yaml; listed here so the oidc-basic profile is self-contained."
+- id: RPINIT-3-logout-id-token-hint-aud
+  spec: "OpenID Connect RP-Initiated Logout 1.0"
+  clause: "3"
+  level: MUST
+  profile: oidc-basic
+  summary: "The logout endpoint rejects an id_token_hint whose aud names no client registered with this issuer."
+  link: https://openid.net/specs/openid-connect-rpinitiated-1_0.html#RPLogout
+  notes: "The reference test expects HTTP 400 with error=invalid_request for this case."

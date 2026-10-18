@@ -1,0 +1,24 @@
+id: oidc-basic
+title: OpenID Connect basic relying-party support
+description: v0.3 oidc profile. OpenID Connect Core 1.0 ID token issuance and claims, nonce, prompt/max_age request parameters, the UserInfo endpoint behind a bearer token, scope-derived claims, OIDC Discovery provider metadata, and RP-initiated logout hint validation (contract v0.3, requirements only).
+requirements:
+  - OIDC-3.1.3.1-id-token-on-openid-scope
+  - OIDC-3.1.3.1-no-id-token-without-openid-scope
+  - OIDC-2-id-token-compact-jwt
+  - OIDC-2-id-token-sub
+  - OIDC-2-id-token-iss
+  - OIDC-2-id-token-aud
+  - OIDC-2-id-token-iat-exp
+  - OIDC-3.1.2.1-nonce-echoed
+  - OIDC-3.1.2.1-prompt-none-login-required
+  - OIDC-3.1.2.1-prompt-login-reauthenticates
+  - OIDC-3.1.2.1-max-age-reauthenticates
+  - OIDC-3.1.2.1-auth-time-claim
+  - OIDC-5.3-userinfo-sub
+  - OIDC-5.3-userinfo-missing-token-401
+  - OIDC-5.4-userinfo-email-scope
+  - OIDC-5.4-userinfo-profile-scope
+  - OIDC-5.4-id-token-scope-claims
+  - OIDC-5.3-userinfo-rejects-client-credentials-token
+  - OIDCDISC-3-userinfo-endpoint
+  - RPINIT-3-logout-id-token-hint-aud
