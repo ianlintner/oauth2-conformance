@@ -2,7 +2,7 @@ id: core.token.code-wrong-client-auth
 title: A code exchange with wrong client authentication is rejected invalid_client
 requirements: [RFC6749-4.1.3-invalid-client]
 profile: core
-status: draft
+status: stable
 note: |
   Invariant INV-CODE-CLIENT-BINDING.
   Runner gaps (part 3/3): with.loginPath is not declared by the SUT contract.

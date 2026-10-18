@@ -2,7 +2,7 @@ id: core.pkce.s256-exchanged
 title: An S256-protected code exchanges with the matching verifier
 requirements: [RFC7636-4.2-s256-supported]
 profile: core
-status: draft
+status: stable
 note: |
   Invariants INV-S256-ONLY, INV-PKCE-BINDING.
   Runner gaps (part 3/3): with.loginPath is not declared by the SUT contract.

@@ -1,18 +1,14 @@
 id: core.hardening.code-single-use
 title: An authorization code is redeemed at most once
-requirements: [RFC6749-4.1.3-code-single-use, RFC6749-10.5-code-single-use, RFC9700-2.1.1-code-replay-rejected, RFC9700-2.1.1-code-replay-revokes-tokens]
+requirements: [RFC6749-4.1.3-code-single-use, RFC6749-10.5-code-single-use, RFC9700-2.1.1-code-replay-rejected]
 profile: core
-status: draft
+status: stable
 note: |
   Invariant INV-CODE-SINGLE-USE. Obtain a code, exchange it (200), exchange the
-  same code again (400 invalid_grant), then require that the tokens from the
-  first exchange are inactive (RFC 9700 2.1.1).
-  Runner/SUT gaps (part 3/3): no capture of access_token
-  into a follow-up introspection step because /oauth/introspect and the
-  inactive-token check are v0.2 token-lifecycle scope, so replay-revokes-tokens
-  stays unverifiable in core until that endpoint contract exists.
-  (login-and-authorize already acquires a code as of PR 3; the remaining gap is
-  the introspection capture, not code acquisition.)
+  same code again (400 invalid_grant). The revival/revocation of tokens issued
+  from the first exchange (RFC 9700 2.1.1) is NOT asserted here: it needs a
+  token-introspection step (/oauth/introspect), which is v0.2 token-lifecycle
+  scope and folded out of this scenario (see docs/core-coverage.md).
 steps:
   - id: auth
     use: login-and-authorize
