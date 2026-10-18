@@ -70,4 +70,4 @@
   profile: token-lifecycle
   summary: "A server that offers a UserInfo endpoint publishes its URL as userinfo_endpoint in the provider metadata."
   link: https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata
-  notes: "The reference test labels this a MUST; userinfo_endpoint is RECOMMENDED in the discovery spec. Full OIDC coverage belongs to the v0.3 oidc profile."
+  notes: "The reference test labels this a MUST; userinfo_endpoint is RECOMMENDED in the discovery spec. This canonical ID is shared: the oidc-basic profile (v0.3) also references it rather than carrying a distinct duplicate."

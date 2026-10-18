@@ -20,5 +20,5 @@ requirements:
   - OIDC-5.4-userinfo-profile-scope
   - OIDC-5.4-id-token-scope-claims
   - OIDC-5.3-userinfo-rejects-client-credentials-token
-  - OIDCDISC-3-userinfo-endpoint-basic
-  - RPINIT-3-logout-id-token-hint-aud
+  - OIDCDISC-3-userinfo-endpoint
+  - RPINIT-2-logout-id-token-hint-aud
