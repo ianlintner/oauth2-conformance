@@ -17,6 +17,7 @@ import { buildCoverage, renderCoverage } from './coverage.js';
 import { runScenarios, type RunReport } from './runner.js';
 import { loginAndAuthorize } from './helpers.js';
 import { validateRepository } from './schema-validate.js';
+import { parseContractRef } from './manifest.js';
 
 interface ParsedArgs {
   command: string;
@@ -123,10 +124,11 @@ async function commandCoverage(flags: Record<string, string | boolean>): Promise
 export async function commandRun(flags: Record<string, string | boolean>): Promise<number> {
   const baseUrl = stringFlag(flags, 'base-url');
   const scenarios = await loadScenarios(rootFlag(flags, 'scenarios'));
+  const contractRef = parseContractRef(stringFlag(flags, 'contract', '0.1.0'));
   const report: RunReport = await runScenarios(scenarios, {
     baseUrl,
     implementation: stringFlag(flags, 'implementation', 'system-under-test'),
-    contract: stringFlag(flags, 'contract', '0.1.0'),
+    contract: contractRef.value,
     ...(flags.profile !== undefined ? { profile: stringFlag(flags, 'profile') } : {}),
     helpers: { 'login-and-authorize': loginAndAuthorize },
   });
@@ -142,7 +144,7 @@ export async function commandRun(flags: Record<string, string | boolean>): Promi
       console.log(`  - ${diff.path}: ${diff.reason} (expected ${JSON.stringify(diff.expected)}, actual ${JSON.stringify(diff.actual)})`);
     }
   }
-  console.log(`executed=${report.executed} passed=${report.passed} failed=${report.failed} deferred=${report.deferred} verdict=${report.verdict}`);
+  console.log(`contract=${contractRef.value} (${contractRef.kind}) executed=${report.executed} passed=${report.passed} failed=${report.failed} deferred=${report.deferred} verdict=${report.verdict}`);
   return report.verdict === 'pass' ? 0 : 1;
 }
 

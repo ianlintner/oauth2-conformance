@@ -8,7 +8,11 @@
   "required": ["implementation", "contract", "profiles"],
   "properties": {
     "implementation": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-    "contract": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "contract": {
+      "type": "string",
+      "description": "The contract this implementation is pinned against: either a tagged semver release (e.g. 0.1.0) or, before that release/tag exists, a full 40-character lowercase commit SHA on main (ROADMAP.md flow step 2). The two forms are mutually unambiguous.",
+      "pattern": "^(\\d+\\.\\d+\\.\\d+|[0-9a-f]{40})$"
+    },
     "profiles": {
       "type": "array",
       "minItems": 1,
