@@ -136,14 +136,14 @@
   summary: "A UserInfo request authenticated with a client credentials token, which represents no end-user, is rejected with 401."
   link: https://openid.net/specs/openid-connect-core-1_0.html#UserInfo
   notes: "Local profile policy: OIDC Core 5.3 requires an access token obtained through end-user authorization, which a client credentials token is not; the 401 rather than a 403 or an empty body is this contract's choice."
-- id: OIDCDISC-3-userinfo-endpoint
+- id: OIDCDISC-3-userinfo-endpoint-basic
   spec: "OpenID Connect Discovery 1.0"
   clause: "3"
   level: SHOULD
   profile: oidc-basic
   summary: "A server that offers a UserInfo endpoint publishes its URL as userinfo_endpoint in the provider metadata."
   link: https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata
-  notes: "RECOMMENDED in discovery. Already catalogued for the token-lifecycle profile in requirements/rfc8414.yaml; listed here so the oidc-basic profile is self-contained."
+  notes: "RECOMMENDED in discovery. Similarly catalogued for the token-lifecycle profile as OIDCDISC-3-userinfo-endpoint in requirements/rfc8414.yaml; given a distinct ID here so the oidc-basic profile is self-contained."
 - id: RPINIT-3-logout-id-token-hint-aud
   spec: "OpenID Connect RP-Initiated Logout 1.0"
   clause: "3"
