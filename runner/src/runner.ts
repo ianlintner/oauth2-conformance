@@ -198,7 +198,7 @@ export async function runScenarios(scenarios: Scenario[], options: RunOptions): 
             }
           } else {
             // Build actual from scope keys; parse JSON/numbers.
-            for (const [key, value] of Object.entries(assertExpect.json ?? {})) {
+            for (const [key] of Object.entries(assertExpect.json ?? {})) {
               const raw = scope.get(key);
               if (raw !== undefined) {
                 const trimmed = raw.trimStart();

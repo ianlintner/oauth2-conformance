@@ -20,7 +20,7 @@
 import { NORMALIZED, normalizePayload } from './normalize.js';
 import type { ScenarioExpectation } from './scenario.js';
 import { interpolate } from './scenario.js';
-import { isAbsentMatcher, isContainsMatcher, isNonemptyMatcher, isGtMatcher, isLtMatcher, isIncludesMatcher, matcherKey } from './matchers.js';
+import { isAbsentMatcher, isContainsMatcher, isNonemptyMatcher, isGtMatcher, isLtMatcher, isIncludesMatcher } from './matchers.js';
 import { decodeJwtSegments, fieldAt } from './jwt.js';
 
 /** Minimal view of the run's captured-value scope (`Map<string, string>`). */
