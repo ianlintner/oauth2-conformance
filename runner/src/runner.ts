@@ -17,6 +17,7 @@
 import { compareResponse, captureValue, type Diff } from './compare.js';
 import { interpolate, interpolateRecord, type Scenario, type ScenarioStep } from './scenario.js';
 import { encodeForm, resolveUrl, sendRequest, type TransportOptions } from './http.js';
+import { decodeJwtSegments } from './jwt.js';
 
 export interface ScenarioResult {
   id: string;
@@ -163,6 +164,75 @@ export async function runScenarios(scenarios: Scenario[], options: RunOptions): 
           } else {
             scope.set(name, value);
           }
+        }
+        if (step.assert !== undefined) {
+          const assertExpect = step.assert;
+          let actualBody: Record<string, unknown> = {};
+
+          // Resolve source: if `jwt.<var>.payload`, decode the JWT's payload.
+          const source = step.source ?? '';
+          if (source.startsWith('jwt.')) {
+            const parts = source.split('.');
+            if (parts.length >= 3 && parts[2] === 'payload') {
+              const varName = parts[1]!;
+              const token = scope.get(varName);
+              if (token !== undefined) {
+                try {
+                  actualBody = decodeJwtSegments(token).payload as Record<string, unknown>;
+                } catch {
+                  diffs.push({
+                    path: `${step.id}.source`,
+                    expected: `jwt.${varName}.payload`,
+                    actual: undefined,
+                    reason: `failed to decode JWT from ${varName}`,
+                  });
+                }
+              } else {
+                diffs.push({
+                  path: `${step.id}.source`,
+                  expected: `jwt.${varName}.payload`,
+                  actual: undefined,
+                  reason: `variable ${varName} not in scope`,
+                });
+              }
+            }
+          } else {
+            // Build actual from scope keys; parse JSON/numbers.
+            for (const [key, value] of Object.entries(assertExpect.json ?? {})) {
+              const raw = scope.get(key);
+              if (raw !== undefined) {
+                const trimmed = raw.trimStart();
+                if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+                  try { actualBody[key] = JSON.parse(raw); } catch { actualBody[key] = raw; }
+                } else {
+                  const num = Number(raw);
+                  actualBody[key] = (!Number.isNaN(num) && String(num) === raw) ? num : raw;
+                }
+              }
+            }
+          }
+
+          const resolvedExpect: Record<string, unknown> = {};
+          for (const [key, value] of Object.entries(assertExpect.json ?? {})) {
+            resolvedExpect[key] = typeof value === 'string'
+              ? interpolate(value, scope, () => '')
+              : value;
+          }
+          const expectWithResolved = {
+            ...assertExpect,
+            json: resolvedExpect,
+          };
+          const fakeResponse: import('./compare.js').ActualResponse = {
+            status: 200,
+            headers: {},
+            body: actualBody,
+          };
+          diffs.push(
+            ...compareResponse(expectWithResolved, fakeResponse, scope).map((diff) => ({
+              ...diff,
+              path: `${step.id}.${diff.path}`,
+            })),
+          );
         }
       } catch (cause) {
         error = cause instanceof Error ? cause.message : String(cause);

@@ -27,7 +27,7 @@ export interface ScenarioRequest {
 }
 
 export interface ScenarioExpectation {
-  status: number;
+  status?: number;
   headers?: Record<string, string>;
   /** Declared top-level claims must be present and match normalized values. */
   json?: Record<string, unknown>;
@@ -50,6 +50,17 @@ export interface ScenarioStep {
   request?: ScenarioRequest;
   expect?: ScenarioExpectation;
   capture?: Record<string, string>;
+  /** Post-capture assertion: carries an `expect` block that runs against
+   *  the capture scope rather than a fresh HTTP response. String values
+   *  in the expect block resolve `{{var}}` references and parse as JSON
+   *  when they look parseable. When `source` is set to `jwt.<var>.payload`,
+   *  the JWT stored in scope variable `<var>` is decoded and its payload
+   *  becomes the assertion body. */
+  assert?: ScenarioExpectation;
+  /** Source for the assert step's actual body. `jwt.<var>.payload` decodes
+   *  the JWT at scope variable `<var>` and uses its payload. Default:
+   *  build from scope keys. */
+  source?: string;
 }
 
 export interface Scenario {
@@ -114,7 +125,8 @@ export function parseRequest(input: unknown, label: string): ScenarioRequest {
 
 export function parseExpectation(input: unknown, label: string): ScenarioExpectation {
   const expect = record(input, label);
-  if (!Number.isInteger(expect.status) || (expect.status as number) < 100 || (expect.status as number) > 599) {
+  const hasStatus = expect.status !== undefined;
+  if (hasStatus && (!Number.isInteger(expect.status) || (expect.status as number) < 100 || (expect.status as number) > 599)) {
     throw new TypeError(`${label}: expected status must be an HTTP status code`);
   }
   let redirect: ScenarioExpectation['redirect'];
@@ -128,7 +140,7 @@ export function parseExpectation(input: unknown, label: string): ScenarioExpecta
     };
   }
   return {
-    status: expect.status as number,
+    ...(hasStatus ? { status: expect.status as number } : {}),
     ...(expect.headers !== undefined ? { headers: strings(expect.headers, `${label}.headers`) } : {}),
     ...(expect.json !== undefined ? { json: record(expect.json, `${label}.json`) } : {}),
     ...(expect.jsonSchema !== undefined ? { jsonSchema: record(expect.jsonSchema, `${label}.jsonSchema`) } : {}),
@@ -155,15 +167,26 @@ function parseStep(input: unknown, index: number): ScenarioStep {
 
   if (step.use !== undefined) {
     if (step.request !== undefined) throw new TypeError(`${label} cannot carry both use and request`);
+    if (step.assert !== undefined) throw new TypeError(`${label} cannot carry both use and assert`);
     return {
       id,
       use: stringAt(step.use, `${label}.use`),
       ...(step.with !== undefined ? { with: record(step.with, `${label}.with`) } : {}),
       ...(step.expect !== undefined ? { expect: parseExpectation(step.expect, `${label}.expect`) } : {}),
       ...(step.capture !== undefined ? { capture: parseCapture(step.capture, `${label}.capture`) } : {}),
+      ...(step.assert !== undefined ? { assert: parseExpectation(step.assert, `${label}.assert`) } : {}),
+      ...(step.source !== undefined ? { source: stringAt(step.source, `${label}.source`) } : {}),
     };
   }
-  if (step.request === undefined) throw new TypeError(`${label} requires either use or request`);
+  if (step.assert !== undefined) {
+    // Assert-only step: no HTTP request, runs against capture scope.
+    return {
+      id,
+      assert: parseExpectation(step.assert, `${label}.assert`),
+      ...(step.source !== undefined ? { source: stringAt(step.source, `${label}.source`) } : {}),
+    };
+  }
+  if (step.request === undefined) throw new TypeError(`${label} requires use, assert, or request`);
   if (step.expect === undefined) throw new TypeError(`${label} with a request requires expect`);
   return {
     id,

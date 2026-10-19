@@ -6,12 +6,7 @@ status: draft
 note: |
   Invariant INV-OIDC-PROMPT-NONE-LOGIN-REQUIRED. prompt=none forbids any
   interactive login, so a request with no active session must redirect back
-  with error=login_required and the state preserved. The runner's
-  login-and-authorize helper always completes a login when it sees a
-  login-page redirect, so it cannot unambiguously express "no active session,
-  do not log in". Part 3/3 needs a no-session mode (or a state-presence
-  pre-check) before this is verifiable. The SUT's prompt=none handling in
-  conformance mode is also not yet claimed by reference/conformance.yaml.
+  with error=login_required and the state preserved.
 steps:
   - id: auth
     use: login-and-authorize
@@ -20,6 +15,7 @@ steps:
       password: test-only-password
       loginPath: /auth/login
       authorizePath: /oauth/authorize
+      session: none
       query:
         response_type: code
         client_id: client-a

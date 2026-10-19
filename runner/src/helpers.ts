@@ -49,19 +49,41 @@ export async function loginAndAuthorize(context: HelperContext): Promise<import(
   const authorizeUrl = query.size > 0 ? `${authorizePath}?${query.toString()}` : authorizePath;
 
   const loginPath = typeof context.with.loginPath === 'string' ? context.with.loginPath : '/login';
-
-  // Reuse the run's session for this user+password at this login path: SUTs
-  // rate-limit logins (the Rust reference refuses after ~8 per IP/user), so one
-  // login per user per run. The key includes the password so a scenario that
-  // logs in with bad credentials never reuses a valid session from a prior step.
   const sessionKey = `${loginPath}\u0000${username}\u0000${password}`;
-  const cachedCookie = context.sessions?.get(sessionKey);
-  if (cachedCookie !== undefined) {
-    const reused = await context.send({ method: 'GET', url: authorizeUrl, headers: { cookie: cachedCookie } });
-    const reusedLocation = reused.redirect?.location;
-    const needsLogin = reused.status >= 300 && reused.status < 400 && reusedLocation !== undefined && isLoginRedirect(reusedLocation, loginPath);
-    if (!needsLogin) return reused;
+  const sessionMode = typeof context.with.session === 'string' ? context.with.session : undefined;
+
+  // `session: none` — send no cookie and don't save a session (fresh browser).
+  if (sessionMode === 'none') {
+    return context.send({ method: 'GET', url: authorizeUrl, headers: {} });
+  }
+
+  // `session: reuse` — must have a saved session; skip the login form entirely.
+  if (sessionMode === 'reuse') {
+    const cachedCookie = context.sessions?.get(sessionKey);
+    if (cachedCookie === undefined) {
+      throw new Error('login-and-authorize: session=reuse but no saved session (did a session=create step run first?)');
+    }
+    return context.send({ method: 'GET', url: authorizeUrl, headers: { cookie: cachedCookie } });
+  }
+
+  // `session: create` — always post credentials fresh, bypassing the cache.
+  if (sessionMode === 'create') {
+    // Delete any cached session first so we force a fresh login.
     context.sessions?.delete(sessionKey);
+  }
+
+  // Default (no explicit session mode, or `session: create`): reuse cached
+  // sessions, but fall through to a fresh login when the session is stale
+  // or absent.
+  if (sessionMode === undefined) {
+    const cachedCookie = context.sessions?.get(sessionKey);
+    if (cachedCookie !== undefined) {
+      const reused = await context.send({ method: 'GET', url: authorizeUrl, headers: { cookie: cachedCookie } });
+      const reusedLocation = reused.redirect?.location;
+      const needsLogin = reused.status >= 300 && reused.status < 400 && reusedLocation !== undefined && isLoginRedirect(reusedLocation, loginPath);
+      if (!needsLogin) return reused;
+      context.sessions?.delete(sessionKey);
+    }
   }
 
   const authorize = await context.send({
@@ -108,5 +130,23 @@ export async function loginAndAuthorize(context: HelperContext): Promise<import(
     headers: {
       ...(loginCookie !== undefined ? { cookie: loginCookie } : {}),
     },
+  });
+}
+
+/**
+ * RP-initiated logout helper.
+ *
+ * `with.id_token_hint` (optional) is sent as the `id_token_hint` query parameter.
+ * Returns the logout redirect response so the scenario can assert on the redirect.
+ */
+export async function logout(context: HelperContext): Promise<import('./compare.js').ActualResponse> {
+  const params = new URLSearchParams();
+  const idTokenHint = typeof context.with.id_token_hint === 'string' ? context.with.id_token_hint : undefined;
+  if (idTokenHint !== undefined) params.set('id_token_hint', idTokenHint);
+  params.set('post_logout_redirect_uri', 'http://localhost:8080/logout-done');
+  return context.send({
+    method: 'GET',
+    url: `/logout?${params.toString()}`,
+    headers: {},
   });
 }
