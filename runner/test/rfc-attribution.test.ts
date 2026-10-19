@@ -69,6 +69,55 @@ test('RFC 9700 code replay: rejection is a MUST, token revocation is only a SHOU
   assert.match(revokes.notes ?? '', /RFC 9700 section 4\.2\.4/);
 });
 
+test('OIDC UserInfo missing-token 401 is OIDC 5.3.3 with the RFC 6750 3.1 Bearer challenge, not OIDC 5.3', () => {
+  const r = get('OIDC-5.3-userinfo-missing-token-401');
+  assert.equal(r.clause, '5.3.3');
+  assert.match(r.notes ?? '', /RFC 6750 section 3\.1/);
+  assert.doesNotMatch(r.notes ?? '', /OIDC Core 5\.3[^.]/);
+});
+
+test('OIDC email/profile scope claims are SHOULD (voluntary per 5.4, 5.3.2 MAY omit), not MUST', () => {
+  for (const id of ['OIDC-5.4-userinfo-email-scope', 'OIDC-5.4-userinfo-profile-scope']) {
+    const r = get(id);
+    assert.equal(r.level, 'SHOULD');
+    assert.match(r.notes ?? '', /5\.3\.2/);
+    assert.match(r.notes ?? '', /omit claims/);
+    assert.match(r.notes ?? '', /not an RFC MUST/);
+  }
+});
+
+test('OIDC prompt=login re-authentication is a SHOULD (3.1.2.1), not a MUST', () => {
+  const r = get('OIDC-3.1.2.1-prompt-login-reauthenticates');
+  assert.equal(r.level, 'SHOULD');
+  assert.match(r.notes ?? '', /SHOULD/);
+  assert.match(r.notes ?? '', /profile strictness/);
+});
+
+test('OIDC ID Token compact form is a JWS-signed JWT, not a bare compact JWT', () => {
+  const r = get('OIDC-2-id-token-compact-jwt');
+  assert.match(r.summary, /JWS-signed JWT/);
+  assert.match(r.notes ?? '', /RFC 7515/);
+});
+
+test('RP-Initiated Logout id_token_hint audience cites section 2, not 3', () => {
+  const r = get('RPINIT-2-logout-id-token-hint-aud');
+  assert.equal(r.clause, '2');
+  assert.equal(byId.has('RPINIT-3-logout-id-token-hint-aud'), false);
+});
+
+test('OIDC Discovery userinfo_endpoint has one canonical ID shared by token-lifecycle and oidc-basic, no -basic duplicate', () => {
+  assert.equal(byId.has('OIDCDISC-3-userinfo-endpoint-basic'), false);
+  get('OIDCDISC-3-userinfo-endpoint');
+  const oidc = profiles.find((p) => p.id === 'oidc-basic');
+  const lifecycle = profiles.find((p) => p.id === 'token-lifecycle');
+  assert.ok(oidc, 'oidc-basic profile must exist');
+  assert.ok(lifecycle, 'token-lifecycle profile must exist');
+  assert.ok(oidc.requirements.includes('OIDCDISC-3-userinfo-endpoint'), 'oidc-basic references the canonical discovery requirement');
+  assert.ok(lifecycle.requirements.includes('OIDCDISC-3-userinfo-endpoint'), 'token-lifecycle references the canonical discovery requirement');
+  const duplicates = requirements.filter((x) => x.spec === 'OpenID Connect Discovery 1.0' && x.clause === '3');
+  assert.equal(duplicates.length, 1, 'exactly one OIDC Discovery section 3 userinfo_endpoint requirement');
+});
+
 test('RFC 7636 4.2 plain rejection is local S256-only policy, not an RFC-imposed MUST NOT', () => {
   const r = get('RFC7636-4.2-plain-rejected');
   assert.equal(r.clause, '4.2');
