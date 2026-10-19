@@ -1,0 +1,53 @@
+# RFC 7592 requirements for the extended-grants profile.
+# Source material: rust-oauth2-server compliance_rfc8628, device_flow, compliance_wave3-6,
+# security_token_exchange_expiry. Summaries are one line each; the clause link is canonical.
+- id: RFC7592-3-reg-mgmt-uri-and-token
+  spec: "RFC 7592"
+  clause: "3"
+  level: MUST
+  profile: extended-grants
+  summary: "Registration responses from a server supporting management include registration_client_uri and registration_access_token."
+  link: https://www.rfc-editor.org/rfc/rfc7592.html#section-3
+  notes: "Defined in RFC 7592 section 3 of the client information response (REQUIRED members)."
+- id: RFC7592-2.1-reg-read
+  spec: "RFC 7592"
+  clause: "2.1"
+  level: MUST
+  profile: extended-grants
+  summary: "GET on the client configuration endpoint with a valid registration access token returns 200 and the client metadata with an unchanged client_id."
+  link: https://www.rfc-editor.org/rfc/rfc7592.html#section-2.1
+- id: RFC7592-2.1-reg-read-invalid-token
+  spec: "RFC 7592"
+  clause: "2.1"
+  level: MUST
+  profile: extended-grants
+  summary: "A read with an invalid registration access token returns an RFC 6750 error."
+  link: https://www.rfc-editor.org/rfc/rfc7592.html#section-2.1
+- id: RFC7592-2.2-reg-update-replaces
+  spec: "RFC 7592"
+  clause: "2.2"
+  level: MUST
+  profile: extended-grants
+  summary: "PUT replaces client metadata (omitted fields are cleared) and carries the unchanged client_id."
+  link: https://www.rfc-editor.org/rfc/rfc7592.html#section-2.2
+- id: RFC7592-2.2-reg-update-secret-not-overwritable
+  spec: "RFC 7592"
+  clause: "2.2"
+  level: MUST NOT
+  profile: extended-grants
+  summary: "A client update must not be allowed to overwrite the existing client secret with a client-chosen value."
+  link: https://www.rfc-editor.org/rfc/rfc7592.html#section-2.2
+- id: RFC7592-2.3-reg-delete-204
+  spec: "RFC 7592"
+  clause: "2.3"
+  level: MUST
+  profile: extended-grants
+  summary: "A successful DELETE returns 204 No Content and invalidates the client_id, client secret and registration access token."
+  link: https://www.rfc-editor.org/rfc/rfc7592.html#section-2.3
+- id: RFC7592-2.3-reg-delete-invalid-token
+  spec: "RFC 7592"
+  clause: "2.3"
+  level: MUST
+  profile: extended-grants
+  summary: "A delete with an invalid registration access token returns an RFC 6750 error."
+  link: https://www.rfc-editor.org/rfc/rfc7592.html#section-2.3

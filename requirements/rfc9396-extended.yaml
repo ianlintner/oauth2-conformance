@@ -1,0 +1,54 @@
+# RFC 9396 requirements for the extended-grants profile.
+# Source material: rust-oauth2-server compliance_rfc8628, device_flow, compliance_wave3-6,
+# security_token_exchange_expiry. Summaries are one line each; the clause link is canonical.
+- id: RFC9396-2-rar-type-required
+  spec: "RFC 9396"
+  clause: "2"
+  level: MUST
+  profile: extended-grants
+  summary: "Each authorization_details object has a string type field."
+  link: https://www.rfc-editor.org/rfc/rfc9396.html#section-2
+- id: RFC9396-5-rar-unknown-type-rejected
+  spec: "RFC 9396"
+  clause: "5"
+  level: MUST
+  profile: extended-grants
+  summary: "Unknown authorization details types are rejected with invalid_authorization_details."
+  link: https://www.rfc-editor.org/rfc/rfc9396.html#section-5
+- id: RFC9396-5-rar-invalid-fields-rejected
+  spec: "RFC 9396"
+  clause: "5"
+  level: MUST
+  profile: extended-grants
+  summary: "Authorization details with unknown fields, wrong types, invalid values or missing required fields are rejected with invalid_authorization_details."
+  link: https://www.rfc-editor.org/rfc/rfc9396.html#section-5
+- id: RFC9396-6-rar-token-request
+  spec: "RFC 9396"
+  clause: "6"
+  level: MUST
+  profile: extended-grants
+  summary: "A token request whose authorization_details are not allowed by the grant or client policy is refused with invalid_authorization_details."
+  link: https://www.rfc-editor.org/rfc/rfc9396.html#section-6
+- id: RFC9396-7-rar-token-response
+  spec: "RFC 9396"
+  clause: "7"
+  level: MUST
+  profile: extended-grants
+  summary: "The token response returns the authorization_details granted and assigned to the access token."
+  link: https://www.rfc-editor.org/rfc/rfc9396.html#section-7
+- id: RFC9396-9.2-rar-introspection
+  spec: "RFC 9396"
+  clause: "9.2"
+  level: MUST
+  profile: extended-grants
+  summary: "Introspection returns authorization_details as a top-level member using the section 2 structure."
+  link: https://www.rfc-editor.org/rfc/rfc9396.html#section-9.2
+  notes: "Applies when the AS includes authorization details in its introspection response."
+- id: RFC9396-10-rar-metadata
+  spec: "RFC 9396"
+  clause: "10"
+  level: SHOULD
+  profile: extended-grants
+  summary: "Server metadata advertises authorization_details_types_supported."
+  link: https://www.rfc-editor.org/rfc/rfc9396.html#section-10
+  notes: "Section 10 defines the metadata parameter; advertising it is expected when RAR is supported."
