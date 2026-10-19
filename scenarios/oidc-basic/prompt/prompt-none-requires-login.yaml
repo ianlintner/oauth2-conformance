@@ -1,0 +1,34 @@
+id: oidc-basic.prompt.prompt-none-requires-login
+title: prompt=none with no active session errors with login_required
+requirements: [OIDC-3.1.2.1-prompt-none-login-required]
+profile: oidc-basic
+status: draft
+note: |
+  Invariant INV-OIDC-PROMPT-NONE-LOGIN-REQUIRED. prompt=none forbids any
+  interactive login, so a request with no active session must redirect back
+  with error=login_required and the state preserved. The runner's
+  login-and-authorize helper always completes a login when it sees a
+  login-page redirect, so it cannot unambiguously express "no active session,
+  do not log in". Part 3/3 needs a no-session mode (or a state-presence
+  pre-check) before this is verifiable. The SUT's prompt=none handling in
+  conformance mode is also not yet claimed by reference/conformance.yaml.
+steps:
+  - id: auth
+    use: login-and-authorize
+    with:
+      username: alice
+      password: test-only-password
+      loginPath: /auth/login
+      authorizePath: /oauth/authorize
+      query:
+        response_type: code
+        client_id: client-a
+        redirect_uri: https://client.example/callback
+        scope: openid
+        state: s-none
+        prompt: none
+    expect:
+      status: 302
+    capture:
+      state: redirect.query.state
+      error: redirect.query.error

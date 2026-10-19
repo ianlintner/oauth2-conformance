@@ -1,0 +1,25 @@
+id: oidc-basic.logout.id-token-hint-aud
+title: RP-initiated logout rejects an id_token_hint with a foreign audience
+requirements: [RPINIT-2-logout-id-token-hint-aud]
+profile: oidc-basic
+status: draft
+note: |
+  Invariant INV-OIDC-RPINIT-HINT-AUD-REGISTERED. An id_token_hint whose aud
+  does not match a registered client must be rejected with an invalid_request
+  error. Expressing this needs an id_token_hint signed by the SUT's own
+  HS256/RS256 key but carrying an unregistered client_id as aud; the runner has
+  neither the SUT signing secret nor a mint-token-with-foreign-aud fixture, and
+  the SUT has no seed client bootstrapping a foreign-aud token. Part 3/3 must
+  expose a signed-token fixture (or the runner must sign with a SUT-provided
+  test key) before this is verifiable.
+steps:
+  - id: logout
+    request:
+      method: GET
+      path: /oauth/logout
+      query:
+        id_token_hint: "{{foreignAudIdToken}}"
+    expect:
+      status: 400
+      json:
+        error: invalid_request

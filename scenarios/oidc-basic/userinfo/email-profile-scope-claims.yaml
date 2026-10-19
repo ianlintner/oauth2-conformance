@@ -1,0 +1,60 @@
+id: oidc-basic.userinfo.email-profile-scope-claims
+title: UserInfo includes email and profile claims only for the granted scopes
+requirements:
+  - OIDC-5.4-userinfo-email-scope
+  - OIDC-5.4-userinfo-profile-scope
+profile: oidc-basic
+status: draft
+note: |
+  Invariants INV-OIDC-USERINFO-EMAIL-SCOPE, INV-OIDC-USERINFO-PROFILE-SCOPE.
+  email and preferred_username (and the standard profile claims) are scope-gated
+  in the reference SUT and appear only when a real user record exists in
+  storage. The conformance seed does not promise storage-backed user claim data,
+  so asserting claim presence is not deterministic against the contract; the
+  reference wellknown::userinfo also gates output on storage.get_user_by_id
+  succeeding. Level SHOULD in OIDC Core 5.4; oidc-basic tracks it as profile
+  strictness once the seed exposes deterministic user claims (part 3/3).
+steps:
+  - id: auth
+    use: login-and-authorize
+    with:
+      username: alice
+      password: test-only-password
+      loginPath: /auth/login
+      authorizePath: /oauth/authorize
+      query:
+        response_type: code
+        client_id: client-a
+        redirect_uri: https://client.example/callback
+        scope: openid email profile
+        state: s-scope
+        code_challenge: E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM
+        code_challenge_method: S256
+    expect:
+      status: 302
+    capture:
+      code: redirect.query.code
+  - id: token
+    request:
+      method: POST
+      path: /oauth/token
+      headers: { authorization: "Basic Y2xpZW50LWE6dGVzdC1vbmx5LXNlY3JldA==" }
+      form:
+        grant_type: authorization_code
+        code: "{{code}}"
+        redirect_uri: https://client.example/callback
+        code_verifier: dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk
+    expect:
+      status: 200
+      json: { id_token: "x", access_token: "x" }
+    capture:
+      at: body.access_token
+  - id: userinfo
+    request:
+      method: GET
+      path: /oauth/userinfo
+      headers: { authorization: "Bearer {{at}}" }
+    expect:
+      status: 200
+      json:
+        sub: "x"

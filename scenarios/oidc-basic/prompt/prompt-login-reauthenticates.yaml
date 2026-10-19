@@ -1,0 +1,37 @@
+id: oidc-basic.prompt.prompt-login-reauthenticates
+title: prompt=login forces re-authentication even with an active session
+requirements: [OIDC-3.1.2.1-prompt-login-reauthenticates]
+profile: oidc-basic
+status: draft
+note: |
+  Invariant INV-OIDC-PROMPT-LOGIN-REAUTHENTICATES. prompt=login must force a
+  fresh authentication even when a session is already active; proving this
+  needs a run that first establishes a session, then re-issues authorize with
+  prompt=login and observes a bound auth_time change or a fresh login redirect.
+  The runner's login-and-authorize caches one session per (loginPath, user,
+  password) and silently reuses it, so it cannot distinguish a reused session
+  from a fresh one; the SUT's prompt=login behavior in conformance mode is also
+  not yet claimed. Part 3/3 needs explicit session-state control before this is
+  verifiable. Level SHOULD in OIDC Core; oidc-basic tracks it as profile
+  strictness.
+steps:
+  - id: auth
+    use: login-and-authorize
+    with:
+      username: alice
+      password: test-only-password
+      loginPath: /auth/login
+      authorizePath: /oauth/authorize
+      query:
+        response_type: code
+        client_id: client-a
+        redirect_uri: https://client.example/callback
+        scope: openid
+        state: s-prompt-login
+        prompt: login
+        code_challenge: E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM
+        code_challenge_method: S256
+    expect:
+      status: 302
+    capture:
+      code: redirect.query.code
