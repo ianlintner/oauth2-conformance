@@ -1,0 +1,18 @@
+id: oidc-basic.userinfo.missing-token-401
+title: UserInfo without an access token returns 401 with a Bearer challenge
+requirements: [OIDC-5.3-userinfo-missing-token-401]
+profile: oidc-basic
+status: stable
+note: |
+  Invariant INV-OIDC-USERINFO-MISSING-TOKEN-401. The 401 WWW-Authenticate
+  challenge names the Bearer scheme; the challenge format itself is RFC 6750
+  3.1 (asserted in the token-lifecycle profile), not OIDC Core 5.3.
+steps:
+  - id: userinfo
+    request:
+      method: GET
+      path: /oauth/userinfo
+    expect:
+      status: 401
+      headers:
+        www-authenticate: "Bearer"

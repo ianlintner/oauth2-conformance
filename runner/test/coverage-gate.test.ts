@@ -36,6 +36,7 @@ const profiles = await loadProfiles(path.join(repoRoot, 'profiles'));
 const report = buildCoverage(requirements, scenarios, profiles, 'core');
 const hardeningReport = buildCoverage(requirements, scenarios, profiles, 'hardening');
 const tokenLifecycleReport = buildCoverage(requirements, scenarios, profiles, 'token-lifecycle');
+const oidcBasicReport = buildCoverage(requirements, scenarios, profiles, 'oidc-basic');
 
 const native = (id: string) => {
   const s = scenarios.find((scenario) => scenario.id === id);
@@ -99,6 +100,27 @@ test('every token-lifecycle MUST and MUST NOT requirement is covered, provisiona
 test('token-lifecycle profile has no dangling/unknown references', () => {
   assert.equal(tokenLifecycleReport.unknownProfiles.length, 0, `unknown scenario profiles: ${tokenLifecycleReport.unknownProfiles.join(', ')}`);
   assert.equal(tokenLifecycleReport.dangling.length, 0, `dangling scenario requirements: ${tokenLifecycleReport.dangling.join(', ')}`);
+});
+
+test('every oidc-basic MUST-NOT and MUST requirement is covered, provisional, or documented', () => {
+  // Every MUST / MUST-NOT requirement in the oidc-basic profile has a
+  // scenario; the draft set is the runner/SUT gaps catalogued in
+  // docs/oidc-basic-coverage.md (numeric id_token claims, nonce echo,
+  // prompt session control, foreign-aud logout hint, scope-claim set
+  // exclusion). Part 3/3 runner extensions promote these to stable.
+  const documented = new Set<string>([]);
+  const uncovered = new Set(oidcBasicReport.uncovered);
+  const provisional = new Set(oidcBasicReport.provisional);
+  for (const req of requirements.filter((r) => r.profile === 'oidc-basic')) {
+    if (req.level !== 'MUST' && req.level !== 'MUST NOT') continue;
+    const hasAny = !uncovered.has(req.id) || provisional.has(req.id) || documented.has(req.id);
+    assert.ok(hasAny, `oidc-basic ${req.level} requirement ${req.id} has no scenario and no documented reason`);
+  }
+});
+
+test('oidc-basic profile has no dangling/unknown references', () => {
+  assert.equal(oidcBasicReport.unknownProfiles.length, 0, `unknown scenario profiles: ${oidcBasicReport.unknownProfiles.join(', ')}`);
+  assert.equal(oidcBasicReport.dangling.length, 0, `dangling scenario requirements: ${oidcBasicReport.dangling.join(', ')}`);
 });
 
 test('hardening profile leaves no requirement without a scenario, including wrong-redirect-uri', () => {

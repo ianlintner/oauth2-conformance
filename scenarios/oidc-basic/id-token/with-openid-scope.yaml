@@ -1,0 +1,45 @@
+id: oidc-basic.id-token.with-openid-scope
+title: An authorization code exchange whose scope includes openid returns an id_token
+requirements: [OIDC-3.1.3.1-id-token-on-openid-scope]
+profile: oidc-basic
+status: stable
+note: |
+  Invariant INV-OIDC-ID-TOKEN-ON-OPENID-SCOPE. client-a grants openid, so the
+  token response MUST carry an id_token member alongside access_token.
+steps:
+  - id: auth
+    use: login-and-authorize
+    with:
+      username: alice
+      password: test-only-password
+      loginPath: /auth/login
+      authorizePath: /oauth/authorize
+      query:
+        response_type: code
+        client_id: client-a
+        redirect_uri: https://client.example/callback
+        scope: openid
+        state: s-oidc
+        code_challenge: E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM
+        code_challenge_method: S256
+    expect:
+      status: 302
+    capture:
+      code: redirect.query.code
+  - id: token
+    request:
+      method: POST
+      path: /oauth/token
+      headers: { authorization: "Basic Y2xpZW50LWE6dGVzdC1vbmx5LXNlY3JldA==" }
+      form:
+        grant_type: authorization_code
+        code: "{{code}}"
+        redirect_uri: https://client.example/callback
+        code_verifier: dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk
+    expect:
+      status: 200
+      json:
+        id_token: "x"
+      jsonSchema:
+        type: object
+        required: [access_token, token_type]

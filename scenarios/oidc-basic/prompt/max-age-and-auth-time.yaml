@@ -1,0 +1,36 @@
+id: oidc-basic.prompt.max-age-and-auth-time
+title: max_age=0 forces re-authentication and the id_token carries auth_time
+requirements:
+  - OIDC-3.1.2.1-max-age-reauthenticates
+  - OIDC-3.1.2.1-auth-time-claim
+profile: oidc-basic
+status: draft
+note: |
+  Invariants INV-OIDC-MAX-AGE-REAUTHENTICATES, INV-OIDC-AUTH-TIME-CLAIM.
+  max_age=0 requires treating any existing session without a fresh auth_time
+  as stale and forcing a new authentication, after which the id_token must
+  carry an auth_time claim. Asserting this needs session-state control plus a
+  numeric auth_time claim decode — both runner gaps. The runner's helper
+  session cache hides whether a re-authentication actually happened, and the
+  numeric auth_time cannot be asserted with current matchers. Part 3/3.
+steps:
+  - id: auth
+    use: login-and-authorize
+    with:
+      username: alice
+      password: test-only-password
+      loginPath: /auth/login
+      authorizePath: /oauth/authorize
+      query:
+        response_type: code
+        client_id: client-a
+        redirect_uri: https://client.example/callback
+        scope: openid
+        state: s-max-age
+        max_age: "0"
+        code_challenge: E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM
+        code_challenge_method: S256
+    expect:
+      status: 302
+    capture:
+      code: redirect.query.code
