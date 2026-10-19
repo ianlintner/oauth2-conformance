@@ -27,3 +27,7 @@ The extended-grants profile ships 51 scenarios and 51 named invariants. All are 
 - RFC 9126 expired request_uri: a scoped requirements amendment added `RFC9126-4-par-expired-request-uri-rejected` (section 4: expired request_uri MUST be rejected as invalid).
 
 Both amendments are flagged in the requirement `notes` and listed here so 3/3 keeps them visible.
+
+## Part 3/3 status (v0.4)
+
+Delivered: seeded `client-dev` (gap 1) and the `device-verify` runner helper (gap 2); SUT interface documented in `contract/sut-interface.md` section 3a. Rust reference run: 7 device scenarios promoted to `stable` (approved-success, authorization-pending, response-members, token-request-grant-type, empty-and-unknown-params, discovery-endpoint, authz-tls) and `device.access-denied` recorded as `reference-deviation` (Rust answers 403; RFC 8628 3.5 requires 400). Remaining device drafts: expired-token, slow-down-on-fast-polling (gap 3), repeated-param-rejected (gap 4), unknown-client (Rust deviates, to be triaged). PAR/JAR/RAR/registration/exchange/assertions stay `draft` (gaps 5-13); follow-up cards required.

@@ -2,8 +2,9 @@ id: extended-grants.device.access-denied
 title: "A denied device grant returns access_denied"
 requirements: ["RFC8628-3.5-access-denied"]
 profile: extended-grants
-status: draft
-note: "Invariant INV-EXT-DEVICE-DENIED. Draft: needs the seeded device-grant client client-dev (SUT seed extension, part 3/3). Needs a runner helper that denies the user code on the verification page (part 3/3)."
+status: reference-deviation
+note: "Invariant INV-EXT-DEVICE-DENIED. RFC 8628 3.5 / RFC 6749 5.2: access_denied is a 400 error response. The Rust reference answers 403 for a denied device code (recorded deviation; RFC wins)."
 steps:
   - {"id": "device", "request": {"method": "POST", "path": "/oauth/device_authorization", "headers": {"authorization": "Basic Y2xpZW50LWRldjp0ZXN0LW9ubHktZGV2LXNlY3JldA=="}, "form": {"client_id": "client-dev", "scope": "read"}}, "expect": {"status": 200}, "capture": {"dc": "body.device_code", "uc": "body.user_code"}}
+  - {"id": "verify", "use": "device-verify", "with": {"username": "alice", "password": "test-only-password", "loginPath": "/auth/login", "user_code": "{{uc}}", "action": "deny"}}
   - {"id": "poll", "request": {"method": "POST", "path": "/oauth/token", "headers": {"authorization": "Basic Y2xpZW50LWRldjp0ZXN0LW9ubHktZGV2LXNlY3JldA=="}, "form": {"grant_type": "urn:ietf:params:oauth:grant-type:device_code", "device_code": "{{dc}}", "client_id": "client-dev"}}, "expect": {"status": 400, "json": {"error": "access_denied"}}}

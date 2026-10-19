@@ -2,7 +2,6 @@ id: extended-grants.device.discovery-endpoint
 title: "Metadata advertises device_authorization_endpoint"
 requirements: ["RFC8628-4-discovery-device-endpoint"]
 profile: extended-grants
-status: draft
-note: "Invariant INV-EXT-DEVICE-DISCOVERY. Draft: metadata only; not yet validated against a SUT."
+status: stable
 steps:
   - {"id": "metadata", "request": {"method": "GET", "path": "/.well-known/oauth-authorization-server"}, "expect": {"status": 200, "jsonSchema": {"type": "object", "required": ["device_authorization_endpoint"]}}}
