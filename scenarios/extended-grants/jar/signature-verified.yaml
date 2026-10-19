@@ -1,0 +1,8 @@
+id: extended-grants.jar.signature-verified
+title: "A request object with a bad signature is rejected"
+requirements: ["RFC9101-6.2-jar-signature-verified", "RFC9101-6.2-jar-bad-signature-error"]
+profile: extended-grants
+status: draft
+note: "Invariant INV-EXT-JAR-SIGNATURE. Draft: needs runner-side JWT signing for request objects and a seeded client JWK (part 3/3)."
+steps:
+  - {"id": "bad-signature", "request": {"method": "GET", "path": "/oauth/authorize", "query": {"client_id": "client-a", "request": "{{request_object}}"}}, "expect": {"status": 400, "json": {"error": "invalid_request_object"}}}

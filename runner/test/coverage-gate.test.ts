@@ -37,6 +37,7 @@ const report = buildCoverage(requirements, scenarios, profiles, 'core');
 const hardeningReport = buildCoverage(requirements, scenarios, profiles, 'hardening');
 const tokenLifecycleReport = buildCoverage(requirements, scenarios, profiles, 'token-lifecycle');
 const oidcBasicReport = buildCoverage(requirements, scenarios, profiles, 'oidc-basic');
+const extendedGrantsReport = buildCoverage(requirements, scenarios, profiles, 'extended-grants');
 
 const native = (id: string) => {
   const s = scenarios.find((scenario) => scenario.id === id);
@@ -121,6 +122,17 @@ test('every oidc-basic MUST-NOT and MUST requirement is covered, provisional, or
 test('oidc-basic profile has no dangling/unknown references', () => {
   assert.equal(oidcBasicReport.unknownProfiles.length, 0, `unknown scenario profiles: ${oidcBasicReport.unknownProfiles.join(', ')}`);
   assert.equal(oidcBasicReport.dangling.length, 0, `dangling scenario requirements: ${oidcBasicReport.dangling.join(', ')}`);
+});
+
+test('extended-grants profile has no dangling/unknown references', () => {
+  assert.equal(extendedGrantsReport.unknownProfiles.length, 0, `unknown scenario profiles: ${extendedGrantsReport.unknownProfiles.join(', ')}`);
+  assert.equal(extendedGrantsReport.dangling.length, 0, `dangling scenario requirements: ${extendedGrantsReport.dangling.join(', ')}`);
+  assert.ok(scenarios.filter((s) => s.profile === 'extended-grants').length >= 51, 'extended-grants has fewer than 51 scenarios');
+  for (const req of requirements.filter((r) => r.profile === 'extended-grants')) {
+    if (req.level !== 'MUST' && req.level !== 'MUST NOT') continue;
+    const covered = !extendedGrantsReport.uncovered.includes(req.id);
+    assert.ok(covered, `extended-grants ${req.level} requirement ${req.id} has no scenario; catalog it in docs/extended-grants-gaps.md`);
+  }
 });
 
 test('hardening profile leaves no requirement without a scenario, including wrong-redirect-uri', () => {

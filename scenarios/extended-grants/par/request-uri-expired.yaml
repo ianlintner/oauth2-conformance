@@ -1,0 +1,9 @@
+id: extended-grants.par.request-uri-expired
+title: "An expired request_uri is rejected as invalid"
+requirements: ["RFC9126-4-par-expired-request-uri-rejected"]
+profile: extended-grants
+status: draft
+note: "Invariant INV-EXT-PAR-EXPIRED-REQUEST-URI. Draft: needs a PAR-capable SUT claim of extended-grants (part 3/3). Review follow-up (RFC 9126 section 4: an expired request_uri MUST be rejected). Needs SUT clock control or a short request_uri lifetime."
+steps:
+  - {"id": "push", "request": {"method": "POST", "path": "/oauth/par", "headers": {"authorization": "Basic Y2xpZW50LWE6dGVzdC1vbmx5LXNlY3JldA=="}, "form": {"client_id": "client-a", "response_type": "code", "redirect_uri": "https://client.example/callback", "scope": "read", "state": "s-par", "code_challenge": "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM", "code_challenge_method": "S256"}}, "expect": {"status": 201, "jsonSchema": {"type": "object", "required": ["request_uri", "expires_in"]}}, "capture": {"ru": "body.request_uri"}}
+  - {"id": "expired-use", "request": {"method": "GET", "path": "/oauth/authorize", "query": {"client_id": "client-a", "request_uri": "{{ru}}"}}, "expect": {"status": 400}}

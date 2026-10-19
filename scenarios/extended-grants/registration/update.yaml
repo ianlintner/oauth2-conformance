@@ -1,0 +1,9 @@
+id: extended-grants.registration.update
+title: "An update replaces metadata and cannot overwrite client_secret"
+requirements: ["RFC7592-2.2-reg-update-replaces", "RFC7592-2.2-reg-update-secret-not-overwritable"]
+profile: extended-grants
+status: draft
+note: "Invariant INV-EXT-REG-UPDATE-REPLACES. Draft: needs SUT registration endpoint enabled in conformance mode (part 3/3). Secret non-overwrite needs a follow-up authenticated read."
+steps:
+  - {"id": "register", "request": {"method": "POST", "path": "/connect/register", "json": {"redirect_uris": ["https://client.example/dyn"], "client_name": "conformance-dyn", "token_endpoint_auth_method": "client_secret_basic", "grant_types": ["authorization_code"]}}, "expect": {"status": 201}, "capture": {"cid": "body.client_id", "rat": "body.registration_access_token"}}
+  - {"id": "update", "request": {"method": "PUT", "path": "/connect/register/{{cid}}", "headers": {"authorization": "Bearer {{rat}}"}, "json": {"redirect_uris": ["https://client.example/dyn"], "client_name": "renamed", "token_endpoint_auth_method": "client_secret_basic", "grant_types": ["authorization_code"], "client_id": "{{cid}}", "client_secret": "attacker-chosen"}}, "expect": {"status": 200, "json": {"client_name": "renamed"}}}

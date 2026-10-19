@@ -1,0 +1,8 @@
+id: extended-grants.par.invalid-request-rejected
+title: "A pushed request missing response_type is rejected with an RFC 6749 error body"
+requirements: ["RFC9126-2.1-par-invalid-request-rejected", "RFC9126-2.3-par-error-format"]
+profile: extended-grants
+status: draft
+note: "Invariant INV-EXT-PAR-INVALID-REQUEST. Draft: needs a PAR-capable SUT claim of extended-grants (part 3/3)."
+steps:
+  - {"id": "push", "request": {"method": "POST", "path": "/oauth/par", "headers": {"authorization": "Basic Y2xpZW50LWE6dGVzdC1vbmx5LXNlY3JldA=="}, "form": {"client_id": "client-a", "redirect_uri": "https://client.example/callback", "scope": "read", "state": "s-par", "code_challenge": "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM", "code_challenge_method": "S256"}}, "expect": {"status": 400, "json": {"error": "invalid_request"}}}

@@ -1,0 +1,205 @@
+# Named invariants for the extended-grants profile (contract v0.4 2/3).
+- id: INV-EXT-DEVICE-TLS
+  profile: extended-grants
+  summary: "Device authorization endpoint is advertised under the issuer origin."
+  requirement: RFC8628-3.1-device-authz-tls
+- id: INV-EXT-DEVICE-PARAMS-IGNORED
+  profile: extended-grants
+  summary: "Empty and unrecognized parameters are ignored at the device endpoint."
+  requirement: RFC8628-3.1-empty-params-ignored
+- id: INV-EXT-DEVICE-PARAMS-NOT-REPEATED
+  profile: extended-grants
+  summary: "A repeated device authorization parameter is rejected."
+  requirement: RFC8628-3.1-params-not-repeated
+- id: INV-EXT-DEVICE-UNKNOWN-CLIENT
+  profile: extended-grants
+  summary: "Unknown or missing client_id is rejected."
+  requirement: RFC8628-3.1-unknown-client-rejected
+- id: INV-EXT-DEVICE-RESPONSE-MEMBERS
+  profile: extended-grants
+  summary: "Device authorization response carries the required members."
+  requirement: RFC8628-3.2-response-members
+- id: INV-EXT-DEVICE-GRANT-TYPE
+  profile: extended-grants
+  summary: "Device token request requires a device_code."
+  requirement: RFC8628-3.4-token-request-grant-type
+- id: INV-EXT-DEVICE-PENDING
+  profile: extended-grants
+  summary: "Polling before approval returns authorization_pending."
+  requirement: RFC8628-3.5-authorization-pending
+- id: INV-EXT-DEVICE-SLOW-DOWN
+  profile: extended-grants
+  summary: "Polling faster than the advertised interval yields slow_down."
+  requirement: RFC8628-3.5-slow-down-interval
+- id: INV-EXT-DEVICE-DENIED
+  profile: extended-grants
+  summary: "A denied device grant returns access_denied."
+  requirement: RFC8628-3.5-access-denied
+- id: INV-EXT-DEVICE-EXPIRED
+  profile: extended-grants
+  summary: "An expired device_code returns expired_token."
+  requirement: RFC8628-3.5-expired-token
+- id: INV-EXT-DEVICE-APPROVED
+  profile: extended-grants
+  summary: "An approved device grant returns a standard token response."
+  requirement: RFC8628-3.5-approved-success
+- id: INV-EXT-DEVICE-DISCOVERY
+  profile: extended-grants
+  summary: "Metadata advertises device_authorization_endpoint."
+  requirement: RFC8628-4-discovery-device-endpoint
+- id: INV-EXT-PAR-ENDPOINT
+  profile: extended-grants
+  summary: "PAR endpoint accepts a form-urlencoded POST."
+  requirement: RFC9126-2-par-endpoint-https
+- id: INV-EXT-PAR-CLIENT-AUTH
+  profile: extended-grants
+  summary: "A confidential client that does not authenticate is rejected at PAR."
+  requirement: RFC9126-2-par-client-auth
+- id: INV-EXT-PAR-JWT-AUDIENCE
+  profile: extended-grants
+  summary: "PAR accepts issuer, token or PAR endpoint as client-assertion audience."
+  requirement: RFC9126-2-par-jwt-audience
+- id: INV-EXT-PAR-NO-REQUEST-URI
+  profile: extended-grants
+  summary: "A pushed request containing request_uri is rejected."
+  requirement: RFC9126-2.1-par-request-uri-forbidden
+- id: INV-EXT-PAR-INVALID-REQUEST
+  profile: extended-grants
+  summary: "A pushed request missing response_type is rejected with an RFC 6749 error body."
+  requirement: RFC9126-2.1-par-invalid-request-rejected
+- id: INV-EXT-PAR-CREATED
+  profile: extended-grants
+  summary: "A valid pushed request returns 201 with a high-entropy request_uri."
+  requirement: RFC9126-2.2-par-created-response
+- id: INV-EXT-PAR-CLIENT-BOUND
+  profile: extended-grants
+  summary: "A request_uri pushed by one client is rejected when used by another."
+  requirement: RFC9126-2.2-par-request-uri-client-bound
+- id: INV-EXT-PAR-SINGLE-USE
+  profile: extended-grants
+  summary: "A request_uri is rejected on second use."
+  requirement: RFC9126-2.2-par-request-uri-single-use
+- id: INV-EXT-PAR-EXPIRED-REQUEST-URI
+  profile: extended-grants
+  summary: "An expired request_uri is rejected as invalid."
+  requirement: RFC9126-4-par-expired-request-uri-rejected
+- id: INV-EXT-PAR-METADATA
+  profile: extended-grants
+  summary: "Metadata advertises pushed_authorization_request_endpoint."
+  requirement: RFC9126-5-par-metadata-endpoint
+- id: INV-EXT-REG-JSON-POST
+  profile: extended-grants
+  summary: "The registration endpoint accepts a JSON POST."
+  requirement: RFC7591-3-reg-endpoint-json-post
+- id: INV-EXT-REG-RESPONSE
+  profile: extended-grants
+  summary: "Registration response carries client_id, secret expiry and metadata."
+  requirement: RFC7591-3.2.1-reg-response-client-id
+- id: INV-EXT-REG-ERROR-FORMAT
+  profile: extended-grants
+  summary: "An invalid registration returns an RFC 7591 error."
+  requirement: RFC7591-3.2.2-reg-error-format
+- id: INV-EXT-REG-MGMT
+  profile: extended-grants
+  summary: "Registration returns a management URI and access token."
+  requirement: RFC7592-3-reg-mgmt-uri-and-token
+- id: INV-EXT-REG-READ
+  profile: extended-grants
+  summary: "A registered client is readable with its token and not with a wrong one."
+  requirement: RFC7592-2.1-reg-read
+- id: INV-EXT-REG-UPDATE-REPLACES
+  profile: extended-grants
+  summary: "An update replaces metadata and cannot overwrite client_secret."
+  requirement: RFC7592-2.2-reg-update-replaces
+- id: INV-EXT-REG-DELETE
+  profile: extended-grants
+  summary: "Delete requires the registration token and returns 204."
+  requirement: RFC7592-2.3-reg-delete-204
+- id: INV-EXT-JAR-CLAIMS
+  profile: extended-grants
+  summary: "A request object carries iss, aud and the authorization parameters."
+  requirement: RFC9101-4-jar-claims
+- id: INV-EXT-JAR-SIGNATURE
+  profile: extended-grants
+  summary: "A request object with a bad signature is rejected."
+  requirement: RFC9101-6.2-jar-signature-verified
+- id: INV-EXT-JAR-OBJECT-WINS
+  profile: extended-grants
+  summary: "Parameters outside the request object are ignored."
+  requirement: RFC9101-6.3-jar-only-request-object-params
+- id: INV-EXT-JAR-CLIENT-ID-MATCH
+  profile: extended-grants
+  summary: "A request object client_id differing from the outer client_id is rejected."
+  requirement: RFC9101-6.3-jar-client-id-match
+- id: INV-EXT-JAR-NO-ALG-NONE
+  profile: extended-grants
+  summary: "A request object signed with alg none is rejected."
+  requirement: RFC9101-10.5-jar-alg-none-rejected
+- id: INV-EXT-JAR-REQUIRE-SIGNED
+  profile: extended-grants
+  summary: "A client requiring signed request objects rejects unsigned ones."
+  requirement: RFC9101-10.5-jar-require-signed
+- id: INV-EXT-JAR-UNSIGNED-POLICY
+  profile: extended-grants
+  summary: "Unsigned request objects are accepted only where policy allows."
+  requirement: RFC9101-4-jar-unsigned-allowed-by-policy
+- id: INV-EXT-RAR-TYPE-REQUIRED
+  profile: extended-grants
+  summary: "An authorization_details entry without type is rejected."
+  requirement: RFC9396-2-rar-type-required
+- id: INV-EXT-RAR-VALIDATION
+  profile: extended-grants
+  summary: "Unknown types and invalid fields are rejected."
+  requirement: RFC9396-5-rar-unknown-type-rejected
+- id: INV-EXT-RAR-TOKEN
+  profile: extended-grants
+  summary: "authorization_details are accepted at the token endpoint and returned."
+  requirement: RFC9396-6-rar-token-request
+- id: INV-EXT-RAR-INTROSPECTION
+  profile: extended-grants
+  summary: "Introspection returns the token authorization_details."
+  requirement: RFC9396-9.2-rar-introspection
+- id: INV-EXT-RAR-METADATA
+  profile: extended-grants
+  summary: "Metadata advertises authorization_details_types_supported."
+  requirement: RFC9396-10-rar-metadata
+- id: INV-EXT-TX-SUBJECT-REQUIRED
+  profile: extended-grants
+  summary: "Token exchange requires a subject_token."
+  requirement: RFC8693-2.1-tx-grant-type
+- id: INV-EXT-TX-ACTOR-TYPE
+  profile: extended-grants
+  summary: "actor_token_type must not be sent without actor_token."
+  requirement: RFC8693-2.1-tx-actor-token-type
+- id: INV-EXT-TX-VALIDATE
+  profile: extended-grants
+  summary: "An invalid subject token is rejected."
+  requirement: RFC8693-2.1-tx-validate-tokens
+- id: INV-EXT-TX-RESPONSE
+  profile: extended-grants
+  summary: "A successful exchange returns issued_token_type and a differing scope."
+  requirement: RFC8693-2.2.1-tx-response-members
+- id: INV-EXT-TX-INVALID-TARGET
+  profile: extended-grants
+  summary: "An unacceptable target is rejected with invalid_target."
+  requirement: RFC8693-2.2.2-tx-error-invalid-request
+- id: INV-EXT-ASSERT-SINGLE
+  profile: extended-grants
+  summary: "The assertion parameter must carry exactly one JWT."
+  requirement: RFC7523-2.2-assert-single-jwt
+- id: INV-EXT-ASSERT-CLAIMS
+  profile: extended-grants
+  summary: "Assertions missing iss, sub, aud or exp are rejected."
+  requirement: RFC7523-3-assert-iss-sub
+- id: INV-EXT-ASSERT-SIGNATURE
+  profile: extended-grants
+  summary: "An assertion with a bad signature is rejected."
+  requirement: RFC7523-3-assert-signature
+- id: INV-EXT-ASSERT-JTI-REPLAY
+  profile: extended-grants
+  summary: "A replayed assertion jti is rejected."
+  requirement: RFC7523-3-assert-jti-replay
+- id: INV-EXT-ASSERT-ERRORS
+  profile: extended-grants
+  summary: "Grant failures use invalid_grant, client auth failures use invalid_client."
+  requirement: RFC7523-3.1-assert-grant-invalid-grant

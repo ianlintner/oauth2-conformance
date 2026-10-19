@@ -1,0 +1,9 @@
+id: extended-grants.assertions.error-codes
+title: "Grant failures use invalid_grant, client auth failures use invalid_client"
+requirements: ["RFC7523-3.1-assert-grant-invalid-grant", "RFC7523-3.2-assert-client-invalid-client"]
+profile: extended-grants
+status: draft
+note: "Invariant INV-EXT-ASSERT-ERRORS. Draft: needs runner-side assertion signing and a seeded client JWK (part 3/3)."
+steps:
+  - {"id": "grant-error", "request": {"method": "POST", "path": "/oauth/token", "form": {"grant_type": "urn:ietf:params:oauth:grant-type:jwt-bearer", "assertion": "{{assertion_bad_sig}}"}}, "expect": {"status": 400, "json": {"error": "invalid_grant"}}}
+  - {"id": "client-error", "request": {"method": "POST", "path": "/oauth/token", "form": {"grant_type": "client_credentials", "client_assertion_type": "urn:ietf:params:oauth:client-assertion-type:jwt-bearer", "client_assertion": "{{assertion_bad_sig}}"}}, "expect": {"status": 401, "json": {"error": "invalid_client"}}}

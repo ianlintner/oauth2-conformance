@@ -1,0 +1,8 @@
+id: extended-grants.assertions.single-jwt
+title: "The assertion parameter must carry exactly one JWT"
+requirements: ["RFC7523-2.2-assert-single-jwt"]
+profile: extended-grants
+status: draft
+note: "Invariant INV-EXT-ASSERT-SINGLE. Draft: needs runner-side assertion signing and a seeded client JWK (part 3/3)."
+steps:
+  - {"id": "two-jwts", "request": {"method": "POST", "path": "/oauth/token", "form": {"grant_type": "urn:ietf:params:oauth:grant-type:jwt-bearer", "assertion": "a.b.c a.b.c"}}, "expect": {"status": 400, "json": {"error": "invalid_grant"}}}

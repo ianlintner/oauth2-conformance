@@ -1,0 +1,8 @@
+id: extended-grants.rar.token-request-and-response
+title: "authorization_details are accepted at the token endpoint and returned"
+requirements: ["RFC9396-6-rar-token-request", "RFC9396-7-rar-token-response"]
+profile: extended-grants
+status: draft
+note: "Invariant INV-EXT-RAR-TOKEN. Draft: needs an authorization_details-capable SUT and a seeded types policy (part 3/3)."
+steps:
+  - {"id": "token", "request": {"method": "POST", "path": "/oauth/token", "headers": {"authorization": "Basic Y2xpZW50LWE6dGVzdC1vbmx5LXNlY3JldA=="}, "form": {"grant_type": "client_credentials", "authorization_details": "[{\"type\":\"payment_initiation\",\"actions\":[\"initiate\"]}]"}}, "expect": {"status": 200, "jsonSchema": {"type": "object", "required": ["access_token", "authorization_details"]}}}

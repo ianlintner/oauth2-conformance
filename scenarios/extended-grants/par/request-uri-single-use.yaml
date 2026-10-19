@@ -1,0 +1,9 @@
+id: extended-grants.par.request-uri-single-use
+title: "A request_uri is rejected on second use"
+requirements: ["RFC9126-2.2-par-request-uri-single-use"]
+profile: extended-grants
+status: draft
+note: "Invariant INV-EXT-PAR-SINGLE-USE. Draft: needs a PAR-capable SUT claim of extended-grants (part 3/3). Needs a first successful use via login-and-authorize with request_uri (part 3/3)."
+steps:
+  - {"id": "push", "request": {"method": "POST", "path": "/oauth/par", "headers": {"authorization": "Basic Y2xpZW50LWE6dGVzdC1vbmx5LXNlY3JldA=="}, "form": {"client_id": "client-a", "response_type": "code", "redirect_uri": "https://client.example/callback", "scope": "read", "state": "s-par", "code_challenge": "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM", "code_challenge_method": "S256"}}, "expect": {"status": 201, "jsonSchema": {"type": "object", "required": ["request_uri", "expires_in"]}}, "capture": {"ru": "body.request_uri"}}
+  - {"id": "second-use", "request": {"method": "GET", "path": "/oauth/authorize", "query": {"client_id": "client-a", "request_uri": "{{ru}}"}}, "expect": {"status": 400}}

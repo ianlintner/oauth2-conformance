@@ -1,0 +1,8 @@
+id: extended-grants.par.endpoint-form-post
+title: "PAR endpoint accepts a form-urlencoded POST"
+requirements: ["RFC9126-2-par-endpoint-https"]
+profile: extended-grants
+status: draft
+note: "Invariant INV-EXT-PAR-ENDPOINT. Draft: needs a PAR-capable SUT claim of extended-grants (part 3/3). https is not assertable on a loopback issuer."
+steps:
+  - {"id": "push", "request": {"method": "POST", "path": "/oauth/par", "headers": {"authorization": "Basic Y2xpZW50LWE6dGVzdC1vbmx5LXNlY3JldA=="}, "form": {"client_id": "client-a", "response_type": "code", "redirect_uri": "https://client.example/callback", "scope": "read", "state": "s-par", "code_challenge": "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM", "code_challenge_method": "S256"}}, "expect": {"status": 201, "jsonSchema": {"type": "object", "required": ["request_uri", "expires_in"]}}, "capture": {"ru": "body.request_uri"}}

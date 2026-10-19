@@ -1,0 +1,8 @@
+id: extended-grants.exchange.validate-tokens
+title: "An invalid subject token is rejected"
+requirements: ["RFC8693-2.1-tx-validate-tokens"]
+profile: extended-grants
+status: draft
+note: "Invariant INV-EXT-TX-VALIDATE. Draft: needs a seeded token-exchange client (part 3/3)."
+steps:
+  - {"id": "bad", "request": {"method": "POST", "path": "/oauth/token", "headers": {"authorization": "Basic Y2xpZW50LWE6dGVzdC1vbmx5LXNlY3JldA=="}, "form": {"grant_type": "urn:ietf:params:oauth:grant-type:token-exchange", "subject_token": "not-a-token", "subject_token_type": "urn:ietf:params:oauth:token-type:access_token"}}, "expect": {"status": 400, "json": {"error": "invalid_request"}}}

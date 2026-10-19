@@ -81,3 +81,11 @@
   summary: "Authorization server metadata advertises pushed_authorization_request_endpoint."
   link: https://www.rfc-editor.org/rfc/rfc9126.html#section-5
   notes: "Section 2 says servers supporting PAR SHOULD include it in metadata."
+- id: RFC9126-4-par-expired-request-uri-rejected
+  spec: "RFC 9126"
+  clause: "4"
+  level: MUST
+  profile: extended-grants
+  summary: "An expired request_uri is rejected as invalid at the authorization endpoint."
+  link: https://www.rfc-editor.org/rfc/rfc9126.html#section-4
+  notes: "Scoped amendment (v0.4 2/3 review follow-up)."

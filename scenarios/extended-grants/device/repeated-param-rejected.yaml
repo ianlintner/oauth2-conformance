@@ -1,0 +1,8 @@
+id: extended-grants.device.repeated-param-rejected
+title: "A repeated device authorization parameter is rejected"
+requirements: ["RFC8628-3.1-params-not-repeated"]
+profile: extended-grants
+status: draft
+note: "Invariant INV-EXT-DEVICE-PARAMS-NOT-REPEATED. Draft: needs the seeded device-grant client client-dev (SUT seed extension, part 3/3). The runner form model cannot send a duplicated key; duplicate-key request shape is a part 3/3 runner gap, so this draft is a placeholder."
+steps:
+  - {"id": "device", "request": {"method": "POST", "path": "/oauth/device_authorization", "headers": {"authorization": "Basic Y2xpZW50LWRldjp0ZXN0LW9ubHktZGV2LXNlY3JldA=="}, "form": {"client_id": "client-dev", "scope": "read"}}, "expect": {"status": 400, "json": {"error": "invalid_request"}}}

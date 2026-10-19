@@ -1,0 +1,10 @@
+id: extended-grants.registration.read
+title: "A registered client is readable with its token and not with a wrong one"
+requirements: ["RFC7592-2.1-reg-read", "RFC7592-2.1-reg-read-invalid-token"]
+profile: extended-grants
+status: draft
+note: "Invariant INV-EXT-REG-READ. Draft: needs SUT registration endpoint enabled in conformance mode (part 3/3)."
+steps:
+  - {"id": "register", "request": {"method": "POST", "path": "/connect/register", "json": {"redirect_uris": ["https://client.example/dyn"], "client_name": "conformance-dyn", "token_endpoint_auth_method": "client_secret_basic", "grant_types": ["authorization_code"]}}, "expect": {"status": 201}, "capture": {"cid": "body.client_id", "rat": "body.registration_access_token"}}
+  - {"id": "read", "request": {"method": "GET", "path": "/connect/register/{{cid}}", "headers": {"authorization": "Bearer {{rat}}"}}, "expect": {"status": 200, "json": {"client_id": "{{cid}}"}}}
+  - {"id": "read-bad-token", "request": {"method": "GET", "path": "/connect/register/{{cid}}", "headers": {"authorization": "Bearer wrong"}}, "expect": {"status": 401}}

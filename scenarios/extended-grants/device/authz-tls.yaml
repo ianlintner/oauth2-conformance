@@ -1,0 +1,8 @@
+id: extended-grants.device.authz-tls
+title: "Device authorization endpoint is advertised under the issuer origin"
+requirements: ["RFC8628-3.1-device-authz-tls"]
+profile: extended-grants
+status: draft
+note: "Invariant INV-EXT-DEVICE-TLS. Draft: needs the seeded device-grant client client-dev (SUT seed extension, part 3/3). Loopback http issuer: TLS enforcement is not black-box testable; real TLS verification is a part 3/3 gap."
+steps:
+  - {"id": "metadata", "request": {"method": "GET", "path": "/.well-known/oauth-authorization-server"}, "expect": {"status": 200, "json": {"device_authorization_endpoint": "http://localhost:8080/oauth/device_authorization"}}}

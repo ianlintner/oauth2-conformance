@@ -1,0 +1,8 @@
+id: extended-grants.assertions.iss-sub-aud-exp
+title: "Assertions missing iss, sub, aud or exp are rejected"
+requirements: ["RFC7523-3-assert-iss-sub", "RFC7523-3-assert-aud", "RFC7523-3-assert-exp"]
+profile: extended-grants
+status: draft
+note: "Invariant INV-EXT-ASSERT-CLAIMS. Draft: needs runner-side assertion signing and a seeded client JWK (part 3/3)."
+steps:
+  - {"id": "missing-claims", "request": {"method": "POST", "path": "/oauth/token", "form": {"grant_type": "urn:ietf:params:oauth:grant-type:jwt-bearer", "assertion": "{{assertion_no_claims}}"}}, "expect": {"status": 400, "json": {"error": "invalid_grant"}}}
