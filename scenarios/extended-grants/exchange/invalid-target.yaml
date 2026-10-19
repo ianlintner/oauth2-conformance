@@ -1,0 +1,9 @@
+id: extended-grants.exchange.invalid-target
+title: "An unacceptable target is rejected with invalid_target"
+requirements: ["RFC8693-2.2.2-tx-error-invalid-request", "RFC8693-2.2.2-tx-invalid-target"]
+profile: extended-grants
+status: draft
+note: "Invariant INV-EXT-TX-INVALID-TARGET. Draft: needs a seeded token-exchange client (part 3/3)."
+steps:
+  - {"id": "subject", "request": {"method": "POST", "path": "/oauth/token", "headers": {"authorization": "Basic Y2xpZW50LWE6dGVzdC1vbmx5LXNlY3JldA=="}, "form": {"grant_type": "client_credentials", "scope": "read write"}}, "expect": {"status": 200}, "capture": {"subj": "body.access_token"}}
+  - {"id": "bad-target", "request": {"method": "POST", "path": "/oauth/token", "headers": {"authorization": "Basic Y2xpZW50LWE6dGVzdC1vbmx5LXNlY3JldA=="}, "form": {"grant_type": "urn:ietf:params:oauth:grant-type:token-exchange", "subject_token": "{{subj}}", "subject_token_type": "urn:ietf:params:oauth:token-type:access_token", "audience": "https://unknown.example"}}, "expect": {"status": 400, "json": {"error": "invalid_target"}}}

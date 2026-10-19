@@ -1,0 +1,8 @@
+id: extended-grants.exchange.subject-token-required
+title: "Token exchange requires a subject_token"
+requirements: ["RFC8693-2.1-tx-grant-type", "RFC8693-2.1-tx-subject-token-required"]
+profile: extended-grants
+status: draft
+note: "Invariant INV-EXT-TX-SUBJECT-REQUIRED. Draft: needs a seeded token-exchange client (part 3/3)."
+steps:
+  - {"id": "no-subject", "request": {"method": "POST", "path": "/oauth/token", "headers": {"authorization": "Basic Y2xpZW50LWE6dGVzdC1vbmx5LXNlY3JldA=="}, "form": {"grant_type": "urn:ietf:params:oauth:grant-type:token-exchange", "subject_token_type": "urn:ietf:params:oauth:token-type:access_token"}}, "expect": {"status": 400, "json": {"error": "invalid_request"}}}

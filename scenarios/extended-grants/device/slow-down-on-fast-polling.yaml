@@ -1,0 +1,10 @@
+id: extended-grants.device.slow-down-on-fast-polling
+title: "Polling faster than the advertised interval yields slow_down"
+requirements: ["RFC8628-3.5-slow-down-on-fast-polling", "RFC8628-3.5-slow-down-interval"]
+profile: extended-grants
+status: draft
+note: "Invariant INV-EXT-DEVICE-SLOW-DOWN. Draft: needs the seeded device-grant client client-dev (SUT seed extension, part 3/3). Review follow-up. Two immediate polls violate the advertised interval so the second is slow_down; the +5 second increase on later polls needs a clock/sleep helper (part 3/3)."
+steps:
+  - {"id": "device", "request": {"method": "POST", "path": "/oauth/device_authorization", "headers": {"authorization": "Basic Y2xpZW50LWRldjp0ZXN0LW9ubHktZGV2LXNlY3JldA=="}, "form": {"client_id": "client-dev", "scope": "read"}}, "expect": {"status": 200}, "capture": {"dc": "body.device_code", "uc": "body.user_code"}}
+  - {"id": "poll-1", "request": {"method": "POST", "path": "/oauth/token", "headers": {"authorization": "Basic Y2xpZW50LWRldjp0ZXN0LW9ubHktZGV2LXNlY3JldA=="}, "form": {"grant_type": "urn:ietf:params:oauth:grant-type:device_code", "device_code": "{{dc}}", "client_id": "client-dev"}}, "expect": {"status": 400, "json": {"error": "authorization_pending"}}}
+  - {"id": "poll-2", "request": {"method": "POST", "path": "/oauth/token", "headers": {"authorization": "Basic Y2xpZW50LWRldjp0ZXN0LW9ubHktZGV2LXNlY3JldA=="}, "form": {"grant_type": "urn:ietf:params:oauth:grant-type:device_code", "device_code": "{{dc}}", "client_id": "client-dev"}}, "expect": {"status": 400, "json": {"error": "slow_down"}}}

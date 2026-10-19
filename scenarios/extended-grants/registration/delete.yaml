@@ -1,0 +1,11 @@
+id: extended-grants.registration.delete
+title: "Delete requires the registration token and returns 204"
+requirements: ["RFC7592-2.3-reg-delete-204", "RFC7592-2.3-reg-delete-invalid-token"]
+profile: extended-grants
+status: draft
+note: "Invariant INV-EXT-REG-DELETE. Draft: needs SUT registration endpoint enabled in conformance mode (part 3/3)."
+steps:
+  - {"id": "register", "request": {"method": "POST", "path": "/connect/register", "json": {"redirect_uris": ["https://client.example/dyn"], "client_name": "conformance-dyn", "token_endpoint_auth_method": "client_secret_basic", "grant_types": ["authorization_code"]}}, "expect": {"status": 201}, "capture": {"cid": "body.client_id", "rat": "body.registration_access_token"}}
+  - {"id": "delete-bad-token", "request": {"method": "DELETE", "path": "/connect/register/{{cid}}", "headers": {"authorization": "Bearer wrong"}}, "expect": {"status": 401}}
+  - {"id": "delete", "request": {"method": "DELETE", "path": "/connect/register/{{cid}}", "headers": {"authorization": "Bearer {{rat}}"}}, "expect": {"status": 204}}
+  - {"id": "read-after", "request": {"method": "GET", "path": "/connect/register/{{cid}}", "headers": {"authorization": "Bearer {{rat}}"}}, "expect": {"status": 401}}

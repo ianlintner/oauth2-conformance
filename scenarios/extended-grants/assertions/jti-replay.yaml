@@ -1,0 +1,9 @@
+id: extended-grants.assertions.jti-replay
+title: "A replayed assertion jti is rejected"
+requirements: ["RFC7523-3-assert-jti-replay"]
+profile: extended-grants
+status: draft
+note: "Invariant INV-EXT-ASSERT-JTI-REPLAY. Draft: needs runner-side assertion signing and a seeded client JWK (part 3/3)."
+steps:
+  - {"id": "first", "request": {"method": "POST", "path": "/oauth/token", "form": {"grant_type": "urn:ietf:params:oauth:grant-type:jwt-bearer", "assertion": "{{assertion}}"}}, "expect": {"status": 200}}
+  - {"id": "replay", "request": {"method": "POST", "path": "/oauth/token", "form": {"grant_type": "urn:ietf:params:oauth:grant-type:jwt-bearer", "assertion": "{{assertion}}"}}, "expect": {"status": 400, "json": {"error": "invalid_grant"}}}

@@ -1,0 +1,9 @@
+id: extended-grants.device.expired-token
+title: "An expired device_code returns expired_token"
+requirements: ["RFC8628-3.5-expired-token"]
+profile: extended-grants
+status: draft
+note: "Invariant INV-EXT-DEVICE-EXPIRED. Draft: needs the seeded device-grant client client-dev (SUT seed extension, part 3/3). Needs SUT clock control or a short seeded lifetime (part 3/3)."
+steps:
+  - {"id": "device", "request": {"method": "POST", "path": "/oauth/device_authorization", "headers": {"authorization": "Basic Y2xpZW50LWRldjp0ZXN0LW9ubHktZGV2LXNlY3JldA=="}, "form": {"client_id": "client-dev", "scope": "read"}}, "expect": {"status": 200}, "capture": {"dc": "body.device_code", "uc": "body.user_code"}}
+  - {"id": "poll", "request": {"method": "POST", "path": "/oauth/token", "headers": {"authorization": "Basic Y2xpZW50LWRldjp0ZXN0LW9ubHktZGV2LXNlY3JldA=="}, "form": {"grant_type": "urn:ietf:params:oauth:grant-type:device_code", "device_code": "{{dc}}", "client_id": "client-dev"}}, "expect": {"status": 400, "json": {"error": "expired_token"}}}

@@ -1,0 +1,9 @@
+id: extended-grants.device.token-request-grant-type
+title: "Device token request requires a device_code"
+requirements: ["RFC8628-3.4-token-request-grant-type"]
+profile: extended-grants
+status: draft
+note: "Invariant INV-EXT-DEVICE-GRANT-TYPE. Draft: needs the seeded device-grant client client-dev (SUT seed extension, part 3/3)."
+steps:
+  - {"id": "device", "request": {"method": "POST", "path": "/oauth/device_authorization", "headers": {"authorization": "Basic Y2xpZW50LWRldjp0ZXN0LW9ubHktZGV2LXNlY3JldA=="}, "form": {"client_id": "client-dev", "scope": "read"}}, "expect": {"status": 200}, "capture": {"dc": "body.device_code", "uc": "body.user_code"}}
+  - {"id": "missing-device-code", "request": {"method": "POST", "path": "/oauth/token", "headers": {"authorization": "Basic Y2xpZW50LWRldjp0ZXN0LW9ubHktZGV2LXNlY3JldA=="}, "form": {"grant_type": "urn:ietf:params:oauth:grant-type:device_code", "client_id": "client-dev"}}, "expect": {"status": 400, "json": {"error": "invalid_request"}}}

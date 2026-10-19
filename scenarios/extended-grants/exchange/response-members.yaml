@@ -1,0 +1,9 @@
+id: extended-grants.exchange.response-members
+title: "A successful exchange returns issued_token_type and a differing scope"
+requirements: ["RFC8693-2.2.1-tx-response-members", "RFC8693-2.2.1-tx-scope-when-differs"]
+profile: extended-grants
+status: draft
+note: "Invariant INV-EXT-TX-RESPONSE. Draft: needs a seeded token-exchange client (part 3/3)."
+steps:
+  - {"id": "subject", "request": {"method": "POST", "path": "/oauth/token", "headers": {"authorization": "Basic Y2xpZW50LWE6dGVzdC1vbmx5LXNlY3JldA=="}, "form": {"grant_type": "client_credentials", "scope": "read write"}}, "expect": {"status": 200}, "capture": {"subj": "body.access_token"}}
+  - {"id": "exchange", "request": {"method": "POST", "path": "/oauth/token", "headers": {"authorization": "Basic Y2xpZW50LWE6dGVzdC1vbmx5LXNlY3JldA=="}, "form": {"grant_type": "urn:ietf:params:oauth:grant-type:token-exchange", "subject_token": "{{subj}}", "subject_token_type": "urn:ietf:params:oauth:token-type:access_token", "scope": "read"}}, "expect": {"status": 200, "json": {"token_type": "Bearer", "scope": "read", "issued_token_type": "urn:ietf:params:oauth:token-type:access_token"}}}

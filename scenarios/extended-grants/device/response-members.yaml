@@ -1,0 +1,8 @@
+id: extended-grants.device.response-members
+title: "Device authorization response carries the required members"
+requirements: ["RFC8628-3.2-response-members", "RFC8628-3.2-interval-positive-integer"]
+profile: extended-grants
+status: draft
+note: "Invariant INV-EXT-DEVICE-RESPONSE-MEMBERS. Draft: needs the seeded device-grant client client-dev (SUT seed extension, part 3/3)."
+steps:
+  - {"id": "device", "request": {"method": "POST", "path": "/oauth/device_authorization", "headers": {"authorization": "Basic Y2xpZW50LWRldjp0ZXN0LW9ubHktZGV2LXNlY3JldA=="}, "form": {"client_id": "client-dev", "scope": "read"}}, "expect": {"status": 200, "jsonSchema": {"type": "object", "required": ["device_code", "user_code", "verification_uri", "expires_in"], "properties": {"expires_in": {"type": "integer", "minimum": 1}, "interval": {"type": "integer", "minimum": 1}}}}}

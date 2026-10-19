@@ -1,0 +1,8 @@
+id: extended-grants.jar.only-request-object-params
+title: "Parameters outside the request object are ignored"
+requirements: ["RFC9101-6.3-jar-only-request-object-params"]
+profile: extended-grants
+status: draft
+note: "Invariant INV-EXT-JAR-OBJECT-WINS. Draft: needs runner-side JWT signing for request objects and a seeded client JWK (part 3/3)."
+steps:
+  - {"id": "authorize", "request": {"method": "GET", "path": "/oauth/authorize", "query": {"client_id": "client-a", "request": "{{request_object}}"}}, "expect": {"status": 302}}

@@ -1,0 +1,8 @@
+id: extended-grants.rar.metadata
+title: "Metadata advertises authorization_details_types_supported"
+requirements: ["RFC9396-10-rar-metadata"]
+profile: extended-grants
+status: draft
+note: "Invariant INV-EXT-RAR-METADATA. Draft: metadata only; not yet validated against a SUT."
+steps:
+  - {"id": "metadata", "request": {"method": "GET", "path": "/.well-known/oauth-authorization-server"}, "expect": {"status": 200, "jsonSchema": {"type": "object", "required": ["authorization_details_types_supported"]}}}

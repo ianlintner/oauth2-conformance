@@ -1,0 +1,9 @@
+id: extended-grants.rar.unknown-type-and-fields
+title: "Unknown types and invalid fields are rejected"
+requirements: ["RFC9396-5-rar-unknown-type-rejected", "RFC9396-5-rar-invalid-fields-rejected"]
+profile: extended-grants
+status: draft
+note: "Invariant INV-EXT-RAR-VALIDATION. Draft: needs an authorization_details-capable SUT and a seeded types policy (part 3/3)."
+steps:
+  - {"id": "unknown-type", "request": {"method": "POST", "path": "/oauth/par", "headers": {"authorization": "Basic Y2xpZW50LWE6dGVzdC1vbmx5LXNlY3JldA=="}, "form": {"client_id": "client-a", "response_type": "code", "redirect_uri": "https://client.example/callback", "scope": "read", "state": "s-par", "code_challenge": "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM", "code_challenge_method": "S256", "authorization_details": "[{\"type\":\"no-such-type\"}]"}}, "expect": {"status": 400, "json": {"error": "invalid_authorization_details"}}}
+  - {"id": "bad-fields", "request": {"method": "POST", "path": "/oauth/par", "headers": {"authorization": "Basic Y2xpZW50LWE6dGVzdC1vbmx5LXNlY3JldA=="}, "form": {"client_id": "client-a", "response_type": "code", "redirect_uri": "https://client.example/callback", "scope": "read", "state": "s-par", "code_challenge": "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM", "code_challenge_method": "S256", "authorization_details": "[{\"type\":\"payment_initiation\",\"actions\":\"not-an-array\"}]"}}, "expect": {"status": 400, "json": {"error": "invalid_authorization_details"}}}

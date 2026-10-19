@@ -11,6 +11,7 @@ requirements:
   - RFC8628-3.4-token-request-grant-type
   - RFC8628-3.5-authorization-pending
   - RFC8628-3.5-slow-down-interval
+  - RFC8628-3.5-slow-down-on-fast-polling
   - RFC8628-3.5-access-denied
   - RFC8628-3.5-expired-token
   - RFC8628-3.5-approved-success
@@ -25,6 +26,7 @@ requirements:
   - RFC9126-2.2-par-request-uri-client-bound
   - RFC9126-2.3-par-error-format
   - RFC9126-2.2-par-request-uri-single-use
+  - RFC9126-4-par-expired-request-uri-rejected
   - RFC9126-5-par-metadata-endpoint
   - RFC7591-3-reg-endpoint-json-post
   - RFC7591-3-reg-endpoint-tls
