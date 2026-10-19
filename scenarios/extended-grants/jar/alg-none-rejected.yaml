@@ -3,6 +3,6 @@ title: "A request object signed with alg none is rejected"
 requirements: ["RFC9101-10.5-jar-alg-none-rejected"]
 profile: extended-grants
 status: draft
-note: "Invariant INV-EXT-JAR-NO-ALG-NONE. Draft: SUT must claim JAR support; token is a static fixture."
+note: "Invariant INV-EXT-JAR-NO-ALG-NONE. Draft: SUT must claim JAR support; static unsigned fixture; RFC 9101 allows redirect-based errors so the 400 is unvalidated."
 steps:
   - {"id": "alg-none", "request": {"method": "GET", "path": "/oauth/authorize", "query": {"client_id": "client-a", "request": "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.e30."}}, "expect": {"status": 400, "json": {"error": "invalid_request_object"}}}

@@ -1,6 +1,6 @@
 # extended-grants runner/SUT gaps (draft, part 3/3)
 
-The extended-grants profile ships 51 scenarios and 51 named invariants. Four scenarios are stable (they exercise only metadata/schema surface reachable with the existing seed and runner). The remaining 47 are `draft` and enumerate the concrete runner and SUT features part 3/3 must add before they can promote to stable and produce passing black-box runs. This list is the explicit draft scope for the next card; nothing here is claimed to pass today.
+The extended-grants profile ships 51 scenarios and 51 named invariants. All are `draft`; nothing has been validated against a running SUT. They enumerate the concrete runner and SUT features part 3/3 must add before they can promote to stable and produce passing black-box runs. This list is the explicit draft scope for the next card; nothing here is claimed to pass today.
 
 ## Runner features (missing today)
 

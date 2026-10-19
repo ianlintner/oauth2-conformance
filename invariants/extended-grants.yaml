@@ -1,7 +1,7 @@
 # Named invariants for the extended-grants profile (contract v0.4 2/3).
 - id: INV-EXT-DEVICE-TLS
   profile: extended-grants
-  summary: "Device authorization endpoint is advertised under the issuer origin."
+  summary: "Device authorization endpoint is advertised in metadata."
   requirement: RFC8628-3.1-device-authz-tls
 - id: INV-EXT-DEVICE-PARAMS-IGNORED
   profile: extended-grants
@@ -30,7 +30,7 @@
 - id: INV-EXT-DEVICE-SLOW-DOWN
   profile: extended-grants
   summary: "Polling faster than the advertised interval yields slow_down."
-  requirement: RFC8628-3.5-slow-down-interval
+  requirement: RFC8628-3.5-slow-down-on-fast-polling
 - id: INV-EXT-DEVICE-DENIED
   profile: extended-grants
   summary: "A denied device grant returns access_denied."

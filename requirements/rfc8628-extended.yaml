@@ -102,8 +102,8 @@
 - id: RFC8628-3.5-slow-down-on-fast-polling
   spec: "RFC 8628"
   clause: "3.5"
-  level: MUST
+  level: SHOULD
   profile: extended-grants
   summary: "A token request polling faster than the advertised interval returns error=slow_down."
   link: https://www.rfc-editor.org/rfc/rfc8628.html#section-3.5
-  notes: "Scoped amendment (v0.4 2/3 review follow-up). The RFC defines slow_down for polling too fast; the server-side obligation is stated indirectly."
+  notes: "Scoped amendment (v0.4 2/3 review follow-up). RFC 8628 3.5 defines slow_down for polling too fast; the explicit MUST is the +5 second interval increase, so returning slow_down is leveled SHOULD."

@@ -1,6 +1,6 @@
 # extended-grants coverage (contract v0.4 2/3)
 
-51 scenarios, 51 invariants. Stable: 4. Draft: 47.
+51 scenarios, 51 invariants. Stable: 0. Draft: 51. Nothing is validated against a running SUT, so all scenarios are draft.
 
 Draft scenarios document runner/SUT gaps; they are not claimed as passing. See docs/extended-grants-gaps.md for the part 3/3 list.
 
@@ -9,15 +9,15 @@ Draft scenarios document runner/SUT gaps; they are not claimed as passing. See d
 | extended-grants.device.authz-tls | draft | RFC8628-3.1-device-authz-tls |
 | extended-grants.device.empty-and-unknown-params | draft | RFC8628-3.1-empty-params-ignored |
 | extended-grants.device.repeated-param-rejected | draft | RFC8628-3.1-params-not-repeated |
-| extended-grants.device.unknown-client | stable | RFC8628-3.1-unknown-client-rejected |
+| extended-grants.device.unknown-client | draft | RFC8628-3.1-unknown-client-rejected |
 | extended-grants.device.response-members | draft | RFC8628-3.2-response-members, RFC8628-3.2-interval-positive-integer |
 | extended-grants.device.token-request-grant-type | draft | RFC8628-3.4-token-request-grant-type |
 | extended-grants.device.authorization-pending | draft | RFC8628-3.5-authorization-pending |
-| extended-grants.device.slow-down-on-fast-polling | draft | RFC8628-3.5-slow-down-interval, RFC8628-3.5-slow-down-on-fast-polling |
+| extended-grants.device.slow-down-on-fast-polling | draft | RFC8628-3.5-slow-down-on-fast-polling, RFC8628-3.5-slow-down-interval |
 | extended-grants.device.access-denied | draft | RFC8628-3.5-access-denied |
 | extended-grants.device.expired-token | draft | RFC8628-3.5-expired-token |
 | extended-grants.device.approved-success | draft | RFC8628-3.5-approved-success |
-| extended-grants.device.discovery-endpoint | stable | RFC8628-4-discovery-device-endpoint |
+| extended-grants.device.discovery-endpoint | draft | RFC8628-4-discovery-device-endpoint |
 | extended-grants.par.endpoint-form-post | draft | RFC9126-2-par-endpoint-https |
 | extended-grants.par.client-auth-required | draft | RFC9126-2-par-client-auth |
 | extended-grants.par.jwt-audience | draft | RFC9126-2-par-jwt-audience |
@@ -27,7 +27,7 @@ Draft scenarios document runner/SUT gaps; they are not claimed as passing. See d
 | extended-grants.par.request-uri-client-bound | draft | RFC9126-2.2-par-request-uri-client-bound |
 | extended-grants.par.request-uri-single-use | draft | RFC9126-2.2-par-request-uri-single-use |
 | extended-grants.par.request-uri-expired | draft | RFC9126-4-par-expired-request-uri-rejected |
-| extended-grants.par.metadata-endpoint | stable | RFC9126-5-par-metadata-endpoint |
+| extended-grants.par.metadata-endpoint | draft | RFC9126-5-par-metadata-endpoint |
 | extended-grants.registration.json-post | draft | RFC7591-3-reg-endpoint-json-post, RFC7591-3-reg-endpoint-tls |
 | extended-grants.registration.response-members | draft | RFC7591-3.2.1-reg-response-client-id, RFC7591-3.2.1-reg-secret-expires-at, RFC7591-3.2.1-reg-returns-metadata |
 | extended-grants.registration.error-format | draft | RFC7591-3.2.2-reg-error-format |
@@ -46,7 +46,7 @@ Draft scenarios document runner/SUT gaps; they are not claimed as passing. See d
 | extended-grants.rar.unknown-type-and-fields | draft | RFC9396-5-rar-unknown-type-rejected, RFC9396-5-rar-invalid-fields-rejected |
 | extended-grants.rar.token-request-and-response | draft | RFC9396-6-rar-token-request, RFC9396-7-rar-token-response |
 | extended-grants.rar.introspection | draft | RFC9396-9.2-rar-introspection |
-| extended-grants.rar.metadata | stable | RFC9396-10-rar-metadata |
+| extended-grants.rar.metadata | draft | RFC9396-10-rar-metadata |
 | extended-grants.exchange.subject-token-required | draft | RFC8693-2.1-tx-grant-type, RFC8693-2.1-tx-subject-token-required |
 | extended-grants.exchange.actor-token-type | draft | RFC8693-2.1-tx-actor-token-type |
 | extended-grants.exchange.validate-tokens | draft | RFC8693-2.1-tx-validate-tokens |

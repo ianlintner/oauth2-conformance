@@ -2,7 +2,7 @@ id: extended-grants.par.metadata-endpoint
 title: "Metadata advertises pushed_authorization_request_endpoint"
 requirements: ["RFC9126-5-par-metadata-endpoint"]
 profile: extended-grants
-status: stable
-note: "Invariant INV-EXT-PAR-METADATA. Metadata only; existing seed."
+status: draft
+note: "Invariant INV-EXT-PAR-METADATA. Draft: metadata only; not yet validated against a SUT."
 steps:
   - {"id": "metadata", "request": {"method": "GET", "path": "/.well-known/oauth-authorization-server"}, "expect": {"status": 200, "jsonSchema": {"type": "object", "required": ["pushed_authorization_request_endpoint"]}}}

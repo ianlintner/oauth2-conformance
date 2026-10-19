@@ -2,8 +2,8 @@ id: extended-grants.device.unknown-client
 title: "Unknown or missing client_id is rejected"
 requirements: ["RFC8628-3.1-unknown-client-rejected"]
 profile: extended-grants
-status: stable
-note: "Invariant INV-EXT-DEVICE-UNKNOWN-CLIENT. Uses only the existing seed."
+status: draft
+note: "Invariant INV-EXT-DEVICE-UNKNOWN-CLIENT. Draft: existing seed but status codes are SUT behaviour (RFC 6749 5.2) and unvalidated."
 steps:
   - {"id": "unknown", "request": {"method": "POST", "path": "/oauth/device_authorization", "form": {"client_id": "no-such-client"}}, "expect": {"status": 401, "json": {"error": "invalid_client"}}}
   - {"id": "missing", "request": {"method": "POST", "path": "/oauth/device_authorization", "form": {"scope": "read"}}, "expect": {"status": 400, "json": {"error": "invalid_request"}}}
