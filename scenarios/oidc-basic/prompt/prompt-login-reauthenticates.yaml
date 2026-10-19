@@ -8,12 +8,7 @@ note: |
   fresh authentication even when a session is already active; proving this
   needs a run that first establishes a session, then re-issues authorize with
   prompt=login and observes a bound auth_time change or a fresh login redirect.
-  The runner's login-and-authorize caches one session per (loginPath, user,
-  password) and silently reuses it, so it cannot distinguish a reused session
-  from a fresh one; the SUT's prompt=login behavior in conformance mode is also
-  not yet claimed. Part 3/3 needs explicit session-state control before this is
-  verifiable. Level SHOULD in OIDC Core; oidc-basic tracks it as profile
-  strictness.
+  Level SHOULD in OIDC Core; oidc-basic tracks it as profile strictness.
 steps:
   - id: auth
     use: login-and-authorize
@@ -22,6 +17,7 @@ steps:
       password: test-only-password
       loginPath: /auth/login
       authorizePath: /oauth/authorize
+      session: create
       query:
         response_type: code
         client_id: client-a

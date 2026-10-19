@@ -51,7 +51,7 @@
         "id": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_-]*$" },
         "use": {
           "type": "string",
-          "enum": ["login-and-authorize"],
+          "enum": ["login-and-authorize", "logout"],
           "description": "Runner helper invoked instead of a raw request."
         },
         "with": { "type": "object", "additionalProperties": true },
@@ -64,13 +64,30 @@
             "type": "string",
             "pattern": "^(?:redirect\\.(?:query|fragment)|body|header|jwt\\.[A-Za-z_][A-Za-z0-9_]*\\.(?:header|payload))\\.[^\\s]+$"
           }
+        },
+        "assert": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "json": { "type": "object", "additionalProperties": true }
+          },
+          "description": "Post-capture assertion against the capture scope instead of a live response."
+        },
+        "source": {
+          "type": "string",
+          "pattern": "^jwt\\.[A-Za-z_][A-Za-z0-9_]*\\.payload$",
+          "description": "When set, decode the JWT at this scope variable and use its payload as the assert body."
         }
       },
       "allOf": [
         {
           "if": { "required": ["use"] },
-          "then": { "not": { "required": ["request"] } },
-          "else": { "required": ["request", "expect"] }
+          "then": { "not": { "required": ["request", "assert"] } },
+          "else": {
+            "if": { "required": ["assert"] },
+            "then": { "not": { "required": ["request"] } },
+            "else": { "required": ["request", "expect"] }
+          }
         }
       ]
     },

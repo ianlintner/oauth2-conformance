@@ -6,13 +6,7 @@ status: draft
 note: |
   Invariant INV-OIDC-ID-TOKEN-SCOPE-CLAIMS. OIDC Core 5.4 requires that claims
   about the end-user be authorized by the granted scopes before being placed in
-  the id_token (or UserInfo). This is an exclusion assertion — prove requested
-  profile/email claims are absent from an id_token whose authorization request
-  did not grant those scopes — which the runner cannot express: there is no
-  "claim keys equal exactly this set" matcher, and scope-to-claim authorization
-  comparison needs claim-set introspection the runner lacks. Level SHOULD.
-  Part 3/3 runner extensions (claim-set equality/absence assertions against a
-  decoded id_token) are required.
+  the id_token (or UserInfo). Level SHOULD.
 steps:
   - id: auth
     use: login-and-authorize
@@ -48,5 +42,12 @@ steps:
       json: { id_token: "x" }
     capture:
       idt: body.id_token
-      # Intent: assert no profile/email claims (name, email, etc.) when only
-      # openid was requested. Not expressible with current matchers; see note.
+  - id: assert-no-profile-claims
+    source: jwt.idt.payload
+    assert:
+      json:
+        name: { "$absent": true }
+        email: { "$absent": true }
+        email_verified: { "$absent": true }
+        family_name: { "$absent": true }
+        given_name: { "$absent": true }

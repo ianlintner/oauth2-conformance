@@ -20,7 +20,7 @@
 import { NORMALIZED, normalizePayload } from './normalize.js';
 import type { ScenarioExpectation } from './scenario.js';
 import { interpolate } from './scenario.js';
-import { isAbsentMatcher, isContainsMatcher, isNonemptyMatcher } from './matchers.js';
+import { isAbsentMatcher, isContainsMatcher, isNonemptyMatcher, isGtMatcher, isLtMatcher, isIncludesMatcher } from './matchers.js';
 import { decodeJwtSegments, fieldAt } from './jwt.js';
 
 /** Minimal view of the run's captured-value scope (`Map<string, string>`). */
@@ -94,6 +94,35 @@ function deepDiff(expected: unknown, actual: unknown, path: string, diffs: Diff[
   if (isNonemptyMatcher(expected)) {
     if (!Array.isArray(actual) || actual.length === 0) {
       diffs.push({ path, expected: '$nonempty', actual, reason: 'expected a non-empty array' });
+    }
+    return;
+  }
+  if (isIncludesMatcher(expected)) {
+    const needle = (expected as { $includes: unknown }).$includes;
+    if (typeof actual === 'string' && !actual.includes(String(needle))) {
+      diffs.push({ path, expected: `$includes ${JSON.stringify(needle)}`, actual, reason: 'string does not contain the expected substring' });
+    } else if (Array.isArray(actual) && !actual.includes(needle)) {
+      diffs.push({ path, expected: `$includes ${JSON.stringify(needle)}`, actual, reason: 'array does not contain the expected value' });
+    } else if (typeof actual !== 'string' && !Array.isArray(actual)) {
+      diffs.push({ path, expected: `$includes ${JSON.stringify(needle)}`, actual, reason: 'expected a string or array for $includes' });
+    }
+    return;
+  }
+  if (isGtMatcher(expected)) {
+    const threshold = (expected as { $gt: number }).$gt;
+    if (typeof actual !== 'number') {
+      diffs.push({ path, expected: `$gt ${threshold}`, actual, reason: 'expected a number for $gt' });
+    } else if (actual <= threshold) {
+      diffs.push({ path, expected: `$gt ${threshold}`, actual, reason: `value ${actual} is not > ${threshold}` });
+    }
+    return;
+  }
+  if (isLtMatcher(expected)) {
+    const threshold = (expected as { $lt: number }).$lt;
+    if (typeof actual !== 'number') {
+      diffs.push({ path, expected: `$lt ${threshold}`, actual, reason: 'expected a number for $lt' });
+    } else if (actual >= threshold) {
+      diffs.push({ path, expected: `$lt ${threshold}`, actual, reason: `value ${actual} is not < ${threshold}` });
     }
     return;
   }
@@ -246,8 +275,10 @@ export function captureValue(expression: string, actual: ActualResponse, scope?:
       const segments = decodeJwtSegments(token);
       const value = fieldAt(part === 'header' ? segments.header : segments.payload, field);
       if (value === undefined || value === null) return undefined;
-      if (typeof value === 'object') return undefined;
-      return String(value);
+      if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+      if (typeof value === 'string') return value;
+      // Arrays and objects: JSON-stringify so the capture holds the whole value.
+      return JSON.stringify(value);
     } catch {
       return undefined;
     }
@@ -276,3 +307,44 @@ export function captureValue(expression: string, actual: ActualResponse, scope?:
 }
 
 export { parseRedirect };
+
+/**
+ * Resolve an assertion body against the capture scope.
+ *
+ * For assert steps, string values in `expect.json` are `{{var}}` references
+ * that must be resolved against the scope and parsed as JSON when they look
+ * like JSON arrays/objects/numbers. This produces a plain object that
+ * compareResponse can work with without needing a live HTTP response.
+ */
+export function resolveAssertionBody(
+  json: Record<string, unknown> | undefined,
+  scope: CaptureScope,
+): Record<string, unknown> | undefined {
+  if (json === undefined) return undefined;
+  const resolved: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(json)) {
+    if (typeof value === 'string' && value.includes('{{')) {
+      const interpolated = interpolate(value, scope);
+      // Try to parse as JSON if it looks like an array or object
+      const trimmed = interpolated.trimStart();
+      if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+        try {
+          resolved[key] = JSON.parse(interpolated);
+          continue;
+        } catch {
+          // fall through to string
+        }
+      }
+      // Try to parse as number
+      const num = Number(interpolated);
+      if (!Number.isNaN(num) && String(num) === interpolated) {
+        resolved[key] = num;
+        continue;
+      }
+      resolved[key] = interpolated;
+    } else {
+      resolved[key] = value;
+    }
+  }
+  return resolved;
+}

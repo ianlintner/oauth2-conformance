@@ -8,13 +8,6 @@ profile: oidc-basic
 status: draft
 note: |
   Invariants INV-OIDC-AUD-CLIENT, INV-OIDC-IAT-EXP-ORDER, INV-OIDC-NONCE-ECHOED.
-  The runner cannot yet assert these claims end-to-end with only existing
-  features: `aud` may be a string or an array, and the jwt capture returns
-  undefined for an array member; `iat`/`exp` are numeric and the runner has no
-  numeric ordering matcher; and `nonce` echo needs a request-parameter-vs-claim
-  comparison the runner does not express. Part 3/3 runner extensions must add
-  aud membership, numeric iat<exp, and a captured-claim-vs-literal matcher.
-  This scenario documents the intended assertions and stays non-executed.
 steps:
   - id: auth
     use: login-and-authorize
@@ -51,6 +44,20 @@ steps:
       json: { id_token: "x" }
     capture:
       idt: body.id_token
-      # Intent: assert aud contains client-a, iat and exp are numeric with
-      # exp > iat, and nonce equals n-0S6_WzA2Mj. None of these are
-      # expressible with current capture/matcher features; see note above.
+      aud: jwt.idt.payload.aud
+      iat: jwt.idt.payload.iat
+      exp: jwt.idt.payload.exp
+      nonce: jwt.idt.payload.nonce
+  - id: assert-aud
+    assert:
+      json:
+        aud: { "$includes": "client-a" }
+  - id: assert-iat-exp
+    assert:
+      json:
+        iat: { "$gt": 0 }
+        exp: { "$lt": 4102444800 }
+  - id: assert-nonce
+    assert:
+      json:
+        nonce: n-0S6_WzA2Mj

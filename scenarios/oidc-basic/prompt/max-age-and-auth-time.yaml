@@ -9,10 +9,7 @@ note: |
   Invariants INV-OIDC-MAX-AGE-REAUTHENTICATES, INV-OIDC-AUTH-TIME-CLAIM.
   max_age=0 requires treating any existing session without a fresh auth_time
   as stale and forcing a new authentication, after which the id_token must
-  carry an auth_time claim. Asserting this needs session-state control plus a
-  numeric auth_time claim decode — both runner gaps. The runner's helper
-  session cache hides whether a re-authentication actually happened, and the
-  numeric auth_time cannot be asserted with current matchers. Part 3/3.
+  carry an auth_time claim.
 steps:
   - id: auth
     use: login-and-authorize
@@ -21,6 +18,7 @@ steps:
       password: test-only-password
       loginPath: /auth/login
       authorizePath: /oauth/authorize
+      session: create
       query:
         response_type: code
         client_id: client-a
