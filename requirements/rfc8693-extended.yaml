@@ -1,0 +1,61 @@
+# RFC 8693 requirements for the extended-grants profile.
+# Source material: rust-oauth2-server compliance_rfc8628, device_flow, compliance_wave3-6,
+# security_token_exchange_expiry. Summaries are one line each; the clause link is canonical.
+- id: RFC8693-2.1-tx-grant-type
+  spec: "RFC 8693"
+  clause: "2.1"
+  level: MUST
+  profile: extended-grants
+  summary: "A token exchange request uses grant_type urn:ietf:params:oauth:grant-type:token-exchange."
+  link: https://www.rfc-editor.org/rfc/rfc8693.html#section-2.1
+- id: RFC8693-2.1-tx-subject-token-required
+  spec: "RFC 8693"
+  clause: "2.1"
+  level: MUST
+  profile: extended-grants
+  summary: "subject_token and subject_token_type are required; a request missing either is rejected."
+  link: https://www.rfc-editor.org/rfc/rfc8693.html#section-2.1
+  notes: "Error code is invalid_request per 2.2.2."
+- id: RFC8693-2.1-tx-actor-token-type
+  spec: "RFC 8693"
+  clause: "2.1"
+  level: MUST NOT
+  profile: extended-grants
+  summary: "actor_token_type must not be included without actor_token and is required when actor_token is present."
+  link: https://www.rfc-editor.org/rfc/rfc8693.html#section-2.1
+- id: RFC8693-2.1-tx-validate-tokens
+  spec: "RFC 8693"
+  clause: "2.1"
+  level: MUST
+  profile: extended-grants
+  summary: "The server validates the subject token (and actor token when present) for its type, rejecting expired, revoked or invalid tokens."
+  link: https://www.rfc-editor.org/rfc/rfc8693.html#section-2.1
+  notes: "rust-oauth2-server security_token_exchange_expiry covers expired subject tokens."
+- id: RFC8693-2.2.1-tx-response-members
+  spec: "RFC 8693"
+  clause: "2.2.1"
+  level: MUST
+  profile: extended-grants
+  summary: "A success response contains access_token, issued_token_type and token_type."
+  link: https://www.rfc-editor.org/rfc/rfc8693.html#section-2.2.1
+- id: RFC8693-2.2.1-tx-scope-when-differs
+  spec: "RFC 8693"
+  clause: "2.2.1"
+  level: MUST
+  profile: extended-grants
+  summary: "The response scope is included when the issued scope differs from the requested scope."
+  link: https://www.rfc-editor.org/rfc/rfc8693.html#section-2.2.1
+- id: RFC8693-2.2.2-tx-error-invalid-request
+  spec: "RFC 8693"
+  clause: "2.2.2"
+  level: MUST
+  profile: extended-grants
+  summary: "An invalid request or unacceptable subject or actor token yields error=invalid_request."
+  link: https://www.rfc-editor.org/rfc/rfc8693.html#section-2.2.2
+- id: RFC8693-2.2.2-tx-invalid-target
+  spec: "RFC 8693"
+  clause: "2.2.2"
+  level: SHOULD
+  profile: extended-grants
+  summary: "An unfulfillable resource or audience target yields error=invalid_target."
+  link: https://www.rfc-editor.org/rfc/rfc8693.html#section-2.2.2

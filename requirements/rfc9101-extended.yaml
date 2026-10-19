@@ -1,0 +1,60 @@
+# RFC 9101 requirements for the extended-grants profile.
+# Source material: rust-oauth2-server compliance_rfc8628, device_flow, compliance_wave3-6,
+# security_token_exchange_expiry. Summaries are one line each; the clause link is canonical.
+- id: RFC9101-4-jar-claims
+  spec: "RFC 9101"
+  clause: "4"
+  level: MUST
+  profile: extended-grants
+  summary: "A Request Object contains all authorization request parameters as JWT claims except request and request_uri."
+  link: https://www.rfc-editor.org/rfc/rfc9101.html#section-4
+- id: RFC9101-6.2-jar-signature-verified
+  spec: "RFC 9101"
+  clause: "6.2"
+  level: MUST
+  profile: extended-grants
+  summary: "The server validates the JWS signature of a Request Object using a key associated with the client."
+  link: https://www.rfc-editor.org/rfc/rfc9101.html#section-6.2
+- id: RFC9101-6.2-jar-bad-signature-error
+  spec: "RFC 9101"
+  clause: "6.2"
+  level: MUST
+  profile: extended-grants
+  summary: "An invalid signature or a key not associated with the client yields the invalid_request_object error."
+  link: https://www.rfc-editor.org/rfc/rfc9101.html#section-6.2
+- id: RFC9101-6.3-jar-only-request-object-params
+  spec: "RFC 9101"
+  clause: "6.3"
+  level: MUST
+  profile: extended-grants
+  summary: "The server uses only the parameters in the Request Object, ignoring duplicates in the query string."
+  link: https://www.rfc-editor.org/rfc/rfc9101.html#section-6.3
+- id: RFC9101-6.3-jar-client-id-match
+  spec: "RFC 9101"
+  clause: "6.3"
+  level: MUST
+  profile: extended-grants
+  summary: "The client_id request parameter and the Request Object client_id claim are identical, otherwise the request is rejected."
+  link: https://www.rfc-editor.org/rfc/rfc9101.html#section-6.3
+- id: RFC9101-10.5-jar-alg-none-rejected
+  spec: "RFC 9101"
+  clause: "10.5"
+  level: MUST
+  profile: extended-grants
+  summary: "When require_signed_request_object is true the server rejects Request Objects with alg none."
+  link: https://www.rfc-editor.org/rfc/rfc9101.html#section-10.5
+- id: RFC9101-10.5-jar-require-signed
+  spec: "RFC 9101"
+  clause: "10.5"
+  level: MUST
+  profile: extended-grants
+  summary: "When require_signed_request_object is true the server rejects authorization requests that do not use a Request Object."
+  link: https://www.rfc-editor.org/rfc/rfc9101.html#section-10.5
+- id: RFC9101-4-jar-unsigned-allowed-by-policy
+  spec: "RFC 9101"
+  clause: "4"
+  level: MAY
+  profile: extended-grants
+  summary: "An unsigned (alg none) Request Object may be accepted when the server does not require signed requests."
+  link: https://www.rfc-editor.org/rfc/rfc9101.html#section-4
+  notes: "Default of require_signed_request_object is false (10.5); acceptance of unsigned objects is server policy."

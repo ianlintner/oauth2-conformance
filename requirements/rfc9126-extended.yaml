@@ -1,0 +1,83 @@
+# RFC 9126 requirements for the extended-grants profile.
+# Source material: rust-oauth2-server compliance_rfc8628, device_flow, compliance_wave3-6,
+# security_token_exchange_expiry. Summaries are one line each; the clause link is canonical.
+- id: RFC9126-2-par-endpoint-https
+  spec: "RFC 9126"
+  clause: "2"
+  level: MUST
+  profile: extended-grants
+  summary: "The PAR endpoint URL uses the https scheme and accepts POST with form-urlencoded parameters."
+  link: https://www.rfc-editor.org/rfc/rfc9126.html#section-2
+- id: RFC9126-2-par-client-auth
+  spec: "RFC 9126"
+  clause: "2"
+  level: MUST
+  profile: extended-grants
+  summary: "Token-endpoint client authentication rules apply at the PAR endpoint; confidential clients that do not authenticate are rejected."
+  link: https://www.rfc-editor.org/rfc/rfc9126.html#section-2
+- id: RFC9126-2-par-jwt-audience
+  spec: "RFC 9126"
+  clause: "2"
+  level: MUST
+  profile: extended-grants
+  summary: "The PAR endpoint accepts its issuer identifier, token endpoint URL or PAR endpoint URL as audience of a JWT client assertion."
+  link: https://www.rfc-editor.org/rfc/rfc9126.html#section-2
+- id: RFC9126-2.1-par-request-uri-forbidden
+  spec: "RFC 9126"
+  clause: "2.1"
+  level: MUST NOT
+  profile: extended-grants
+  summary: "A pushed authorization request must not contain request_uri."
+  link: https://www.rfc-editor.org/rfc/rfc9126.html#section-2.1
+- id: RFC9126-2.1-par-invalid-request-rejected
+  spec: "RFC 9126"
+  clause: "2.1"
+  level: MUST
+  profile: extended-grants
+  summary: "A pushed request that fails authorization request validation (for example a missing response_type) is rejected with an error."
+  link: https://www.rfc-editor.org/rfc/rfc9126.html#section-2.1
+  notes: "Error handling per 2.3, which reuses RFC 6749 5.2 and 4.1.2.1 codes."
+- id: RFC9126-2.2-par-created-response
+  spec: "RFC 9126"
+  clause: "2.2"
+  level: MUST
+  profile: extended-grants
+  summary: "A valid pushed request returns HTTP 201 with request_uri and expires_in."
+  link: https://www.rfc-editor.org/rfc/rfc9126.html#section-2.2
+- id: RFC9126-2.2-par-request-uri-unguessable
+  spec: "RFC 9126"
+  clause: "2.2"
+  level: MUST
+  profile: extended-grants
+  summary: "The request_uri contains a part generated with a cryptographically strong random source."
+  link: https://www.rfc-editor.org/rfc/rfc9126.html#section-2.2
+- id: RFC9126-2.2-par-request-uri-client-bound
+  spec: "RFC 9126"
+  clause: "2.2"
+  level: MUST
+  profile: extended-grants
+  summary: "The request_uri is bound to the client that posted the authorization request."
+  link: https://www.rfc-editor.org/rfc/rfc9126.html#section-2.2
+- id: RFC9126-2.3-par-error-format
+  spec: "RFC 9126"
+  clause: "2.3"
+  level: MUST
+  profile: extended-grants
+  summary: "PAR errors use the RFC 6749 5.2 token-endpoint error response format."
+  link: https://www.rfc-editor.org/rfc/rfc9126.html#section-2.3
+- id: RFC9126-2.2-par-request-uri-single-use
+  spec: "RFC 9126"
+  clause: "2.2"
+  level: SHOULD
+  profile: extended-grants
+  summary: "A request_uri is a single-use reference: a second use at the authorization endpoint is rejected."
+  link: https://www.rfc-editor.org/rfc/rfc9126.html#section-2.2
+  notes: "2.2 describes request_uri as a single-use reference; 7.1 recommends one-time use."
+- id: RFC9126-5-par-metadata-endpoint
+  spec: "RFC 9126"
+  clause: "5"
+  level: SHOULD
+  profile: extended-grants
+  summary: "Authorization server metadata advertises pushed_authorization_request_endpoint."
+  link: https://www.rfc-editor.org/rfc/rfc9126.html#section-5
+  notes: "Section 2 says servers supporting PAR SHOULD include it in metadata."

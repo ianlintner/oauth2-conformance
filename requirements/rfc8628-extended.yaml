@@ -1,0 +1,101 @@
+# RFC 8628 requirements for the extended-grants profile.
+# Source material: rust-oauth2-server compliance_rfc8628, device_flow, compliance_wave3-6,
+# security_token_exchange_expiry. Summaries are one line each; the clause link is canonical.
+- id: RFC8628-3.1-device-authz-tls
+  spec: "RFC 8628"
+  clause: "3.1"
+  level: MUST
+  profile: extended-grants
+  summary: "Device authorization requests are made over TLS."
+  link: https://www.rfc-editor.org/rfc/rfc8628.html#section-3.1
+- id: RFC8628-3.1-empty-params-ignored
+  spec: "RFC 8628"
+  clause: "3.1"
+  level: MUST
+  profile: extended-grants
+  summary: "The device authorization endpoint treats parameters sent without a value as omitted and ignores unrecognized parameters."
+  link: https://www.rfc-editor.org/rfc/rfc8628.html#section-3.1
+- id: RFC8628-3.1-params-not-repeated
+  spec: "RFC 8628"
+  clause: "3.1"
+  level: MUST NOT
+  profile: extended-grants
+  summary: "A device authorization request parameter must not be included more than once; duplicates are rejected."
+  link: https://www.rfc-editor.org/rfc/rfc8628.html#section-3.1
+  notes: "RFC 8628 3.1 forbids repeating a parameter; rejecting duplicates is the conventional server behavior, not an explicit server MUST."
+- id: RFC8628-3.1-unknown-client-rejected
+  spec: "RFC 8628"
+  clause: "3.1"
+  level: MUST
+  profile: extended-grants
+  summary: "A device authorization request with a missing or unknown client_id is rejected with an OAuth error."
+  link: https://www.rfc-editor.org/rfc/rfc8628.html#section-3.1
+  notes: "Follows the RFC 6749 5.2 client identification rules referenced by 3.1."
+- id: RFC8628-3.2-response-members
+  spec: "RFC 8628"
+  clause: "3.2"
+  level: MUST
+  profile: extended-grants
+  summary: "A successful device authorization response contains device_code, user_code, verification_uri and expires_in."
+  link: https://www.rfc-editor.org/rfc/rfc8628.html#section-3.2
+- id: RFC8628-3.2-interval-positive-integer
+  spec: "RFC 8628"
+  clause: "3.2"
+  level: MAY
+  profile: extended-grants
+  summary: "A returned interval value is a positive integer number of seconds; clients default to 5 when it is absent."
+  link: https://www.rfc-editor.org/rfc/rfc8628.html#section-3.2
+  notes: "interval is OPTIONAL in the response; the 5-second default is a client rule."
+- id: RFC8628-3.4-token-request-grant-type
+  spec: "RFC 8628"
+  clause: "3.4"
+  level: MUST
+  profile: extended-grants
+  summary: "The device access token request uses grant_type urn:ietf:params:oauth:grant-type:device_code with a device_code."
+  link: https://www.rfc-editor.org/rfc/rfc8628.html#section-3.4
+- id: RFC8628-3.5-authorization-pending
+  spec: "RFC 8628"
+  clause: "3.5"
+  level: MUST
+  profile: extended-grants
+  summary: "Polling the token endpoint before the user acts returns 400 with error=authorization_pending."
+  link: https://www.rfc-editor.org/rfc/rfc8628.html#section-3.5
+  notes: "The error code is defined for this case in 3.5; HTTP 400 comes from RFC 6749 5.2."
+- id: RFC8628-3.5-slow-down-interval
+  spec: "RFC 8628"
+  clause: "3.5"
+  level: MUST
+  profile: extended-grants
+  summary: "After a slow_down error the polling interval is increased by 5 seconds for all subsequent requests."
+  link: https://www.rfc-editor.org/rfc/rfc8628.html#section-3.5
+- id: RFC8628-3.5-access-denied
+  spec: "RFC 8628"
+  clause: "3.5"
+  level: MUST
+  profile: extended-grants
+  summary: "If the user denied the request, the token endpoint returns error=access_denied."
+  link: https://www.rfc-editor.org/rfc/rfc8628.html#section-3.5
+  notes: "Error code defined in 3.5; the RFC text does not restate server obligation as MUST."
+- id: RFC8628-3.5-expired-token
+  spec: "RFC 8628"
+  clause: "3.5"
+  level: MUST
+  profile: extended-grants
+  summary: "An expired device_code yields error=expired_token at the token endpoint."
+  link: https://www.rfc-editor.org/rfc/rfc8628.html#section-3.5
+  notes: "Error code defined in 3.5; the RFC text does not restate server obligation as MUST."
+- id: RFC8628-3.5-approved-success
+  spec: "RFC 8628"
+  clause: "3.5"
+  level: MUST
+  profile: extended-grants
+  summary: "After user approval the token endpoint returns a standard RFC 6749 5.1 success response."
+  link: https://www.rfc-editor.org/rfc/rfc8628.html#section-3.5
+- id: RFC8628-4-discovery-device-endpoint
+  spec: "RFC 8628"
+  clause: "4"
+  level: SHOULD
+  profile: extended-grants
+  summary: "Authorization server metadata advertises device_authorization_endpoint."
+  link: https://www.rfc-editor.org/rfc/rfc8628.html#section-4
+  notes: "Section 4 defines the metadata parameter; advertising it is the practical discovery path."

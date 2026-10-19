@@ -1,0 +1,59 @@
+# RFC 7523 requirements for the extended-grants profile.
+# Source material: rust-oauth2-server compliance_rfc8628, device_flow, compliance_wave3-6,
+# security_token_exchange_expiry. Summaries are one line each; the clause link is canonical.
+- id: RFC7523-2.2-assert-single-jwt
+  spec: "RFC 7523"
+  clause: "2.2"
+  level: MUST
+  profile: extended-grants
+  summary: "client_assertion contains a single JWT and is sent with client_assertion_type urn:ietf:params:oauth:client-assertion-type:jwt-bearer."
+  link: https://www.rfc-editor.org/rfc/rfc7523.html#section-2.2
+- id: RFC7523-3-assert-iss-sub
+  spec: "RFC 7523"
+  clause: "3"
+  level: MUST
+  profile: extended-grants
+  summary: "The JWT contains iss and, for client authentication, a sub equal to the client_id."
+  link: https://www.rfc-editor.org/rfc/rfc7523.html#section-3
+- id: RFC7523-3-assert-aud
+  spec: "RFC 7523"
+  clause: "3"
+  level: MUST
+  profile: extended-grants
+  summary: "The server rejects a JWT that does not contain its own identity as an audience."
+  link: https://www.rfc-editor.org/rfc/rfc7523.html#section-3
+- id: RFC7523-3-assert-exp
+  spec: "RFC 7523"
+  clause: "3"
+  level: MUST
+  profile: extended-grants
+  summary: "The JWT contains exp and the server rejects a JWT whose expiration has passed."
+  link: https://www.rfc-editor.org/rfc/rfc7523.html#section-3
+- id: RFC7523-3-assert-signature
+  spec: "RFC 7523"
+  clause: "3"
+  level: MUST
+  profile: extended-grants
+  summary: "The server rejects a JWT with an invalid signature or MAC."
+  link: https://www.rfc-editor.org/rfc/rfc7523.html#section-3
+- id: RFC7523-3-assert-jti-replay
+  spec: "RFC 7523"
+  clause: "3"
+  level: MAY
+  profile: extended-grants
+  summary: "The server may reject replayed JWTs by tracking jti values until exp."
+  link: https://www.rfc-editor.org/rfc/rfc7523.html#section-3
+- id: RFC7523-3.1-assert-grant-invalid-grant
+  spec: "RFC 7523"
+  clause: "3.1"
+  level: MUST
+  profile: extended-grants
+  summary: "An invalid JWT authorization grant yields error=invalid_grant."
+  link: https://www.rfc-editor.org/rfc/rfc7523.html#section-3.1
+- id: RFC7523-3.2-assert-client-invalid-client
+  spec: "RFC 7523"
+  clause: "3.2"
+  level: MUST
+  profile: extended-grants
+  summary: "An invalid client authentication JWT yields error=invalid_client."
+  link: https://www.rfc-editor.org/rfc/rfc7523.html#section-3.2

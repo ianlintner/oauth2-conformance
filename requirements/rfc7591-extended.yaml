@@ -1,0 +1,45 @@
+# RFC 7591 requirements for the extended-grants profile.
+# Source material: rust-oauth2-server compliance_rfc8628, device_flow, compliance_wave3-6,
+# security_token_exchange_expiry. Summaries are one line each; the clause link is canonical.
+- id: RFC7591-3-reg-endpoint-json-post
+  spec: "RFC 7591"
+  clause: "3"
+  level: MUST
+  profile: extended-grants
+  summary: "The client registration endpoint accepts HTTP POST with application/json bodies."
+  link: https://www.rfc-editor.org/rfc/rfc7591.html#section-3
+- id: RFC7591-3-reg-endpoint-tls
+  spec: "RFC 7591"
+  clause: "3"
+  level: MUST
+  profile: extended-grants
+  summary: "The client registration endpoint is protected by transport-layer security."
+  link: https://www.rfc-editor.org/rfc/rfc7591.html#section-3
+- id: RFC7591-3.2.1-reg-response-client-id
+  spec: "RFC 7591"
+  clause: "3.2.1"
+  level: MUST
+  profile: extended-grants
+  summary: "A successful registration response contains client_id."
+  link: https://www.rfc-editor.org/rfc/rfc7591.html#section-3.2.1
+- id: RFC7591-3.2.1-reg-secret-expires-at
+  spec: "RFC 7591"
+  clause: "3.2.1"
+  level: MUST
+  profile: extended-grants
+  summary: "If client_secret is issued the response includes client_secret_expires_at (0 when it does not expire)."
+  link: https://www.rfc-editor.org/rfc/rfc7591.html#section-3.2.1
+- id: RFC7591-3.2.1-reg-returns-metadata
+  spec: "RFC 7591"
+  clause: "3.2.1"
+  level: MUST
+  profile: extended-grants
+  summary: "The registration response returns all registered client metadata, including server-provisioned values."
+  link: https://www.rfc-editor.org/rfc/rfc7591.html#section-3.2.1
+- id: RFC7591-3.2.2-reg-error-format
+  spec: "RFC 7591"
+  clause: "3.2.2"
+  level: MUST
+  profile: extended-grants
+  summary: "Registration errors return HTTP 400 JSON with an error code such as invalid_redirect_uri or invalid_client_metadata."
+  link: https://www.rfc-editor.org/rfc/rfc7591.html#section-3.2.2
