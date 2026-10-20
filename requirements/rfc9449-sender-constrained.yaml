@@ -39,18 +39,18 @@
   link: https://www.rfc-editor.org/rfc/rfc9449.html#section-4.2
 - id: RFC9449-4.2-htu-query-rejected
   spec: "RFC 9449"
-  clause: "4.2"
-  level: MUST NOT
+  clause: "4.3"
+  level: MUST
   profile: sender-constrained
-  summary: "A proof whose htu claim contains a query or fragment component is rejected."
-  link: https://www.rfc-editor.org/rfc/rfc9449.html#section-4.2
+  summary: "The proof htu claim is compared against the request URI without query and fragment; a mismatching htu is rejected."
+  link: https://www.rfc-editor.org/rfc/rfc9449.html#section-4.3
 - id: RFC9449-4.2-iat-freshness-window
   spec: "RFC 9449"
-  clause: "4.2"
-  level: SHOULD
+  clause: "11.1"
+  level: MUST
   profile: sender-constrained
-  summary: "The proof iat claim is checked against a server-defined freshness window and stale proofs are rejected."
-  link: https://www.rfc-editor.org/rfc/rfc9449.html#section-4.2
+  summary: "Servers accept a DPoP proof only for a limited time after its iat creation time; stale proofs are rejected."
+  link: https://www.rfc-editor.org/rfc/rfc9449.html#section-11.1
 - id: RFC9449-4.3-jti-required
   spec: "RFC 9449"
   clause: "4.3"
@@ -60,11 +60,11 @@
   link: https://www.rfc-editor.org/rfc/rfc9449.html#section-4.3
 - id: RFC9449-4.3-jti-replay-rejected
   spec: "RFC 9449"
-  clause: "4.3"
-  level: MUST
+  clause: "11.1"
+  level: SHOULD
   profile: sender-constrained
-  summary: "A replayed DPoP proof carrying an already-seen jti is rejected with invalid_dpop_proof."
-  link: https://www.rfc-editor.org/rfc/rfc9449.html#section-4.3
+  summary: "Where the server stores jti values, a replayed proof is rejected with invalid_dpop_proof (strict single use may not always be feasible)."
+  link: https://www.rfc-editor.org/rfc/rfc9449.html#section-11.1
 - id: RFC9449-7.1-ath-required
   spec: "RFC 9449"
   clause: "7.1"
@@ -182,7 +182,7 @@
 - id: RFC9449-11.1-replay-store-in-memory-floor
   spec: "RFC 9449"
   clause: "11.1"
-  level: MUST
+  level: MAY
   profile: sender-constrained
-  summary: "When the configured backend does not persist proofs, an in-process replay cache still rejects a repeated jti."
+  summary: "Local policy, not an RFC mandate: when the configured backend does not persist proofs, an in-process replay cache still rejects a repeated jti."
   link: https://www.rfc-editor.org/rfc/rfc9449.html#section-11.1

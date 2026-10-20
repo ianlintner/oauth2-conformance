@@ -196,3 +196,16 @@ test('sender-constrained RFC attribution: introspection, nonce, rate limits and 
     assert.match(r.notes ?? '', /Local/);
   }
 });
+
+test('RFC 9449 section 11.1 replay and freshness levels match the RFC text', () => {
+  const iat = get('RFC9449-4.2-iat-freshness-window');
+  assert.equal(iat.level, 'MUST');
+  assert.equal(iat.clause, '11.1');
+  const replay = get('RFC9449-4.3-jti-replay-rejected');
+  assert.equal(replay.level, 'SHOULD');
+  assert.equal(replay.clause, '11.1');
+  const floor = get('RFC9449-11.1-replay-store-in-memory-floor');
+  assert.equal(floor.level, 'MAY');
+  assert.match(floor.summary, /local policy/i);
+  assert.equal(get('RFC9449-4.2-htu-query-rejected').clause, '4.3');
+});
