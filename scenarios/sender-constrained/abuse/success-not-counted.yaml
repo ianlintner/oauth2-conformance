@@ -1,0 +1,8 @@
+id: sender-constrained.abuse.success-not-counted
+title: "Successful issuance does not consume the invalid_client bucket (local policy)"
+requirements: ["RFC9700-2.5-success-not-counted-policy"]
+profile: sender-constrained
+status: draft
+note: "Invariant INV-SC-SUCCESS-NOT-COUNTED. Draft: needs step repetition (loop N times) in the runner."
+steps:
+  - {"id": "ok", "request": {"method": "POST", "path": "/oauth/token", "form": {"grant_type": "client_credentials"}, "headers": {"authorization": "Basic Y2xpZW50LWNjOnRlc3Qtb25seS1jYy1zZWNyZXQ="}}, "expect": {"status": 200}}

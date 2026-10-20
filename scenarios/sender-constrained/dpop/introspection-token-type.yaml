@@ -1,0 +1,9 @@
+id: sender-constrained.dpop.introspection-token-type
+title: "Introspection of a DPoP-bound token reports token_type DPoP"
+requirements: ["RFC9449-6.2-introspection-token-type-dpop"]
+profile: sender-constrained
+status: draft
+note: "Invariant INV-SC-INTROSPECTION-TOKEN-TYPE. Draft: needs a DPoP proof signing helper (ES256 key with selectable typ/jwk/htm/htu/iat/jti/ath/nonce claims)."
+steps:
+  - {"id": "token", "request": {"method": "POST", "path": "/oauth/token", "headers": {"authorization": "Basic Y2xpZW50LWNjOnRlc3Qtb25seS1jYy1zZWNyZXQ=", "dpop": "{{proof_token_ok}}"}, "form": {"grant_type": "client_credentials"}}, "expect": {"status": 200, "json": {"access_token": "x", "token_type": "DPoP"}}, "capture": {"at": "body.access_token"}}
+  - {"id": "introspect", "request": {"method": "POST", "path": "/oauth/introspect", "headers": {"authorization": "Basic Y2xpZW50LWNjOnRlc3Qtb25seS1jYy1zZWNyZXQ="}, "form": {"token": "{{at}}"}}, "expect": {"status": 200, "json": {"active": true, "token_type": "DPoP"}}}

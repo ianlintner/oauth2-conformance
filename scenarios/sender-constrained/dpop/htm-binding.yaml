@@ -1,0 +1,8 @@
+id: sender-constrained.dpop.htm-binding
+title: "A proof whose htm differs from the request method is rejected"
+requirements: ["RFC9449-4-htm-binding"]
+profile: sender-constrained
+status: draft
+note: "Invariant INV-SC-HTM-BINDING. Draft: needs a DPoP proof signing helper (ES256 key with selectable typ/jwk/htm/htu/iat/jti/ath/nonce claims)."
+steps:
+  - {"id": "token", "request": {"method": "POST", "path": "/oauth/token", "headers": {"authorization": "Basic Y2xpZW50LWNjOnRlc3Qtb25seS1jYy1zZWNyZXQ=", "dpop": "{{proof_wrong_htm}}"}, "form": {"grant_type": "client_credentials"}}, "expect": {"status": 400, "json": {"error": "invalid_dpop_proof"}}}

@@ -1,0 +1,8 @@
+id: sender-constrained.dpop.use-dpop-nonce
+title: "A proof lacking a required nonce yields use_dpop_nonce"
+requirements: ["RFC9449-8-use-dpop-nonce-error"]
+profile: sender-constrained
+status: draft
+note: "Invariant INV-SC-USE-DPOP-NONCE. Draft: needs a DPoP proof signing helper (ES256 key with selectable typ/jwk/htm/htu/iat/jti/ath/nonce claims); needs SUT nonce-required mode."
+steps:
+  - {"id": "token", "request": {"method": "POST", "path": "/oauth/token", "headers": {"authorization": "Basic Y2xpZW50LWNjOnRlc3Qtb25seS1jYy1zZWNyZXQ=", "dpop": "{{proof_token_ok}}"}, "form": {"grant_type": "client_credentials"}}, "expect": {"status": 400, "json": {"error": "use_dpop_nonce"}}}

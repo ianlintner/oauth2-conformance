@@ -1,0 +1,8 @@
+id: sender-constrained.dpop.nonce-response-header
+title: "use_dpop_nonce carries a DPoP-Nonce header and JSON body"
+requirements: ["RFC9449-8-nonce-response-header"]
+profile: sender-constrained
+status: draft
+note: "Invariant INV-SC-NONCE-RESPONSE-HEADER. Draft: needs a DPoP proof signing helper (ES256 key with selectable typ/jwk/htm/htu/iat/jti/ath/nonce claims); needs SUT nonce-required mode."
+steps:
+  - {"id": "token", "request": {"method": "POST", "path": "/oauth/token", "headers": {"authorization": "Basic Y2xpZW50LWNjOnRlc3Qtb25seS1jYy1zZWNyZXQ=", "dpop": "{{proof_token_ok}}"}, "form": {"grant_type": "client_credentials"}}, "expect": {"status": 400, "json": {"error": "use_dpop_nonce"}, "headers": {"dpop-nonce": "$nonempty"}}}

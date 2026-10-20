@@ -1,0 +1,9 @@
+id: sender-constrained.dpop.replay-restart
+title: "A proof consumed before a restart is still rejected after"
+requirements: ["RFC9449-11.1-replay-store-restart-safe"]
+profile: sender-constrained
+status: draft
+note: "Invariant INV-SC-REPLAY-RESTART. Draft: needs a DPoP proof signing helper (ES256 key with selectable typ/jwk/htm/htu/iat/jti/ath/nonce claims); needs SUT restart control between steps."
+steps:
+  - {"id": "token", "request": {"method": "POST", "path": "/oauth/token", "headers": {"authorization": "Basic Y2xpZW50LWNjOnRlc3Qtb25seS1jYy1zZWNyZXQ=", "dpop": "{{proof_token_ok}}"}, "form": {"grant_type": "client_credentials"}}, "expect": {"status": 200, "json": {"access_token": "x", "token_type": "DPoP"}}}
+  - {"id": "replay", "request": {"method": "POST", "path": "/oauth/token", "headers": {"authorization": "Basic Y2xpZW50LWNjOnRlc3Qtb25seS1jYy1zZWNyZXQ=", "dpop": "{{proof_token_ok}}"}, "form": {"grant_type": "client_credentials"}}, "expect": {"status": 400, "json": {"error": "invalid_dpop_proof"}}}

@@ -1,0 +1,8 @@
+id: sender-constrained.abuse.rate-limit-per-client
+title: "Rate-limit buckets are per client_id (local policy)"
+requirements: ["RFC9700-2.5-rate-limit-per-client-policy"]
+profile: sender-constrained
+status: draft
+note: "Invariant INV-SC-RATE-LIMIT-PER-CLIENT. Draft: needs step repetition (loop N times) in the runner."
+steps:
+  - {"id": "other-client", "request": {"method": "POST", "path": "/oauth/token", "form": {"grant_type": "client_credentials"}, "headers": {"authorization": "Basic Y2xpZW50LWNjOnRlc3Qtb25seS1jYy1zZWNyZXQ="}}, "expect": {"status": 200}}

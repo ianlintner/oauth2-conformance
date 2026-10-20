@@ -1,0 +1,8 @@
+id: sender-constrained.mtls.cnf-x5t
+title: "A certificate-bound token carries cnf x5t#S256"
+requirements: ["RFC8705-3.1-cnf-x5t-binding"]
+profile: sender-constrained
+status: draft
+note: "Invariant INV-SC-CNF-X5T. Draft: needs mTLS client-certificate transport in the runner and a seeded client-mtls; needs x5t#S256 thumbprint computation."
+steps:
+  - {"id": "token", "request": {"method": "POST", "path": "/oauth/token", "form": {"grant_type": "client_credentials", "client_id": "client-mtls"}}, "expect": {"status": 200}}

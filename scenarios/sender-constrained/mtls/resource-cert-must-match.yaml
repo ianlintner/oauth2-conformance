@@ -1,0 +1,9 @@
+id: sender-constrained.mtls.resource-cert-must-match
+title: "A resource rejects a certificate-bound token over a different client certificate"
+requirements: ["RFC8705-3-resource-cert-must-match"]
+profile: sender-constrained
+status: draft
+note: "Invariant INV-SC-RESOURCE-CERT-MUST-MATCH. Draft: needs mTLS client-certificate transport in the runner and a seeded client-mtls; needs two distinct client certificates; step 1 here is a DPoP placeholder for issuance."
+steps:
+  - {"id": "token", "request": {"method": "POST", "path": "/oauth/token", "headers": {"authorization": "Basic Y2xpZW50LWNjOnRlc3Qtb25seS1jYy1zZWNyZXQ=", "dpop": "{{proof_token_ok}}"}, "form": {"grant_type": "client_credentials", "scope": "openid"}}, "expect": {"status": 200, "json": {"access_token": "x", "token_type": "DPoP"}}, "capture": {"at": "body.access_token"}}
+  - {"id": "resource", "request": {"method": "GET", "path": "/oauth/userinfo", "headers": {"authorization": "Bearer {{at}}"}}, "expect": {"status": 401}}

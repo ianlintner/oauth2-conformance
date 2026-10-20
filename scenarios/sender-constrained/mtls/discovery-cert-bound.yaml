@@ -1,0 +1,8 @@
+id: sender-constrained.mtls.discovery-cert-bound
+title: "Metadata advertises tls_client_certificate_bound_access_tokens"
+requirements: ["RFC8705-3.3-discovery-cert-bound-tokens"]
+profile: sender-constrained
+status: draft
+note: "Invariant INV-SC-DISCOVERY-CERT-BOUND. Draft: no new runner feature needed, but the SUT must claim the sender-constrained profile and has not been run against it."
+steps:
+  - {"id": "metadata", "request": {"method": "GET", "path": "/.well-known/oauth-authorization-server"}, "expect": {"status": 200, "json": {"tls_client_certificate_bound_access_tokens": true}}}

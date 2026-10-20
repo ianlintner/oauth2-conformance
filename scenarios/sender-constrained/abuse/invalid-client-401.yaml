@@ -1,0 +1,8 @@
+id: sender-constrained.abuse.invalid-client-401
+title: "Failed client authentication via Authorization header yields 401 invalid_client"
+requirements: ["RFC6749-5.2-invalid-client-401"]
+profile: sender-constrained
+status: draft
+note: "Invariant INV-SC-INVALID-CLIENT-401. Draft: no new runner feature needed, but the SUT must claim the sender-constrained profile and has not been run against it."
+steps:
+  - {"id": "bad", "request": {"method": "POST", "path": "/oauth/token", "form": {"grant_type": "client_credentials"}, "headers": {"authorization": "Basic Y2xpZW50LWNjOndyb25n"}}, "expect": {"status": 401, "json": {"error": "invalid_client"}}}

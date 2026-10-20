@@ -1,0 +1,141 @@
+# Named invariants for the sender-constrained profile (contract v0.5 2/3).
+- id: INV-SC-TYP-HEADER
+  profile: sender-constrained
+  summary: "A proof with typ other than dpop+jwt is rejected"
+  requirement: RFC9449-4-typ-header-dpop-jwt
+- id: INV-SC-SIGNATURE-VERIFIED
+  profile: sender-constrained
+  summary: "A proof whose signature does not verify against its jwk is rejected"
+  requirement: RFC9449-4-proof-signature-verified
+- id: INV-SC-JWK-USABLE-ALGORITHM
+  profile: sender-constrained
+  summary: "A proof using a symmetric alg or a jwk carrying a private key is rejected"
+  requirement: RFC9449-4-jwk-usable-algorithm
+- id: INV-SC-HTM-BINDING
+  profile: sender-constrained
+  summary: "A proof whose htm differs from the request method is rejected"
+  requirement: RFC9449-4-htm-binding
+- id: INV-SC-HTU-BINDING
+  profile: sender-constrained
+  summary: "A proof whose htu differs from the request URI is rejected"
+  requirement: RFC9449-4.2-htu-binding
+- id: INV-SC-HTU-QUERY-IGNORED
+  profile: sender-constrained
+  summary: "htu is compared without query and fragment; a mismatching htu is rejected"
+  requirement: RFC9449-4.2-htu-query-rejected
+- id: INV-SC-IAT-STALE
+  profile: sender-constrained
+  summary: "A proof with a stale iat is rejected"
+  requirement: RFC9449-4.2-iat-freshness-window
+- id: INV-SC-JTI-REQUIRED
+  profile: sender-constrained
+  summary: "A proof without a jti claim is rejected"
+  requirement: RFC9449-4.3-jti-required
+- id: INV-SC-JTI-REPLAY
+  profile: sender-constrained
+  summary: "Replaying the same proof (same jti) is rejected"
+  requirement: RFC9449-4.3-jti-replay-rejected
+- id: INV-SC-ATH-REQUIRED
+  profile: sender-constrained
+  summary: "A resource proof without ath is rejected"
+  requirement: RFC9449-7.1-ath-required
+- id: INV-SC-ATH-MATCHES-TOKEN
+  profile: sender-constrained
+  summary: "A resource proof with a correct ath is accepted"
+  requirement: RFC9449-7.1-ath-matches-token
+- id: INV-SC-ATH-MISMATCH
+  profile: sender-constrained
+  summary: "A resource proof whose ath hashes a different token is rejected"
+  requirement: RFC9449-7.1-ath-mismatch-rejected
+- id: INV-SC-TOKEN-TYPE-DPOP
+  profile: sender-constrained
+  summary: "A DPoP-proofed token request yields token_type DPoP"
+  requirement: RFC9449-5-token-type-dpop
+- id: INV-SC-CNF-JKT-BINDING
+  profile: sender-constrained
+  summary: "The issued token is bound to the proof key via cnf.jkt"
+  requirement: RFC9449-6.1-cnf-jkt-binding
+- id: INV-SC-INTROSPECTION-TOKEN-TYPE
+  profile: sender-constrained
+  summary: "Introspection of a DPoP-bound token reports token_type DPoP"
+  requirement: RFC9449-6.2-introspection-token-type-dpop
+- id: INV-SC-WRONG-KEY
+  profile: sender-constrained
+  summary: "A resource request with a proof from a different key is rejected"
+  requirement: RFC9449-7.2-wrong-key-rejected
+- id: INV-SC-USE-DPOP-NONCE
+  profile: sender-constrained
+  summary: "A proof lacking a required nonce yields use_dpop_nonce"
+  requirement: RFC9449-8-use-dpop-nonce-error
+- id: INV-SC-NONCE-RETRY
+  profile: sender-constrained
+  summary: "Retrying with the server nonce succeeds"
+  requirement: RFC9449-8-nonce-retry-succeeds
+- id: INV-SC-NONCE-RESPONSE-HEADER
+  profile: sender-constrained
+  summary: "use_dpop_nonce carries a DPoP-Nonce header and JSON body"
+  requirement: RFC9449-8-nonce-response-header
+- id: INV-SC-FORGED-NONCE
+  profile: sender-constrained
+  summary: "A forged nonce is answered with use_dpop_nonce"
+  requirement: RFC9449-8-forged-nonce-use-dpop-nonce
+- id: INV-SC-NONCE-GRACE
+  profile: sender-constrained
+  summary: "A nonce from the previous rotation bucket may be accepted"
+  requirement: RFC9449-9-nonce-grace-window
+- id: INV-SC-STALE-NONCE
+  profile: sender-constrained
+  summary: "A nonce outside the accepted window yields use_dpop_nonce"
+  requirement: RFC9449-9-stale-nonce-use-dpop-nonce
+- id: INV-SC-DISCOVERY-ALG-VALUES
+  profile: sender-constrained
+  summary: "Metadata may advertise dpop_signing_alg_values_supported"
+  requirement: RFC9449-5.1-as-discovery-alg-values
+- id: INV-SC-REPLAY-CROSS-INSTANCE
+  profile: sender-constrained
+  summary: "A proof consumed by one instance is rejected by another"
+  requirement: RFC9449-11.1-replay-store-cross-instance
+- id: INV-SC-REPLAY-RESTART
+  profile: sender-constrained
+  summary: "A proof consumed before a restart is still rejected after"
+  requirement: RFC9449-11.1-replay-store-restart-safe
+- id: INV-SC-REPLAY-IN-MEMORY
+  profile: sender-constrained
+  summary: "An in-process cache rejects a repeated jti (local policy)"
+  requirement: RFC9449-11.1-replay-store-in-memory-floor
+- id: INV-SC-TLS-CLIENT-AUTH-DN
+  profile: sender-constrained
+  summary: "tls_client_auth with a mismatching Subject DN is rejected"
+  requirement: RFC8705-2.1-tls-client-auth-subject-dn
+- id: INV-SC-DISCOVERY-CERT-BOUND
+  profile: sender-constrained
+  summary: "Metadata advertises tls_client_certificate_bound_access_tokens"
+  requirement: RFC8705-3.3-discovery-cert-bound-tokens
+- id: INV-SC-CNF-X5T
+  profile: sender-constrained
+  summary: "A certificate-bound token carries cnf x5t#S256"
+  requirement: RFC8705-3.1-cnf-x5t-binding
+- id: INV-SC-RESOURCE-CERT-MUST-MATCH
+  profile: sender-constrained
+  summary: "A resource rejects a certificate-bound token over a different client certificate"
+  requirement: RFC8705-3-resource-cert-must-match
+- id: INV-SC-INVALID-CLIENT-RATE-LIMITED
+  profile: sender-constrained
+  summary: "Repeated invalid_client failures are eventually answered 429 (local policy)"
+  requirement: RFC9700-2.5-invalid-client-rate-limited-policy
+- id: INV-SC-INVALID-CLIENT-401
+  profile: sender-constrained
+  summary: "Failed client authentication via Authorization header yields 401 invalid_client"
+  requirement: RFC6749-5.2-invalid-client-401
+- id: INV-SC-RATE-LIMIT-PER-CLIENT
+  profile: sender-constrained
+  summary: "Rate-limit buckets are per client_id (local policy)"
+  requirement: RFC9700-2.5-rate-limit-per-client-policy
+- id: INV-SC-SUCCESS-NOT-COUNTED
+  profile: sender-constrained
+  summary: "Successful issuance does not consume the invalid_client bucket (local policy)"
+  requirement: RFC9700-2.5-success-not-counted-policy
+- id: INV-SC-TOKEN-SENDER-CONSTRAINED
+  profile: sender-constrained
+  summary: "Access tokens are sender-constrained (DPoP or mTLS)"
+  requirement: RFC9700-2.2.1-token-sender-constrained
