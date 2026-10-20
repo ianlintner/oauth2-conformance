@@ -11,14 +11,14 @@
 - id: RFC8705-3.3-discovery-cert-bound-tokens
   spec: "RFC 8705"
   clause: "3.3"
-  level: MUST
+  level: MAY
   profile: sender-constrained
   summary: "Authorization server metadata advertises tls_client_certificate_bound_access_tokens true when certificate-bound tokens are supported."
   link: https://www.rfc-editor.org/rfc/rfc8705.html#section-3.3
 - id: RFC8705-3.1-cnf-x5t-binding
   spec: "RFC 8705"
   clause: "3.1"
-  level: MUST
+  level: SHOULD
   profile: sender-constrained
   summary: "A certificate-bound access token carries a cnf x5t#S256 member holding the SHA-256 thumbprint of the client certificate."
   link: https://www.rfc-editor.org/rfc/rfc8705.html#section-3.1

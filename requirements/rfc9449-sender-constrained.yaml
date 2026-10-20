@@ -100,13 +100,14 @@
   profile: sender-constrained
   summary: "The issued access token is bound to the proof's public key through the cnf/jkt confirmation member."
   link: https://www.rfc-editor.org/rfc/rfc9449.html#section-6.1
-- id: RFC9449-7.1-introspection-requires-proof
+- id: RFC9449-6.2-introspection-token-type-dpop
   spec: "RFC 9449"
-  clause: "7.1"
+  clause: "6.2"
   level: MUST
   profile: sender-constrained
-  summary: "Introspection of a DPoP-bound token requires a matching proof and reports the token inactive otherwise."
-  link: https://www.rfc-editor.org/rfc/rfc9449.html#section-7.1
+  summary: "When an introspection response for a DPoP-bound token includes token_type, its value is DPoP."
+  link: https://www.rfc-editor.org/rfc/rfc9449.html#section-6.2
+  notes: "The resource server sends no DPoP proof to the introspection endpoint and the AS does not validate the binding there; the RS checks the returned cnf jkt itself."
 - id: RFC9449-7.2-wrong-key-rejected
   spec: "RFC 9449"
   clause: "7.2"
@@ -135,12 +136,12 @@
   profile: sender-constrained
   summary: "A use_dpop_nonce error response carries a parseable JSON error body and a DPoP-Nonce response header."
   link: https://www.rfc-editor.org/rfc/rfc9449.html#section-8
-- id: RFC9449-8-forged-nonce-invalid-proof
+- id: RFC9449-8-forged-nonce-use-dpop-nonce
   spec: "RFC 9449"
   clause: "8"
   level: MUST
   profile: sender-constrained
-  summary: "A proof carrying a tampered or forged nonce is rejected as invalid_dpop_proof rather than issuing a new nonce."
+  summary: "A proof carrying a tampered or forged nonce is answered with use_dpop_nonce and a fresh DPoP-Nonce header, not accepted."
   link: https://www.rfc-editor.org/rfc/rfc9449.html#section-8
 - id: RFC9449-9-nonce-grace-window
   spec: "RFC 9449"
@@ -156,13 +157,14 @@
   profile: sender-constrained
   summary: "A nonce outside the accepted rotation window is answered with use_dpop_nonce so the client retries with a fresh one."
   link: https://www.rfc-editor.org/rfc/rfc9449.html#section-9
-- id: RFC9449-5-as-discovery-alg-values
+- id: RFC9449-5.1-as-discovery-alg-values
   spec: "RFC 9449"
-  clause: "5"
-  level: MUST
+  clause: "5.1"
+  level: MAY
   profile: sender-constrained
-  summary: "Authorization server metadata advertises dpop_signing_alg_values_supported for the accepted proof algorithms."
-  link: https://www.rfc-editor.org/rfc/rfc9449.html#section-5
+  summary: "Authorization server metadata may advertise dpop_signing_alg_values_supported for the accepted proof algorithms."
+  link: https://www.rfc-editor.org/rfc/rfc9449.html#section-5.1
+  notes: "Metadata is how support is signalled; if advertised, the values must match what the server actually accepts."
 - id: RFC9449-11.1-replay-store-cross-instance
   spec: "RFC 9449"
   clause: "11.1"

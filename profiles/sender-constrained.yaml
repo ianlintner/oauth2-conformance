@@ -1,6 +1,6 @@
 id: sender-constrained
 title: Sender-constrained tokens and abuse controls
-description: v0.5 sender-constrained profile. RFC 9449 DPoP (proof validation, ath, nonce, jti replay), RFC 8705 mTLS certificate-bound tokens, and RFC 9700 rate limiting and sender-constraint controls (contract v0.5, requirements only).
+description: "v0.5 sender-constrained profile. RFC 9449 DPoP (proof validation, ath, nonce, jti replay), RFC 8705 mTLS certificate-bound tokens, and RFC 9700 rate limiting and sender-constraint controls (contract v0.5, requirements only). Strictness: the profile lists every catalogued level (MUST, SHOULD, MAY); only MUST entries gate a pass, and MAY entries tagged local policy (rate limiting) are not RFC server requirements."
 requirements:
   - RFC9449-4-typ-header-dpop-jwt
   - RFC9449-4-proof-signature-verified
@@ -16,15 +16,15 @@ requirements:
   - RFC9449-7.1-ath-mismatch-rejected
   - RFC9449-5-token-type-dpop
   - RFC9449-6.1-cnf-jkt-binding
-  - RFC9449-7.1-introspection-requires-proof
+  - RFC9449-6.2-introspection-token-type-dpop
   - RFC9449-7.2-wrong-key-rejected
   - RFC9449-8-use-dpop-nonce-error
   - RFC9449-8-nonce-retry-succeeds
   - RFC9449-8-nonce-response-header
-  - RFC9449-8-forged-nonce-invalid-proof
+  - RFC9449-8-forged-nonce-use-dpop-nonce
   - RFC9449-9-nonce-grace-window
   - RFC9449-9-stale-nonce-use-dpop-nonce
-  - RFC9449-5-as-discovery-alg-values
+  - RFC9449-5.1-as-discovery-alg-values
   - RFC9449-11.1-replay-store-cross-instance
   - RFC9449-11.1-replay-store-restart-safe
   - RFC9449-11.1-replay-store-in-memory-floor
@@ -32,8 +32,8 @@ requirements:
   - RFC8705-3.3-discovery-cert-bound-tokens
   - RFC8705-3.1-cnf-x5t-binding
   - RFC8705-3-resource-cert-must-match
-  - RFC9700-2.5-invalid-client-rate-limited
-  - RFC9700-2.5-no-limiter-still-401
-  - RFC9700-2.5-rate-limit-per-client
-  - RFC9700-2.5-success-not-counted
+  - RFC9700-2.5-invalid-client-rate-limited-policy
+  - RFC6749-5.2-invalid-client-401
+  - RFC9700-2.5-rate-limit-per-client-policy
+  - RFC9700-2.5-success-not-counted-policy
   - RFC9700-2.2.1-token-sender-constrained
