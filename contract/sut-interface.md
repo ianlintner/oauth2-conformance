@@ -31,6 +31,15 @@ The authorization endpoint must be drivable without a browser:
 
 The test login must not change any protocol behavior the profile tests: error handling, redirect validation, PKCE and `iss` rules apply exactly as in normal operation. Only credential entry and consent are automated.
 
+
+## 3a. Device-grant verification (extended-grants, v0.4)
+
+Owner-gated SUT interface extension; all ports implementing `extended-grants` must provide it.
+
+- Seed: client `client-dev` (`client_secret_basic`, grant `urn:ietf:params:oauth:grant-type:device_code`, secret `test-only-dev-secret`) is in `examples/seed.yaml`.
+- Verification: after the non-interactive test login (section 3), the runner POSTs `application/x-www-form-urlencoded` `user_code` and `action` (`approve` or `deny`) to the device verification endpoint (default `/oauth/device/verify`) with the session cookie. This is the runner's `device-verify` helper (`with.username`, `with.password`, `with.user_code`, optional `action`, `loginPath`, `verifyPath`). Conformance mode only.
+- Still out of scope (scenarios stay `draft`): SUT clock control (`expired_token`, `slow_down` +5s increase), duplicate form keys, client-assertion/JAR signing, seeded client JWKs.
+
 ## 4. Readiness
 
 - `GET /health` (or the SUT's documented equivalent, declared in `conformance.yaml`) returns `200` only after the seed is fully applied and the server accepts OAuth requests; before that it returns non-2xx or refuses connections.

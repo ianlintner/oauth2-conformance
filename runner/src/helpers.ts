@@ -150,3 +150,43 @@ export async function logout(context: HelperContext): Promise<import('./compare.
     headers: {},
   });
 }
+
+/**
+ * RFC 8628 verification-page driver (`use: device-verify`).
+ *
+ * Logs the seeded user in through the SUT's test login form, then submits
+ * `with.user_code` (may use `{{var}}`) to `with.verifyPath` (default
+ * `/oauth/device/verify`) with `action=approve|deny` (`with.action`, default
+ * approve). Returns the verification response.
+ */
+export async function deviceVerify(context: HelperContext): Promise<import('./compare.js').ActualResponse> {
+  const username = requireString(context.with.username, 'username');
+  const password = requireString(context.with.password, 'password');
+  const userCode = requireString(context.with.user_code, 'user_code').replace(
+    /\{\{([^}]+)\}\}/g,
+    (_m, name: string) => context.scope.get(name) ?? '',
+  );
+  if (userCode === '') throw new Error('device-verify: user_code resolved to an empty value');
+  const action = typeof context.with.action === 'string' ? context.with.action : 'approve';
+  if (action !== 'approve' && action !== 'deny') throw new Error('device-verify: with.action must be approve or deny');
+  const loginPath = typeof context.with.loginPath === 'string' ? context.with.loginPath : '/login';
+  const verifyPath = typeof context.with.verifyPath === 'string' ? context.with.verifyPath : '/oauth/device/verify';
+
+  const login = await context.send({
+    method: 'POST',
+    url: loginPath,
+    headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ username, password }).toString(),
+  });
+  if (login.status >= 400) throw new Error(`device-verify: SUT login failed with status ${login.status}`);
+  const cookie = cookieFrom(login);
+  return context.send({
+    method: 'POST',
+    url: verifyPath,
+    headers: {
+      'content-type': 'application/x-www-form-urlencoded',
+      ...(cookie !== undefined ? { cookie } : {}),
+    },
+    body: new URLSearchParams({ user_code: userCode, action }).toString(),
+  });
+}

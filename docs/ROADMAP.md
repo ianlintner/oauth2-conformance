@@ -38,7 +38,7 @@ Ordering: contract milestones are sequential. Ports run in parallel with each ot
 
 | Implementation | v0.1 | v0.2 | v0.3 | v0.4 | v0.5 | v0.6 | v0.7 |
 |---|---|---|---|---|---|---|---|
-| Rust (reference) | dev | — | — | — | — | — | — |
+| Rust (reference) | dev | — | — | dev | — | — | — |
 | Python | — | — | — | — | — | — | — |
 | TypeScript | — | — | — | — | — | — | — |
 | Go | — | — | — | — | — | — | — |
@@ -52,3 +52,5 @@ Contract v0.2 (`token-lifecycle`) is delivered: 31 scenarios (25 stable, 6 `refe
 Contract v0.3 (`oidc-basic`) part 3/3 runner extensions delivered: numeric matchers (`$gt`, `$lt`), array membership (`$includes`), `assert` step type with JWT payload `source`, session-mode control on `login-and-authorize` (`none`/`create`/`reuse`), `logout` helper, JWT array/object capture support. Scenarios updated with executable assertions where possible. 13 scenarios (5 stable, 8 draft), 19 invariants, 19 requirements. Remaining draft-to-stable blockers: cross-claim comparison (`iat` < `exp`), signed-token fixture for logout hint, seed with deterministic user claims, and SUT conformance.yaml claiming `oidc-basic`. Rust and Python SUTs do not yet claim `oidc-basic`; full validation requires SUT-side OIDC endpoints.
 
 Contract v0.4 (`extended-grants`) part 2/3 delivered: 51 scenarios (all draft, none yet validated against a SUT), 51 invariants, coverage report (docs/extended-grants-coverage.md) and the part 3/3 runner/SUT gap list (docs/extended-grants-gaps.md). Scoped requirements amendments add RFC 8628 slow_down on too-fast polling and RFC 9126 expired request_uri rejection.
+
+Contract v0.4 (`extended-grants`) part 3/3: `device-verify` helper and seeded `client-dev` delivered. Rust measured manually: device 7 stable pass, 1 reference-deviation; the other 43 scenarios stay draft pending clock control, duplicate-key transport and JWT signing helpers (see `docs/extended-grants-gaps.md`). Rust is `dev`, not `pass`, until CI claims the profile.

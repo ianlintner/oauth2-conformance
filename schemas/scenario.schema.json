@@ -51,7 +51,7 @@
         "id": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_-]*$" },
         "use": {
           "type": "string",
-          "enum": ["login-and-authorize", "logout"],
+          "enum": ["login-and-authorize", "logout", "device-verify"],
           "description": "Runner helper invoked instead of a raw request."
         },
         "with": { "type": "object", "additionalProperties": true },
