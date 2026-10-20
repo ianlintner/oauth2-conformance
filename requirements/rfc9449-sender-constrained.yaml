@@ -1,0 +1,186 @@
+# RFC 9449 requirements for the sender-constrained profile.
+# Source material: rust-oauth2-server dpop_ath_replay, rfc9700_dpop_nonce,
+# rfc9700_compliance (vectors n/o), compliance_wave4 (RFC 9449 discovery).
+# Summaries are one line each; the clause link is canonical.
+- id: RFC9449-4-typ-header-dpop-jwt
+  spec: "RFC 9449"
+  clause: "4"
+  level: MUST
+  profile: sender-constrained
+  summary: "A DPoP proof whose JOSE typ header is not dpop+jwt is rejected with invalid_dpop_proof."
+  link: https://www.rfc-editor.org/rfc/rfc9449.html#section-4
+- id: RFC9449-4-proof-signature-verified
+  spec: "RFC 9449"
+  clause: "4"
+  level: MUST
+  profile: sender-constrained
+  summary: "The DPoP proof signature verifies against the public key carried in its jwk header parameter."
+  link: https://www.rfc-editor.org/rfc/rfc9449.html#section-4
+- id: RFC9449-4-jwk-usable-algorithm
+  spec: "RFC 9449"
+  clause: "4"
+  level: SHOULD
+  profile: sender-constrained
+  summary: "The proof's jwk is a public key only and uses an asymmetric algorithm the server supports, never a symmetric alg."
+  link: https://www.rfc-editor.org/rfc/rfc9449.html#section-4
+- id: RFC9449-4-htm-binding
+  spec: "RFC 9449"
+  clause: "4"
+  level: MUST
+  profile: sender-constrained
+  summary: "The proof htm claim matches the HTTP method of the request it accompanies."
+  link: https://www.rfc-editor.org/rfc/rfc9449.html#section-4
+- id: RFC9449-4.2-htu-binding
+  spec: "RFC 9449"
+  clause: "4.2"
+  level: MUST
+  profile: sender-constrained
+  summary: "The proof htu claim matches the request URI scheme, host and path without query or fragment."
+  link: https://www.rfc-editor.org/rfc/rfc9449.html#section-4.2
+- id: RFC9449-4.2-htu-query-rejected
+  spec: "RFC 9449"
+  clause: "4.2"
+  level: MUST NOT
+  profile: sender-constrained
+  summary: "A proof whose htu claim contains a query or fragment component is rejected."
+  link: https://www.rfc-editor.org/rfc/rfc9449.html#section-4.2
+- id: RFC9449-4.2-iat-freshness-window
+  spec: "RFC 9449"
+  clause: "4.2"
+  level: SHOULD
+  profile: sender-constrained
+  summary: "The proof iat claim is checked against a server-defined freshness window and stale proofs are rejected."
+  link: https://www.rfc-editor.org/rfc/rfc9449.html#section-4.2
+- id: RFC9449-4.3-jti-required
+  spec: "RFC 9449"
+  clause: "4.3"
+  level: MUST
+  profile: sender-constrained
+  summary: "Every DPoP proof carries a unique jti claim used by the server for replay detection."
+  link: https://www.rfc-editor.org/rfc/rfc9449.html#section-4.3
+- id: RFC9449-4.3-jti-replay-rejected
+  spec: "RFC 9449"
+  clause: "4.3"
+  level: MUST
+  profile: sender-constrained
+  summary: "A replayed DPoP proof carrying an already-seen jti is rejected with invalid_dpop_proof."
+  link: https://www.rfc-editor.org/rfc/rfc9449.html#section-4.3
+- id: RFC9449-7.1-ath-required
+  spec: "RFC 9449"
+  clause: "7.1"
+  level: MUST
+  profile: sender-constrained
+  summary: "A proof presented with an access token includes an ath claim; a proof without it is rejected."
+  link: https://www.rfc-editor.org/rfc/rfc9449.html#section-7.1
+- id: RFC9449-7.1-ath-matches-token
+  spec: "RFC 9449"
+  clause: "7.1"
+  level: MUST
+  profile: sender-constrained
+  summary: "The ath claim is base64url without padding of SHA-256 over the ASCII access token and must match the presented token."
+  link: https://www.rfc-editor.org/rfc/rfc9449.html#section-7.1
+- id: RFC9449-7.1-ath-mismatch-rejected
+  spec: "RFC 9449"
+  clause: "7.1"
+  level: MUST
+  profile: sender-constrained
+  summary: "A DPoP-bound token presented with a proof whose ath hashes a different token is not accepted."
+  link: https://www.rfc-editor.org/rfc/rfc9449.html#section-7.1
+- id: RFC9449-5-token-type-dpop
+  spec: "RFC 9449"
+  clause: "5"
+  level: MUST
+  profile: sender-constrained
+  summary: "A token issued in response to a DPoP proof is returned with token_type DPoP rather than Bearer."
+  link: https://www.rfc-editor.org/rfc/rfc9449.html#section-5
+- id: RFC9449-6.1-cnf-jkt-binding
+  spec: "RFC 9449"
+  clause: "6.1"
+  level: MUST
+  profile: sender-constrained
+  summary: "The issued access token is bound to the proof's public key through the cnf/jkt confirmation member."
+  link: https://www.rfc-editor.org/rfc/rfc9449.html#section-6.1
+- id: RFC9449-7.1-introspection-requires-proof
+  spec: "RFC 9449"
+  clause: "7.1"
+  level: MUST
+  profile: sender-constrained
+  summary: "Introspection of a DPoP-bound token requires a matching proof and reports the token inactive otherwise."
+  link: https://www.rfc-editor.org/rfc/rfc9449.html#section-7.1
+- id: RFC9449-7.2-wrong-key-rejected
+  spec: "RFC 9449"
+  clause: "7.2"
+  level: MUST
+  profile: sender-constrained
+  summary: "A protected-resource request presenting a proof from a key other than the bound one is rejected, not served."
+  link: https://www.rfc-editor.org/rfc/rfc9449.html#section-7.2
+- id: RFC9449-8-use-dpop-nonce-error
+  spec: "RFC 9449"
+  clause: "8"
+  level: MUST
+  profile: sender-constrained
+  summary: "When the server requires a nonce and the proof lacks a valid one, it answers use_dpop_nonce with a fresh DPoP-Nonce header."
+  link: https://www.rfc-editor.org/rfc/rfc9449.html#section-8
+- id: RFC9449-8-nonce-retry-succeeds
+  spec: "RFC 9449"
+  clause: "8"
+  level: MUST
+  profile: sender-constrained
+  summary: "Retrying the same request with the server-supplied nonce in the proof's nonce claim succeeds."
+  link: https://www.rfc-editor.org/rfc/rfc9449.html#section-8
+- id: RFC9449-8-nonce-response-header
+  spec: "RFC 9449"
+  clause: "8"
+  level: MUST
+  profile: sender-constrained
+  summary: "A use_dpop_nonce error response carries a parseable JSON error body and a DPoP-Nonce response header."
+  link: https://www.rfc-editor.org/rfc/rfc9449.html#section-8
+- id: RFC9449-8-forged-nonce-invalid-proof
+  spec: "RFC 9449"
+  clause: "8"
+  level: MUST
+  profile: sender-constrained
+  summary: "A proof carrying a tampered or forged nonce is rejected as invalid_dpop_proof rather than issuing a new nonce."
+  link: https://www.rfc-editor.org/rfc/rfc9449.html#section-8
+- id: RFC9449-9-nonce-grace-window
+  spec: "RFC 9449"
+  clause: "9"
+  level: MAY
+  profile: sender-constrained
+  summary: "The server may accept a nonce from the previous rotation bucket during a bounded grace window."
+  link: https://www.rfc-editor.org/rfc/rfc9449.html#section-9
+- id: RFC9449-9-stale-nonce-use-dpop-nonce
+  spec: "RFC 9449"
+  clause: "9"
+  level: MUST
+  profile: sender-constrained
+  summary: "A nonce outside the accepted rotation window is answered with use_dpop_nonce so the client retries with a fresh one."
+  link: https://www.rfc-editor.org/rfc/rfc9449.html#section-9
+- id: RFC9449-5-as-discovery-alg-values
+  spec: "RFC 9449"
+  clause: "5"
+  level: MUST
+  profile: sender-constrained
+  summary: "Authorization server metadata advertises dpop_signing_alg_values_supported for the accepted proof algorithms."
+  link: https://www.rfc-editor.org/rfc/rfc9449.html#section-5
+- id: RFC9449-11.1-replay-store-cross-instance
+  spec: "RFC 9449"
+  clause: "11.1"
+  level: SHOULD
+  profile: sender-constrained
+  summary: "The jti replay cache is backend-shared so a proof consumed by one instance is rejected by another."
+  link: https://www.rfc-editor.org/rfc/rfc9449.html#section-11.1
+- id: RFC9449-11.1-replay-store-restart-safe
+  spec: "RFC 9449"
+  clause: "11.1"
+  level: SHOULD
+  profile: sender-constrained
+  summary: "Replay protection survives a process restart or instance replacement rather than resetting with an empty cache."
+  link: https://www.rfc-editor.org/rfc/rfc9449.html#section-11.1
+- id: RFC9449-11.1-replay-store-in-memory-floor
+  spec: "RFC 9449"
+  clause: "11.1"
+  level: MUST
+  profile: sender-constrained
+  summary: "When the configured backend does not persist proofs, an in-process replay cache still rejects a repeated jti."
+  link: https://www.rfc-editor.org/rfc/rfc9449.html#section-11.1

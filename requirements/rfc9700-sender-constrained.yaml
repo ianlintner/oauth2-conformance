@@ -1,0 +1,39 @@
+# RFC 9700 requirements for the sender-constrained profile (rate limiting and
+# sender-constraint controls).
+# Source material: rust-oauth2-server rfc9700_rate_limit, rfc9700_compliance.
+# Summaries are one line each; the clause link is canonical.
+- id: RFC9700-2.5-invalid-client-rate-limited
+  spec: "RFC 9700"
+  clause: "2.5"
+  level: SHOULD
+  profile: sender-constrained
+  summary: "The token endpoint rate-limits repeated invalid_client failures and answers 429 once the budget is exhausted."
+  link: https://www.rfc-editor.org/rfc/rfc9700.html#section-2.5
+- id: RFC9700-2.5-no-limiter-still-401
+  spec: "RFC 9700"
+  clause: "2.5"
+  level: MUST
+  profile: sender-constrained
+  summary: "Without a configured rate limiter the token endpoint still answers bad credentials with 401 invalid_client."
+  link: https://www.rfc-editor.org/rfc/rfc9700.html#section-2.5
+- id: RFC9700-2.5-rate-limit-per-client
+  spec: "RFC 9700"
+  clause: "2.5"
+  level: SHOULD
+  profile: sender-constrained
+  summary: "Rate-limit buckets are keyed per client_id so exhausting one client's budget does not affect another."
+  link: https://www.rfc-editor.org/rfc/rfc9700.html#section-2.5
+- id: RFC9700-2.5-success-not-counted
+  spec: "RFC 9700"
+  clause: "2.5"
+  level: SHOULD
+  profile: sender-constrained
+  summary: "Successful token issuance does not consume the invalid_client rate-limit bucket."
+  link: https://www.rfc-editor.org/rfc/rfc9700.html#section-2.5
+- id: RFC9700-2.2.1-token-sender-constrained
+  spec: "RFC 9700"
+  clause: "2.2.1"
+  level: SHOULD
+  profile: sender-constrained
+  summary: "Access tokens are sender-constrained (DPoP or mTLS) so a leaked token is unusable without the holder's key."
+  link: https://www.rfc-editor.org/rfc/rfc9700.html#section-2.2.1
