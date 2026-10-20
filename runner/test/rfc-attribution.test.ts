@@ -172,3 +172,40 @@ test('hardening rfc9700.code-replay obtains a real code, redeems it once, then r
   assert.deepEqual(exchanges[1]?.expect?.json, { error: 'invalid_grant' });
   assert.equal(exchanges[0]?.request?.form?.code, exchanges[1]?.request?.form?.code);
 });
+
+test('every profile entry resolves to a requirement of that profile', () => {
+  for (const profile of profiles) {
+    for (const id of profile.requirements) {
+      const found = byId.get(id);
+      assert.ok(found, `profile ${profile.id} references unknown ${id}`);
+      if (profile.id === 'sender-constrained') assert.equal(found.profile, profile.id, `${id} belongs to ${found.profile}`);
+    }
+  }
+});
+
+test('sender-constrained RFC attribution: introspection, nonce, rate limits and metadata', () => {
+  assert.equal(byId.has('RFC9449-7.1-introspection-requires-proof'), false);
+  assert.equal(get('RFC9449-6.2-introspection-token-type-dpop').clause, '6.2');
+  assert.equal(byId.has('RFC9449-8-forged-nonce-invalid-proof'), false);
+  assert.match(get('RFC9449-8-forged-nonce-use-dpop-nonce').summary, /use_dpop_nonce/);
+  assert.equal(get('RFC8705-3.3-discovery-cert-bound-tokens').level, 'MAY');
+  assert.equal(get('RFC8705-3.1-cnf-x5t-binding').level, 'SHOULD');
+  assert.equal(get('RFC9449-5.1-as-discovery-alg-values').clause, '5.1');
+  for (const r of requirements.filter((x) => /^RFC9700-2\.5-.*-policy$/.test(x.id))) {
+    assert.notEqual(r.level, 'MUST');
+    assert.match(r.notes ?? '', /Local/);
+  }
+});
+
+test('RFC 9449 section 11.1 replay and freshness levels match the RFC text', () => {
+  const iat = get('RFC9449-4.2-iat-freshness-window');
+  assert.equal(iat.level, 'MUST');
+  assert.equal(iat.clause, '11.1');
+  const replay = get('RFC9449-4.3-jti-replay-rejected');
+  assert.equal(replay.level, 'SHOULD');
+  assert.equal(replay.clause, '11.1');
+  const floor = get('RFC9449-11.1-replay-store-in-memory-floor');
+  assert.equal(floor.level, 'MAY');
+  assert.match(floor.summary, /local policy/i);
+  assert.equal(get('RFC9449-4.2-htu-query-rejected').clause, '4.3');
+});

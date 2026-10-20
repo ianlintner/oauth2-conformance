@@ -1,0 +1,42 @@
+# RFC 9700 requirements for the sender-constrained profile (rate limiting and
+# sender-constraint controls).
+# Source material: rust-oauth2-server rfc9700_rate_limit, rfc9700_compliance.
+# Summaries are one line each; the clause link is canonical.
+- id: RFC9700-2.5-invalid-client-rate-limited-policy
+  spec: "RFC 9700"
+  clause: "2.5"
+  level: MAY
+  profile: sender-constrained
+  summary: "The token endpoint rate-limits repeated invalid_client failures and answers 429 once the budget is exhausted."
+  link: https://www.rfc-editor.org/rfc/rfc9700.html#section-2.5
+  notes: "Local abuse-control policy, not an RFC 9700 server requirement; RFC 9700 2.5 covers client authentication only. Derived from the reference rate-limit tests."
+- id: RFC6749-5.2-invalid-client-401
+  spec: "RFC 6749"
+  clause: "5.2"
+  level: MUST
+  profile: sender-constrained
+  summary: "A token request with failed client authentication is answered invalid_client (401 when the client used the Authorization header), with or without a rate limiter."
+  link: https://www.rfc-editor.org/rfc/rfc6749.html#section-5.2
+- id: RFC9700-2.5-rate-limit-per-client-policy
+  spec: "RFC 9700"
+  clause: "2.5"
+  level: MAY
+  profile: sender-constrained
+  summary: "Rate-limit buckets are keyed per client_id so exhausting one client's budget does not affect another."
+  link: https://www.rfc-editor.org/rfc/rfc9700.html#section-2.5
+  notes: "Local abuse-control policy, not an RFC 9700 server requirement; RFC 9700 2.5 covers client authentication only. Derived from the reference rate-limit tests."
+- id: RFC9700-2.5-success-not-counted-policy
+  spec: "RFC 9700"
+  clause: "2.5"
+  level: MAY
+  profile: sender-constrained
+  summary: "Successful token issuance does not consume the invalid_client rate-limit bucket."
+  link: https://www.rfc-editor.org/rfc/rfc9700.html#section-2.5
+  notes: "Local abuse-control policy, not an RFC 9700 server requirement; RFC 9700 2.5 covers client authentication only. Derived from the reference rate-limit tests."
+- id: RFC9700-2.2.1-token-sender-constrained
+  spec: "RFC 9700"
+  clause: "2.2.1"
+  level: SHOULD
+  profile: sender-constrained
+  summary: "Access tokens are sender-constrained (DPoP or mTLS) so a leaked token is unusable without the holder's key."
+  link: https://www.rfc-editor.org/rfc/rfc9700.html#section-2.2.1

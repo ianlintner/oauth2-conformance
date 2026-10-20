@@ -1,0 +1,31 @@
+# RFC 8705 requirements for the sender-constrained profile.
+# Source material: rust-oauth2-server rfc9700_compliance (vector p), compliance_wave4
+# (RFC 8705 discovery). Summaries are one line each; the clause link is canonical.
+- id: RFC8705-2.1-tls-client-auth-subject-dn
+  spec: "RFC 8705"
+  clause: "2.1"
+  level: MUST
+  profile: sender-constrained
+  summary: "tls_client_auth validates the presented client certificate against the registered Subject DN and rejects a mismatch."
+  link: https://www.rfc-editor.org/rfc/rfc8705.html#section-2.1
+- id: RFC8705-3.3-discovery-cert-bound-tokens
+  spec: "RFC 8705"
+  clause: "3.3"
+  level: MAY
+  profile: sender-constrained
+  summary: "Authorization server metadata advertises tls_client_certificate_bound_access_tokens true when certificate-bound tokens are supported."
+  link: https://www.rfc-editor.org/rfc/rfc8705.html#section-3.3
+- id: RFC8705-3.1-cnf-x5t-binding
+  spec: "RFC 8705"
+  clause: "3.1"
+  level: SHOULD
+  profile: sender-constrained
+  summary: "A certificate-bound access token carries a cnf x5t#S256 member holding the SHA-256 thumbprint of the client certificate."
+  link: https://www.rfc-editor.org/rfc/rfc8705.html#section-3.1
+- id: RFC8705-3-resource-cert-must-match
+  spec: "RFC 8705"
+  clause: "3"
+  level: MUST
+  profile: sender-constrained
+  summary: "A protected resource rejects a certificate-bound token presented over a TLS connection with a different client certificate."
+  link: https://www.rfc-editor.org/rfc/rfc8705.html#section-3
