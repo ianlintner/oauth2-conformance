@@ -79,3 +79,13 @@ Features the drafts need that the runner or SUT lack today; part 3/3 decides whi
 Scenarios with no listed gap (dpop.discovery-alg-values, mtls.discovery-cert-bound, abuse.invalid-client-401) only need the SUT to claim the profile.
 
 Policy note: rate-limit scenarios (RFC9700-2.5-*-policy) are MAY/local policy, not RFC server requirements.
+
+## Part 3/3 status (v0.5)
+
+Delivered (runner-only, **no SUT interface change**): the `dpop-proof` step helper (`runner/src/dpop.ts`). It signs an ES256 DPoP proof with selectable `htm`, `htu`, `typ`, `iat_offset`, `jti`, `omit` (htm/htu/iat/jti), `ath`/`ath_token`, `nonce` and a named ephemeral `key`, and returns `{proof, jkt}` so a scenario captures `body.proof` and sends it in the `DPoP` header. A replay resends the captured variable byte-for-byte. DPoP is plain HTTP, so the SUT needs nothing new.
+
+Rust reference run (conformance mode, seeded with `examples/seed.yaml`, `OAUTH2_SERVER_PUBLIC_BASE_URL=http://localhost:8080`; binary built from the local rust-oauth2-server checkout, whose DPoP handler is unchanged since before main `2adb1ce`): 7 scenarios pass and are promoted to `stable`: dpop.token-type-dpop (positive control), dpop.jti-required, dpop.jti-replay, dpop.htm-binding, dpop.htu-binding, dpop.typ-header, dpop.iat-stale. Each negative scenario differs from the accepted control proof by exactly one property. No Rust failure, so no reference-deviation and no Rust fix card. Rust is not claimed `pass` for v0.5: 28 scenarios stay draft and CI does not yet run this profile.
+
+Python: its repository has no conformance-mode seed loader (the string only appears in its README and CI), so the profile was not run there.
+
+Still draft (need more than `dpop-proof`): user-bound token flows with `ath` and `wrong-key` (need the proof for the resource request built from a captured token and a `jkt` capture; scenario rewrites are a follow-up), nonce scenarios (SUT nonce-required mode, owner-gated), clock control, step repetition, mTLS transport, `sut-restart` / `request-on-instance`.

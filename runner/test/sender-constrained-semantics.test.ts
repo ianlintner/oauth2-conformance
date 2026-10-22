@@ -1,7 +1,7 @@
 /**
  * Semantic guards for the sender-constrained scenarios (contract v0.5).
  *
- * These scenarios are draft: the runner has no DPoP signer or mTLS transport.
+ * Most scenarios are draft: the runner has a DPoP signer (`dpop-proof`) but no mTLS transport.
  * The guards stop them from asserting a rejection for the wrong reason, which
  * would be false MUST coverage once a helper exists.
  */
@@ -22,8 +22,25 @@ const get = (id: string): Scenario => {
 const text = (step: ScenarioStep) => JSON.stringify(step);
 const userinfoSteps = (s: Scenario) => s.steps.filter((st) => st.request?.path === '/oauth/userinfo');
 
-test('every sender-constrained scenario is draft (no runner support yet)', () => {
-  for (const s of all) assert.equal(s.status, 'draft', s.id);
+/** Scenarios validated against the Rust reference with the `dpop-proof` helper (part 3/3). Any other scenario stays draft. */
+const VALIDATED_STABLE = [
+  'dpop.token-type-dpop', 'dpop.jti-required', 'dpop.jti-replay', 'dpop.htm-binding',
+  'dpop.htu-binding', 'dpop.typ-header', 'dpop.iat-stale',
+].map((id) => `sender-constrained.${id}`);
+
+test('only the Rust-validated dpop-proof scenarios are stable; every other sender-constrained scenario is draft', () => {
+  for (const s of all) assert.equal(s.status, VALIDATED_STABLE.includes(s.id) ? 'stable' : 'draft', s.id);
+  for (const id of VALIDATED_STABLE) assert.ok(byId.has(id), id);
+});
+
+test('stable dpop-proof scenarios sign their proof first and send it, one deliberate difference from the valid control', () => {
+  for (const id of VALIDATED_STABLE) {
+    const s = byId.get(id)!;
+    assert.equal(s.steps[0]?.use, 'dpop-proof', id);
+    assert.ok(s.steps.some((st) => st.request?.headers?.dpop === '{{proof_value}}'), id);
+  }
+  const control = byId.get('sender-constrained.dpop.token-type-dpop')!;
+  assert.equal(control.steps.at(-1)?.expect?.status, 200, 'positive control: the unmodified proof is accepted');
 });
 
 test('no resource step presents a client_credentials token to /oauth/userinfo', () => {
@@ -104,7 +121,7 @@ test('placeholder-only scenarios are draft and say so (a bare 200 is not evidenc
 test('declared-but-unimplemented helpers defer, never pass (draft scenarios cannot become false evidence)', async () => {
   const { runScenarios } = await import('../src/runner.js');
   const fetchImpl = (async () => new Response('{}', { status: 200 })) as typeof fetch;
-  for (const s of all.filter((x) => x.steps.some((st) => st.use !== undefined && !['login-and-authorize'].includes(st.use)))) {
+  for (const s of all.filter((x) => x.status === 'draft' && x.steps.some((st) => st.use !== undefined && !['login-and-authorize'].includes(st.use)))) {
     const report = await runScenarios([s], { baseUrl: 'http://sut.invalid', implementation: 'fake', contract: '0.5.0', fetchImpl, helpers: {} });
     assert.equal(report.results[0]!.outcome, 'deferred', s.id);
     assert.notEqual(report.verdict === 'pass' && report.passed > 0, true, s.id);

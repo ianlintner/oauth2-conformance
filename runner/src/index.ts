@@ -10,5 +10,6 @@ export * from './compare.js';
 export * from './http.js';
 export * from './runner.js';
 export * from './coverage.js';
+export * from './dpop.js';
 export * from './helpers.js';
 export * from './schema-validate.js';

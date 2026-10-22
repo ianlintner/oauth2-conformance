@@ -38,7 +38,7 @@ Ordering: contract milestones are sequential. Ports run in parallel with each ot
 
 | Implementation | v0.1 | v0.2 | v0.3 | v0.4 | v0.5 | v0.6 | v0.7 |
 |---|---|---|---|---|---|---|---|
-| Rust (reference) | dev | — | — | dev | — | — | — |
+| Rust (reference) | dev | — | — | dev | dev | — | — |
 | Python | — | — | — | — | — | — | — |
 | TypeScript | — | — | — | — | — | — | — |
 | Go | — | — | — | — | — | — | — |
@@ -56,3 +56,5 @@ Contract v0.4 (`extended-grants`) part 2/3 delivered: 51 scenarios (all draft, n
 Contract v0.4 (`extended-grants`) part 3/3: `device-verify` helper and seeded `client-dev` delivered. Rust measured manually: device 7 stable pass, 1 reference-deviation; the other 43 scenarios stay draft pending clock control, duplicate-key transport and JWT signing helpers (see `docs/extended-grants-gaps.md`). Rust is `dev`, not `pass`, until CI claims the profile.
 
 Contract v0.5 (`sender-constrained`) part 2/3 delivered: 35 draft scenarios (one per catalogued requirement), 35 `INV-SC-*` invariants, and `docs/sender-constrained-coverage.md` with the runner/SUT gap list (DPoP proof signing, nonce mode, clock control, mTLS transport, step repetition) for part 3/3.
+
+Contract v0.5 (`sender-constrained`) part 3/3: `dpop-proof` runner helper delivered (no SUT interface change). Rust measured manually: 7 DPoP scenarios `stable` and passing; 28 remain draft (see `docs/sender-constrained-coverage.md`). Rust is `dev`, not `pass`, until CI claims the profile. Python v0.5 is `—`: no conformance-mode SUT interface.

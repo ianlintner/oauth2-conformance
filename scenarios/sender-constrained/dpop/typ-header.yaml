@@ -2,7 +2,8 @@ id: sender-constrained.dpop.typ-header
 title: "A proof with typ other than dpop+jwt is rejected"
 requirements: ["RFC9449-4-typ-header-dpop-jwt"]
 profile: sender-constrained
-status: draft
-note: "Invariant INV-SC-TYP-HEADER. Draft: needs a DPoP proof signing helper (ES256 key with selectable typ/jwk/htm/htu/iat/jti/ath/nonce claims)."
+status: stable
+note: "Invariant INV-SC-TYP-HEADER. Executable with the dpop-proof runner helper (no SUT interface change); Rust reference validated (see docs/sender-constrained-coverage.md). "
 steps:
-  - {"id": "token", "request": {"method": "POST", "path": "/oauth/token", "headers": {"authorization": "Basic Y2xpZW50LWNjOnRlc3Qtb25seS1jYy1zZWNyZXQ=", "dpop": "{{proof_wrong_typ}}"}, "form": {"grant_type": "client_credentials"}}, "expect": {"status": 400, "json": {"error": "invalid_dpop_proof"}}}
+  - {"id": "proof", "use": "dpop-proof", "with": {"htm": "POST", "htu": "http://localhost:8080/oauth/token", "typ": "JWT"}, "expect": {"status": 200}, "capture": {"proof_value": "body.proof"}}
+  - {"id": "token", "request": {"method": "POST", "path": "/oauth/token", "headers": {"authorization": "Basic Y2xpZW50LWNjOnRlc3Qtb25seS1jYy1zZWNyZXQ=", "dpop": "{{proof_value}}"}, "form": {"grant_type": "client_credentials"}}, "expect": {"status": 400, "json": {"error": "invalid_dpop_proof"}}}
