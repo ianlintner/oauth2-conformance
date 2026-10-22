@@ -51,7 +51,7 @@
         "id": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_-]*$" },
         "use": {
           "type": "string",
-          "enum": ["login-and-authorize", "logout", "device-verify", "mtls-request", "sut-restart", "request-on-instance"],
+          "enum": ["login-and-authorize", "logout", "device-verify", "dpop-proof", "mtls-request", "sut-restart", "request-on-instance"],
           "description": "Runner helper invoked instead of a raw request. mtls-request, sut-restart and request-on-instance are declared for draft scenarios only; the runner does not implement them yet, so a scenario using one defers (unknown step helper) and must stay draft."
         },
         "with": { "type": "object", "additionalProperties": true },
