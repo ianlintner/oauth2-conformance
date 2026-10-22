@@ -1,8 +1,10 @@
 id: sender-constrained.dpop.htu-query-ignored
-title: "htu is compared without query and fragment; a mismatching htu is rejected"
+title: "htu is compared without query and fragment: a matching htu with a query on the request URI is accepted"
 requirements: ["RFC9449-4.2-htu-query-rejected"]
 profile: sender-constrained
 status: draft
-note: "Invariant INV-SC-HTU-QUERY-IGNORED. Draft: needs a DPoP proof signing helper (ES256 key with selectable typ/jwk/htm/htu/iat/jti/ath/nonce claims)."
+note: "Invariant INV-SC-HTU-QUERY-IGNORED. Draft: needs a DPoP proof signing helper (ES256 key with selectable typ/jwk/htm/htu/iat/jti/ath/nonce claims). Distinct from htu-binding: here the proof htu equals the endpoint URI WITHOUT the query and the request URI carries a query string; a conforming server compares htu without query/fragment and must accept (200). The last step (query present, htu names a different path) must still be rejected so the query cannot mask a real mismatch."
 steps:
-  - {"id": "token", "request": {"method": "POST", "path": "/oauth/token", "headers": {"authorization": "Basic Y2xpZW50LWNjOnRlc3Qtb25seS1jYy1zZWNyZXQ=", "dpop": "{{proof_htu_with_other_path}}"}, "form": {"grant_type": "client_credentials"}}, "expect": {"status": 400, "json": {"error": "invalid_dpop_proof"}}}
+  - {"id": "baseline", "request": {"method": "POST", "path": "/oauth/token", "headers": {"authorization": "Basic Y2xpZW50LWNjOnRlc3Qtb25seS1jYy1zZWNyZXQ=", "dpop": "{{proof_htu_matching_no_query}}"}, "form": {"grant_type": "client_credentials"}}, "expect": {"status": 200, "json": {"access_token": "x", "token_type": "DPoP"}}}
+  - {"id": "token", "request": {"method": "POST", "path": "/oauth/token", "headers": {"authorization": "Basic Y2xpZW50LWNjOnRlc3Qtb25seS1jYy1zZWNyZXQ=", "dpop": "{{proof_htu_matching_no_query_2}}"}, "form": {"grant_type": "client_credentials"}, "query": {"probe": "1"}}, "expect": {"status": 200, "json": {"access_token": "x", "token_type": "DPoP"}}}
+  - {"id": "mismatching-htu-with-query", "request": {"method": "POST", "path": "/oauth/token", "headers": {"authorization": "Basic Y2xpZW50LWNjOnRlc3Qtb25seS1jYy1zZWNyZXQ=", "dpop": "{{proof_htu_other_path}}"}, "form": {"grant_type": "client_credentials"}, "query": {"probe": "1"}}, "expect": {"status": 400, "json": {"error": "invalid_dpop_proof"}}}

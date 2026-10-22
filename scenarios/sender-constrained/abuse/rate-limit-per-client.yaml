@@ -3,6 +3,7 @@ title: "Rate-limit buckets are per client_id (local policy)"
 requirements: ["RFC9700-2.5-rate-limit-per-client-policy"]
 profile: sender-constrained
 status: draft
-note: "Invariant INV-SC-RATE-LIMIT-PER-CLIENT. Draft: needs step repetition (loop N times) in the runner."
+note: "Invariant INV-SC-RATE-LIMIT-PER-CLIENT. Draft, NOT coverage: needs step repetition (loop N times) in the runner to exhaust one client's invalid_client bucket. Until then the steps below are a placeholder: the failed-auth step is a single attempt (never reaches any limit) and the other-client 200 is what any SUT returns, so a pass proves nothing about per-client isolation. Must stay draft until a repeat/loop helper drives the bucket to its limit and the isolation step still returns 200."
 steps:
-  - {"id": "other-client", "request": {"method": "POST", "path": "/oauth/token", "form": {"grant_type": "client_credentials"}, "headers": {"authorization": "Basic Y2xpZW50LWNjOnRlc3Qtb25seS1jYy1zZWNyZXQ="}}, "expect": {"status": 200}}
+  - {"id": "placeholder-failed-auth", "request": {"method": "POST", "path": "/oauth/token", "form": {"grant_type": "client_credentials"}, "headers": {"authorization": "Basic Y2xpZW50LWNjOndyb25n"}}, "expect": {"status": 401, "json": {"error": "invalid_client"}}}
+  - {"id": "placeholder-other-client", "request": {"method": "POST", "path": "/oauth/token", "form": {"grant_type": "client_credentials"}, "headers": {"authorization": "Basic Y2xpZW50LWNjOnRlc3Qtb25seS1jYy1zZWNyZXQ="}}, "expect": {"status": 200}}

@@ -3,6 +3,7 @@ title: "tls_client_auth with a mismatching Subject DN is rejected"
 requirements: ["RFC8705-2.1-tls-client-auth-subject-dn"]
 profile: sender-constrained
 status: draft
-note: "Invariant INV-SC-TLS-CLIENT-AUTH-DN. Draft: needs mTLS client-certificate transport in the runner and a seeded client-mtls; needs a certificate whose Subject DN differs from the registered one."
+note: "Invariant INV-SC-TLS-CLIENT-AUTH-DN. Draft: needs mTLS client-certificate transport in the runner (mtls-request helper with a named client certificate) and a seeded client-mtls (tls_client_auth, authorization_code, redirect https://client.example/callback, certificate-bound access tokens); needs a CA-trusted certificate whose Subject DN differs from the registered tls_client_auth_subject_dn (client-cert-wrong-dn). Positive control: the registered certificate authenticates first (client_credentials grant must be enabled on client-mtls)."
 steps:
-  - {"id": "token", "request": {"method": "POST", "path": "/oauth/token", "form": {"grant_type": "client_credentials", "client_id": "client-mtls"}}, "expect": {"status": 401, "json": {"error": "invalid_client"}}}
+  - {"id": "control", "use": "mtls-request", "with": {"cert": "client-cert-a", "method": "POST", "path": "/oauth/token", "form": {"grant_type": "client_credentials", "client_id": "client-mtls"}}, "expect": {"status": 200}}
+  - {"id": "token", "use": "mtls-request", "with": {"cert": "client-cert-wrong-dn", "method": "POST", "path": "/oauth/token", "form": {"grant_type": "client_credentials", "client_id": "client-mtls"}}, "expect": {"status": 401, "json": {"error": "invalid_client"}}}

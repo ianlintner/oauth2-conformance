@@ -42,6 +42,19 @@ Requests use placeholders such as `{{proof_wrong_typ}}` for DPoP proofs the runn
 | sender-constrained.mtls.resource-cert-must-match | RFC8705-3-resource-cert-must-match |
 | sender-constrained.mtls.tls-client-auth-dn | RFC8705-2.1-tls-client-auth-subject-dn |
 
+## Scenario semantics (remediation of review findings on PR #17)
+
+All 35 stay draft; none is stable or counted as MUST coverage. Semantic guards live in `runner/test/sender-constrained-semantics.test.ts`.
+
+- DPoP resource scenarios (ath-matches-token, ath-mismatch, ath-required, wrong-key, token-sender-constrained) obtain a user-bound token with the `openid` scope (login-and-authorize, then authorization_code with a DPoP proof) because `/oauth/userinfo` rejects client_credentials tokens regardless of sender constraint. ath-mismatch, ath-required and wrong-key run a positive control (correctly bound request returns 200) before the mutated request returns 401, so the rejection can only come from the sender constraint.
+- token-sender-constrained now also shows a DPoP-bound token is rejected as a plain Bearer, not just issued.
+- mtls.resource-cert-must-match is RFC 8705 certificate binding (token bound to client-cert-a, positive control with client-cert-a, 401 with client-cert-b). mtls.tls-client-auth-dn presents client-cert-a as control (200) and client-cert-wrong-dn (401 invalid_client). Both need the `mtls-request` helper, which the runner does not implement: an unknown helper defers the scenario.
+- htu-query-ignored is distinct from htu-binding: a matching htu with a query on the request URI is accepted; a mismatching htu with a query is rejected.
+- Nonce scenarios assert the DPoP-Nonce response header via `capture` (fails when absent). A non-empty-value matcher for headers is a part 3/3 gap.
+- jwk-usable-algorithm has a valid-proof control plus symmetric-alg and private-key-jwk variants. replay-restart and replay-cross-instance use `sut-restart` / `request-on-instance` helpers (declared in the schema for draft use, not implemented).
+- abuse.rate-limit-per-client, abuse.success-not-counted and mtls.cnf-x5t were status-200-only. The abuse pair are now explicit placeholders (notes say NOT coverage); cnf-x5t asserts the `cnf.x5t#S256` claim but not the thumbprint value.
+- Runner regression: a capturing-fetch test pins that request headers, content-type and the URL-encoded form body reach the SUT; dropping either in the runner fails it.
+
 ## Runner/SUT gaps (draft, part 3/3)
 
 Features the drafts need that the runner or SUT lack today; part 3/3 decides which to build. Scenarios per feature:
@@ -55,13 +68,12 @@ Features the drafts need that the runner or SUT lack today; part 3/3 decides whi
 - needs SUT nonce-required mode (6): dpop.forged-nonce, dpop.nonce-grace, dpop.nonce-response-header, dpop.nonce-retry, dpop.stale-nonce, dpop.use-dpop-nonce
 - needs clock control or a backdated-claim mode (3): dpop.iat-stale, dpop.nonce-grace, dpop.stale-nonce
 - needs a nonce claim in the signing helper (1): dpop.nonce-retry
-- needs a multi-instance SUT deployment and per-step target selection (1): dpop.replay-cross-instance
-- needs SUT restart control between steps (1): dpop.replay-restart
+- needs a multi-instance SUT deployment and `request-on-instance` helper (1): dpop.replay-cross-instance
+- needs a `sut-restart` helper with a persistent replay store (1): dpop.replay-restart
 - needs a second ephemeral key in the signing helper (1): dpop.wrong-key
 - needs mTLS client-certificate transport in the runner and a seeded client-mtls (3): mtls.cnf-x5t, mtls.resource-cert-must-match, mtls.tls-client-auth-dn
 - needs x5t#S256 thumbprint computation (1): mtls.cnf-x5t
 - needs two distinct client certificates (1): mtls.resource-cert-must-match
-- step 1 here is a DPoP placeholder for issuance (1): mtls.resource-cert-must-match
 - needs a certificate whose Subject DN differs from the registered one (1): mtls.tls-client-auth-dn
 
 Scenarios with no listed gap (dpop.discovery-alg-values, mtls.discovery-cert-bound, abuse.invalid-client-401) only need the SUT to claim the profile.
