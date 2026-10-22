@@ -3,7 +3,7 @@ title: "A proof with a stale iat is rejected"
 requirements: ["RFC9449-4.2-iat-freshness-window"]
 profile: sender-constrained
 status: stable
-note: "Invariant INV-SC-IAT-STALE. Executable with the dpop-proof runner helper (no SUT interface change); Rust reference validated (see docs/sender-constrained-coverage.md). needs clock control or a backdated-claim mode."
+note: "Invariant INV-SC-IAT-STALE. Executable with the dpop-proof runner helper (no SUT interface change); Rust reference validated (see docs/sender-constrained-coverage.md)."
 steps:
   - {"id": "proof", "use": "dpop-proof", "with": {"htm": "POST", "htu": "http://localhost:8080/oauth/token", "iat_offset": -86400}, "expect": {"status": 200}, "capture": {"proof_value": "body.proof"}}
   - {"id": "token", "request": {"method": "POST", "path": "/oauth/token", "headers": {"authorization": "Basic Y2xpZW50LWNjOnRlc3Qtb25seS1jYy1zZWNyZXQ=", "dpop": "{{proof_value}}"}, "form": {"grant_type": "client_credentials"}}, "expect": {"status": 400, "json": {"error": "invalid_dpop_proof"}}}
