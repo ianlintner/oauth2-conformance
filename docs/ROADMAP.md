@@ -54,3 +54,5 @@ Contract v0.3 (`oidc-basic`) part 3/3 runner extensions delivered: numeric match
 Contract v0.4 (`extended-grants`) part 2/3 delivered: 51 scenarios (all draft, none yet validated against a SUT), 51 invariants, coverage report (docs/extended-grants-coverage.md) and the part 3/3 runner/SUT gap list (docs/extended-grants-gaps.md). Scoped requirements amendments add RFC 8628 slow_down on too-fast polling and RFC 9126 expired request_uri rejection.
 
 Contract v0.4 (`extended-grants`) part 3/3: `device-verify` helper and seeded `client-dev` delivered. Rust measured manually: device 7 stable pass, 1 reference-deviation; the other 43 scenarios stay draft pending clock control, duplicate-key transport and JWT signing helpers (see `docs/extended-grants-gaps.md`). Rust is `dev`, not `pass`, until CI claims the profile.
+
+Contract v0.5 (`sender-constrained`) part 2/3 delivered: 35 draft scenarios (one per catalogued requirement), 35 `INV-SC-*` invariants, and `docs/sender-constrained-coverage.md` with the runner/SUT gap list (DPoP proof signing, nonce mode, clock control, mTLS transport, step repetition) for part 3/3.

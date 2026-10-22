@@ -1,0 +1,11 @@
+id: sender-constrained.dpop.ath-required
+title: "A resource proof without ath is rejected"
+requirements: ["RFC9449-7.1-ath-required"]
+profile: sender-constrained
+status: draft
+note: "Invariant INV-SC-ATH-REQUIRED. Draft: needs a DPoP proof signing helper (ES256 key with selectable typ/jwk/htm/htu/iat/jti/ath/nonce claims); needs access-token hash (ath) input to the signing helper; needs a user-bound access token (login-and-authorize with openid scope, then authorization_code exchange with a DPoP proof) because /oauth/userinfo rejects client_credentials tokens regardless of sender constraint. positive control: the correctly bound request succeeds first, so the 401 on the mutated request can only come from the sender-constraint check; the only difference is the missing ath."
+steps:
+  - {"id": "auth", "use": "login-and-authorize", "with": {"username": "alice", "password": "test-only-password", "loginPath": "/auth/login", "authorizePath": "/oauth/authorize", "query": {"response_type": "code", "client_id": "client-a", "redirect_uri": "https://client.example/callback", "scope": "openid", "state": "s-sc", "code_challenge": "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM", "code_challenge_method": "S256"}}, "expect": {"status": 302}, "capture": {"code": "redirect.query.code"}}
+  - {"id": "token", "request": {"method": "POST", "path": "/oauth/token", "headers": {"authorization": "Basic Y2xpZW50LWE6dGVzdC1vbmx5LXNlY3JldA==", "dpop": "{{proof_token_ok}}"}, "form": {"grant_type": "authorization_code", "code": "{{code}}", "redirect_uri": "https://client.example/callback", "code_verifier": "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"}}, "expect": {"status": 200, "json": {"access_token": "x", "token_type": "DPoP"}}, "capture": {"at": "body.access_token"}}
+  - {"id": "resource-ok", "request": {"method": "GET", "path": "/oauth/userinfo", "headers": {"authorization": "DPoP {{at}}", "dpop": "{{proof_resource_ok}}"}}, "expect": {"status": 200}}
+  - {"id": "resource", "request": {"method": "GET", "path": "/oauth/userinfo", "headers": {"authorization": "DPoP {{at}}", "dpop": "{{proof_resource_no_ath}}"}}, "expect": {"status": 401}}

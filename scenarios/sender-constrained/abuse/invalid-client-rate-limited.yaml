@@ -1,0 +1,8 @@
+id: sender-constrained.abuse.invalid-client-rate-limited
+title: "Repeated invalid_client failures are eventually answered 429 (local policy)"
+requirements: ["RFC9700-2.5-invalid-client-rate-limited-policy"]
+profile: sender-constrained
+status: draft
+note: "Invariant INV-SC-INVALID-CLIENT-RATE-LIMITED. Draft: needs step repetition (loop N times) in the runner."
+steps:
+  - {"id": "bad", "request": {"method": "POST", "path": "/oauth/token", "form": {"grant_type": "client_credentials"}, "headers": {"authorization": "Basic Y2xpZW50LWNjOndyb25n"}}, "expect": {"status": 429}}

@@ -1,0 +1,9 @@
+id: sender-constrained.mtls.cnf-x5t
+title: "A certificate-bound token carries cnf x5t#S256"
+requirements: ["RFC8705-3.1-cnf-x5t-binding"]
+profile: sender-constrained
+status: draft
+note: "Invariant INV-SC-CNF-X5T. Draft: needs mTLS client-certificate transport in the runner (mtls-request helper with a named client certificate) and a seeded client-mtls (tls_client_auth, authorization_code, redirect https://client.example/callback, certificate-bound access tokens). The assert step checks the JWT payload carries a cnf.x5t#S256 string; comparing it to the SHA-256 thumbprint of client-cert-a needs x5t#S256 computation (part 3/3 gap), and opaque tokens would need introspection instead. A bare 200 on issuance is NOT evidence of binding."
+steps:
+  - {"id": "token", "use": "mtls-request", "with": {"cert": "client-cert-a", "method": "POST", "path": "/oauth/token", "form": {"grant_type": "client_credentials", "client_id": "client-mtls"}}, "expect": {"status": 200}, "capture": {"at": "body.access_token"}}
+  - {"id": "assert-cnf", "source": "jwt.at.payload", "assert": {"json": {"cnf": {"x5t#S256": {"$includes": ""}}}}}

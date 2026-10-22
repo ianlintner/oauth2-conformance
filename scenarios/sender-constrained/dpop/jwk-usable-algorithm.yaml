@@ -1,0 +1,10 @@
+id: sender-constrained.dpop.jwk-usable-algorithm
+title: "A proof using a symmetric alg or a jwk carrying a private key is rejected"
+requirements: ["RFC9449-4-jwk-usable-algorithm"]
+profile: sender-constrained
+status: draft
+note: "Invariant INV-SC-JWK-USABLE-ALGORITHM. Draft: needs a DPoP proof signing helper (ES256 key with selectable typ/jwk/htm/htu/iat/jti/ath/nonce claims); needs a proof variant with a jwk that includes private members (d). Variants: HS256 symmetric alg and private-key jwk, each with a valid-proof positive control."
+steps:
+  - {"id": "control", "request": {"method": "POST", "path": "/oauth/token", "headers": {"authorization": "Basic Y2xpZW50LWNjOnRlc3Qtb25seS1jYy1zZWNyZXQ=", "dpop": "{{proof_token_ok}}"}, "form": {"grant_type": "client_credentials"}}, "expect": {"status": 200, "json": {"access_token": "x", "token_type": "DPoP"}}}
+  - {"id": "symmetric-alg", "request": {"method": "POST", "path": "/oauth/token", "headers": {"authorization": "Basic Y2xpZW50LWNjOnRlc3Qtb25seS1jYy1zZWNyZXQ=", "dpop": "{{proof_symmetric_alg}}"}, "form": {"grant_type": "client_credentials"}}, "expect": {"status": 400, "json": {"error": "invalid_dpop_proof"}}}
+  - {"id": "private-key-jwk", "request": {"method": "POST", "path": "/oauth/token", "headers": {"authorization": "Basic Y2xpZW50LWNjOnRlc3Qtb25seS1jYy1zZWNyZXQ=", "dpop": "{{proof_jwk_private_key}}"}, "form": {"grant_type": "client_credentials"}}, "expect": {"status": 400, "json": {"error": "invalid_dpop_proof"}}}

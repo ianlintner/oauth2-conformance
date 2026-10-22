@@ -1,0 +1,11 @@
+id: sender-constrained.mtls.resource-cert-must-match
+title: "A resource rejects a certificate-bound token over a different client certificate"
+requirements: ["RFC8705-3-resource-cert-must-match"]
+profile: sender-constrained
+status: draft
+note: "Invariant INV-SC-RESOURCE-CERT-MUST-MATCH. Draft: needs mTLS client-certificate transport in the runner (mtls-request helper with a named client certificate) and a seeded client-mtls (tls_client_auth, authorization_code, redirect https://client.example/callback, certificate-bound access tokens); needs two distinct client certificates (client-cert-a bound at issuance, client-cert-b presented to the resource). RFC 8705 certificate binding, not DPoP. positive control: the correctly bound request succeeds first, so the 401 on the mutated request can only come from the sender-constraint check; only the presented certificate differs."
+steps:
+  - {"id": "auth", "use": "login-and-authorize", "with": {"username": "alice", "password": "test-only-password", "loginPath": "/auth/login", "authorizePath": "/oauth/authorize", "query": {"response_type": "code", "client_id": "client-mtls", "redirect_uri": "https://client.example/callback", "scope": "openid", "state": "s-sc", "code_challenge": "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM", "code_challenge_method": "S256"}}, "expect": {"status": 302}, "capture": {"code": "redirect.query.code"}}
+  - {"id": "token", "use": "mtls-request", "with": {"cert": "client-cert-a", "method": "POST", "path": "/oauth/token", "form": {"grant_type": "authorization_code", "client_id": "client-mtls", "code": "{{code}}", "redirect_uri": "https://client.example/callback", "code_verifier": "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"}}, "expect": {"status": 200}, "capture": {"at": "body.access_token"}}
+  - {"id": "resource-ok", "use": "mtls-request", "with": {"cert": "client-cert-a", "method": "GET", "path": "/oauth/userinfo", "headers": {"authorization": "Bearer {{at}}"}}, "expect": {"status": 200}}
+  - {"id": "resource", "use": "mtls-request", "with": {"cert": "client-cert-b", "method": "GET", "path": "/oauth/userinfo", "headers": {"authorization": "Bearer {{at}}"}}, "expect": {"status": 401}}

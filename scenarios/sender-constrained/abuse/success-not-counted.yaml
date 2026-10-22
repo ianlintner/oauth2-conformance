@@ -1,0 +1,9 @@
+id: sender-constrained.abuse.success-not-counted
+title: "Successful issuance does not consume the invalid_client bucket (local policy)"
+requirements: ["RFC9700-2.5-success-not-counted-policy"]
+profile: sender-constrained
+status: draft
+note: "Invariant INV-SC-SUCCESS-NOT-COUNTED. Draft, NOT coverage: needs step repetition (loop N times) in the runner to interleave successes with failures up to the limit. Until then the steps below are a placeholder: a handful of requests never reach any limit, so a pass proves nothing about the bucket accounting. Must stay draft until a repeat/loop helper drives failures to just under the limit with successes interleaved and the next failure is still 401 (not 429)."
+steps:
+  - {"id": "placeholder-ok", "request": {"method": "POST", "path": "/oauth/token", "form": {"grant_type": "client_credentials"}, "headers": {"authorization": "Basic Y2xpZW50LWNjOnRlc3Qtb25seS1jYy1zZWNyZXQ="}}, "expect": {"status": 200}}
+  - {"id": "placeholder-failed-auth", "request": {"method": "POST", "path": "/oauth/token", "form": {"grant_type": "client_credentials"}, "headers": {"authorization": "Basic Y2xpZW50LWNjOndyb25n"}}, "expect": {"status": 401, "json": {"error": "invalid_client"}}}

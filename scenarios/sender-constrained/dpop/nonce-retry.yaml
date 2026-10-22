@@ -1,0 +1,9 @@
+id: sender-constrained.dpop.nonce-retry
+title: "Retrying with the server nonce succeeds"
+requirements: ["RFC9449-8-nonce-retry-succeeds"]
+profile: sender-constrained
+status: draft
+note: "Invariant INV-SC-NONCE-RETRY. Draft: needs a DPoP proof signing helper (ES256 key with selectable typ/jwk/htm/htu/iat/jti/ath/nonce claims); needs SUT nonce-required mode; needs a nonce claim in the signing helper."
+steps:
+  - {"id": "token", "request": {"method": "POST", "path": "/oauth/token", "headers": {"authorization": "Basic Y2xpZW50LWNjOnRlc3Qtb25seS1jYy1zZWNyZXQ=", "dpop": "{{proof_token_ok}}"}, "form": {"grant_type": "client_credentials"}}, "expect": {"status": 400, "json": {"error": "use_dpop_nonce"}}, "capture": {"nonce": "header.dpop-nonce"}}
+  - {"id": "retry", "request": {"method": "POST", "path": "/oauth/token", "headers": {"authorization": "Basic Y2xpZW50LWNjOnRlc3Qtb25seS1jYy1zZWNyZXQ=", "dpop": "{{proof_with_nonce}}"}, "form": {"grant_type": "client_credentials"}}, "expect": {"status": 200, "json": {"access_token": "x", "token_type": "DPoP"}}}
