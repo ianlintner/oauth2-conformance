@@ -9,7 +9,7 @@
   level: MUST
   profile: operations
   summary: "An authorization code redeemed on one replica is rejected when presented to any other replica."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#5.1-authorization-codes
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#51-authorization-codes
   notes: "Deployment condition for RFC 6749 section 4.1.2 and RFC 9700 section 2.1.1."
 - id: OPS-5.1-code-used-survives-restart
   spec: "Operations profile"
@@ -17,7 +17,7 @@
   level: MUST
   profile: operations
   summary: "An authorization code marked used before a restart is still rejected after the restart."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#5.1-authorization-codes
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#51-authorization-codes
   notes: "Deployment condition for RFC 6749 section 4.1.2 and RFC 9700 section 2.1.1."
 - id: OPS-5.2-refresh-rotation-across-replicas
   spec: "Operations profile"
@@ -25,7 +25,7 @@
   level: SHOULD
   profile: operations
   summary: "A rotated refresh token is rejected by every replica."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#5.2-refresh-tokens
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#52-refresh-tokens
   notes: "Deployment condition for RFC 9700 section 4.14.2."
 - id: OPS-5.2-refresh-reuse-revokes-family-across-replicas
   spec: "Operations profile"
@@ -33,7 +33,7 @@
   level: SHOULD
   profile: operations
   summary: "Reuse of a rotated refresh token revokes its whole token family as seen by every replica."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#5.2-refresh-tokens
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#52-refresh-tokens
   notes: "Deployment condition for RFC 9700 section 4.14.2."
 - id: OPS-5.3-revocation-across-replicas
   spec: "Operations profile"
@@ -41,7 +41,7 @@
   level: MUST
   profile: operations
   summary: "A revocation performed on one replica takes effect on every replica for access tokens, refresh tokens and introspection results."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#5.3-revocation
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#53-revocation
   notes: "Deployment condition for RFC 7009 section 2.1 and RFC 7662."
 - id: OPS-5.4-dpop-replay-across-replicas
   spec: "Operations profile"
@@ -49,7 +49,7 @@
   level: SHOULD
   profile: operations
   summary: "A DPoP proof consumed on one replica is rejected on every replica."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#5.4-sender-constrained-proofs
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#54-sender-constrained-proofs
   notes: "Deployment condition for RFC 9449 section 11.1; complements RFC9449-11.1-replay-store-cross-instance."
 - id: OPS-5.4-dpop-replay-survives-restart
   spec: "Operations profile"
@@ -57,7 +57,7 @@
   level: SHOULD
   profile: operations
   summary: "The DPoP replay cache is not reset by a process restart or instance replacement."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#5.4-sender-constrained-proofs
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#54-sender-constrained-proofs
   notes: "Deployment condition for RFC 9449 section 11.1; complements RFC9449-11.1-replay-store-restart-safe."
 - id: OPS-5.5-par-request-uri-single-use-across-replicas
   spec: "Operations profile"
@@ -65,7 +65,7 @@
   level: SHOULD
   profile: operations
   summary: "A pushed authorization request URI is consumed exactly once across replicas."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#5.5-single-use-artifacts
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#55-single-use-artifacts
   notes: "Deployment condition for RFC 9126 section 2.2."
 - id: OPS-5.5-device-code-single-use-across-replicas
   spec: "Operations profile"
@@ -73,5 +73,5 @@
   level: MAY
   profile: operations
   summary: "A device authorization code is consumed exactly once across replicas."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#5.5-single-use-artifacts
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#55-single-use-artifacts
   notes: "Local policy: RFC 8628 does not mandate single use; this fixes the cross-replica behavior the reference storage contract tests."

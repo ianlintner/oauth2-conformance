@@ -206,17 +206,19 @@ identity provider in conformance runs.
 
 - The set of supported providers is implementation- and deployment-defined;
   the reference implements `google`, `microsoft`, `azure` and `github`.
-- The provider endpoints are configurable by base URL, so the flow can be
-  exercised against a local mock identity provider without third-party
-  credentials.
+- Provider endpoints SHOULD be configurable by base URL, so conformance runs
+  can exercise the flow against a local mock identity provider without
+  third-party credentials. This is a v0.6 contract target, not behavior already
+  verified in the Rust reference: its current provider authorization and token
+  URLs are hard-coded.
 - Initiating login for a known provider with no configured credentials is
   rejected with `provider_not_configured`.
 
 ### 4.2 CSRF state binding
 
 - Initiating login records an expected `state` value in the session and redirects
-  the user agent to the provider's authorization endpoint with that `state` and a
-  PKCE challenge.
+  the user agent to the provider's authorization endpoint with that `state`.
+  Where supported by the provider, the redirect also carries a PKCE challenge.
 - The callback requires a `state` matching the value recorded in the session. A
   missing `state` is rejected with `access_denied`; a mismatched `state` is
   rejected with `access_denied`.

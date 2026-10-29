@@ -10,320 +10,320 @@
   level: MUST
   profile: operations
   summary: "A request with neither an admin session nor an admin bearer token is answered with a 302 redirect to the login page instead of admin content."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#2.1-authentication-and-rbac
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#21-authentication-and-rbac
 - id: OPS-2.1-session-without-admin-role-403
   spec: "Operations profile"
   clause: "2.1"
   level: MUST
   profile: operations
   summary: "An authenticated session without the admin role is rejected 403 with error insufficient_permissions."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#2.1-authentication-and-rbac
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#21-authentication-and-rbac
 - id: OPS-2.1-bearer-admin-client-allowlist-fail-closed
   spec: "Operations profile"
   clause: "2.1"
   level: MUST
   profile: operations
   summary: "A bearer token is admin only when it carries the admin scope and was issued to an operator allow-listed client; the allow-list is fail-closed so no bearer token is admin when it is unset."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#2.1-authentication-and-rbac
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#21-authentication-and-rbac
 - id: OPS-2.1-bearer-without-admin-scope-403
   spec: "Operations profile"
   clause: "2.1"
   level: MUST
   profile: operations
   summary: "A valid bearer token without the admin scope is rejected 403 with error insufficient_scope."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#2.1-authentication-and-rbac
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#21-authentication-and-rbac
 - id: OPS-2.1-bearer-invalid-token-401
   spec: "Operations profile"
   clause: "2.1"
   level: MUST
   profile: operations
   summary: "An invalid or expired bearer token is rejected 401 with error invalid_token."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#2.1-authentication-and-rbac
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#21-authentication-and-rbac
 - id: OPS-2.1-admin-credentials-reach-handler
   spec: "Operations profile"
   clause: "2.1"
   level: MUST
   profile: operations
   summary: "An admin session, or an allow-listed bearer token carrying the admin scope, reaches the handler."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#2.1-authentication-and-rbac
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#21-authentication-and-rbac
 - id: OPS-2.2-page-envelope
   spec: "Operations profile"
   clause: "2.2"
   level: MUST
   profile: operations
   summary: "Every admin list endpoint returns an envelope with items, total (unpaged count), limit and offset."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#2.2-paging-and-listing
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#22-paging-and-listing
 - id: OPS-2.2-limit-offset-selects-slice
   spec: "Operations profile"
   clause: "2.2"
   level: MUST
   profile: operations
   summary: "The limit and offset query parameters select the returned slice and the final page carries the remainder."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#2.2-paging-and-listing
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#22-paging-and-listing
 - id: OPS-2.2-empty-collection-200
   spec: "Operations profile"
   clause: "2.2"
   level: MUST
   profile: operations
   summary: "A list endpoint over an empty collection returns 200 with items [] and total 0."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#2.2-paging-and-listing
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#22-paging-and-listing
 - id: OPS-2.2-search-filters-by-name
   spec: "Operations profile"
   clause: "2.2"
   level: SHOULD
   profile: operations
   summary: "A search query parameter filters a listing by name where the resource has one."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#2.2-paging-and-listing
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#22-paging-and-listing
 - id: OPS-2.2-unknown-id-404
   spec: "Operations profile"
   clause: "2.2"
   level: MUST
   profile: operations
   summary: "A detail endpoint addressed with an unknown id returns 404."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#2.2-paging-and-listing
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#22-paging-and-listing
 - id: OPS-2.3-user-create-201-password-hashed
   spec: "Operations profile"
   clause: "2.3"
   level: MUST
   profile: operations
   summary: "Creating a user returns 201 with the created record and stores the submitted password only as a hash."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#2.3-user-administration
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#23-user-administration
 - id: OPS-2.3-user-create-missing-field-400
   spec: "Operations profile"
   clause: "2.3"
   level: MUST
   profile: operations
   summary: "A user creation missing a required field is rejected 400 with error invalid_request."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#2.3-user-administration
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#23-user-administration
 - id: OPS-2.3-user-create-duplicate-409
   spec: "Operations profile"
   clause: "2.3"
   level: MUST
   profile: operations
   summary: "A user creation with an existing username is rejected 409 with error already_exists."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#2.3-user-administration
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#23-user-administration
 - id: OPS-2.3-user-update-partial-unknown-404
   spec: "Operations profile"
   clause: "2.3"
   level: MUST
   profile: operations
   summary: "Updating a user applies only the supplied fields and rejects an unknown id with 404."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#2.3-user-administration
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#23-user-administration
 - id: OPS-2.3-user-update-unknown-role-ignored
   spec: "Operations profile"
   clause: "2.3"
   level: MUST
   profile: operations
   summary: "An unrecognised role value in a user update is ignored and the stored role is unchanged."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#2.3-user-administration
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#23-user-administration
 - id: OPS-2.3-user-delete-revokes-tokens
   spec: "Operations profile"
   clause: "2.3"
   level: MUST
   profile: operations
   summary: "Deleting a user removes the user and revokes that user's tokens."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#2.3-user-administration
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#23-user-administration
 - id: OPS-2.3-user-disable-revokes-tokens
   spec: "Operations profile"
   clause: "2.3"
   level: MUST
   profile: operations
   summary: "Toggling a user's enabled flag takes effect and disabling a user revokes that user's tokens."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#2.3-user-administration
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#23-user-administration
 - id: OPS-2.3-user-set-role-invalid-400
   spec: "Operations profile"
   clause: "2.3"
   level: MUST
   profile: operations
   summary: "Setting a user role sets a known role and rejects an unknown role with 400 invalid_request."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#2.3-user-administration
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#23-user-administration
 - id: OPS-2.3-user-password-reset-revokes-tokens
   spec: "Operations profile"
   clause: "2.3"
   level: MUST
   profile: operations
   summary: "A password reset replaces the stored hash and revokes that user's tokens."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#2.3-user-administration
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#23-user-administration
 - id: OPS-2.3-user-password-weak-400
   spec: "Operations profile"
   clause: "2.3"
   level: MUST
   profile: operations
   summary: "A password reset with a weak password is rejected 400 and leaves the stored hash unchanged."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#2.3-user-administration
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#23-user-administration
 - id: OPS-2.4-client-create-secret-returned-once
   spec: "Operations profile"
   clause: "2.4"
   level: MUST
   profile: operations
   summary: "Creating a confidential client returns 201 with its secret in the creation response only, never again."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#2.4-client-administration
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#24-client-administration
 - id: OPS-2.4-client-create-public-no-secret
   spec: "Operations profile"
   clause: "2.4"
   level: MUST
   profile: operations
   summary: "A public client is created without a secret."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#2.4-client-administration
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#24-client-administration
 - id: OPS-2.4-client-create-empty-name-400
   spec: "Operations profile"
   clause: "2.4"
   level: MUST
   profile: operations
   summary: "A client creation with an empty name is rejected 400."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#2.4-client-administration
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#24-client-administration
 - id: OPS-2.4-client-update-partial-unknown-404
   spec: "Operations profile"
   clause: "2.4"
   level: MUST
   profile: operations
   summary: "Updating a client applies only the supplied fields and rejects an unknown id with 404."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#2.4-client-administration
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#24-client-administration
 - id: OPS-2.4-client-disable-revokes-tokens
   spec: "Operations profile"
   clause: "2.4"
   level: MUST
   profile: operations
   summary: "Toggling a client's enabled flag takes effect and disabling a client revokes that client's tokens."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#2.4-client-administration
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#24-client-administration
 - id: OPS-2.4-client-regenerate-secret-replaces
   spec: "Operations profile"
   clause: "2.4"
   level: MUST
   profile: operations
   summary: "Regenerating a client secret issues a new secret that authenticates afterwards, retiring the old one."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#2.4-client-administration
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#24-client-administration
 - id: OPS-2.4-client-regenerate-secret-public-400
   spec: "Operations profile"
   clause: "2.4"
   level: MUST
   profile: operations
   summary: "Regenerating a secret for a client that has no secret is rejected 400 with error invalid_request."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#2.4-client-administration
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#24-client-administration
 - id: OPS-2.5-token-list-and-detail
   spec: "Operations profile"
   clause: "2.5"
   level: MUST
   profile: operations
   summary: "Tokens are listed with the page envelope and a detail request for an unknown token id returns 404."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#2.5-token-administration
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#25-token-administration
 - id: OPS-2.5-token-revoke-single
   spec: "Operations profile"
   clause: "2.5"
   level: MUST
   profile: operations
   summary: "Revoking a token by id revokes that one token."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#2.5-token-administration
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#25-token-administration
 - id: OPS-2.5-token-revoke-by-user-scoped
   spec: "Operations profile"
   clause: "2.5"
   level: MUST
   profile: operations
   summary: "Bulk revocation by user revokes every token of the named user and no other user's tokens."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#2.5-token-administration
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#25-token-administration
 - id: OPS-2.5-token-revoke-by-client-scoped
   spec: "Operations profile"
   clause: "2.5"
   level: MUST
   profile: operations
   summary: "Bulk revocation by client revokes every token of the named client and no other client's tokens."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#2.5-token-administration
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#25-token-administration
 - id: OPS-2.6-denylist-entry-shape
   spec: "Operations profile"
   clause: "2.6"
   level: MUST
   profile: operations
   summary: "A denylist entry records kind, value, optional reason, optional expires_at and the acting admin identity."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#2.6-denylist
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#26-denylist
 - id: OPS-2.6-denylist-kind-validated-400
   spec: "Operations profile"
   clause: "2.6"
   level: MUST
   profile: operations
   summary: "A denylist kind other than ip, user_id, username, email or client_id is rejected 400 invalid_request."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#2.6-denylist
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#26-denylist
 - id: OPS-2.6-denylist-add-201-upsert
   spec: "Operations profile"
   clause: "2.6"
   level: MUST
   profile: operations
   summary: "Adding a denylist entry returns 201 and an entry for an existing kind and value is replaced rather than duplicated, with the latest reason winning."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#2.6-denylist
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#26-denylist
 - id: OPS-2.6-denylist-remove-clears-entry
   spec: "Operations profile"
   clause: "2.6"
   level: MUST
   profile: operations
   summary: "Deleting a denylist entry by id removes it."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#2.6-denylist
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#26-denylist
 - id: OPS-2.6-denylist-ip-blocked-403
   spec: "Operations profile"
   clause: "2.6"
   level: MUST
   profile: operations
   summary: "A request from a denylisted client IP is rejected 403 access_denied by middleware before the handler runs."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#2.6-denylist
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#26-denylist
 - id: OPS-2.6-denylist-ip-not-listed-passes
   spec: "Operations profile"
   clause: "2.6"
   level: MUST
   profile: operations
   summary: "A request from a client IP that is not denylisted reaches the handler."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#2.6-denylist
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#26-denylist
 - id: OPS-2.6-denylist-expired-entry-not-blocking
   spec: "Operations profile"
   clause: "2.6"
   level: MUST
   profile: operations
   summary: "A denylist entry whose expires_at has passed no longer blocks."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#2.6-denylist
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#26-denylist
 - id: OPS-2.6-denylist-subject-lookup-reason
   spec: "Operations profile"
   clause: "2.6"
   level: MUST
   profile: operations
   summary: "A subject lookup by user id, username, email or client id returns the recorded reason."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#2.6-denylist
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#26-denylist
 - id: OPS-2.6-denylist-empty-subject-no-match
   spec: "Operations profile"
   clause: "2.6"
   level: MUST
   profile: operations
   summary: "An empty subject value never matches a denylist entry."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#2.6-denylist
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#26-denylist
 - id: OPS-2.7-audit-actor-and-action-recorded
   spec: "Operations profile"
   clause: "2.7"
   level: MUST
   profile: operations
   summary: "Admin mutations record the acting admin identity and a stable machine-readable action name such as user.create or denylist.add."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#2.7-audit-log
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#27-audit-log
 - id: OPS-2.7-audit-newest-first-paged
   spec: "Operations profile"
   clause: "2.7"
   level: MUST
   profile: operations
   summary: "The audit log is listed newest-first with the section 2.2 envelope."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#2.7-audit-log
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#27-audit-log
 - id: OPS-2.7-audit-write-failure-nonfatal
   spec: "Operations profile"
   clause: "2.7"
   level: SHOULD
   profile: operations
   summary: "A failure to write an audit entry is logged and neither fails nor rolls back the admin action."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#2.7-audit-log
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#27-audit-log
 - id: OPS-2.8-capabilities-boolean-flags
   spec: "Operations profile"
   clause: "2.8"
   level: MUST
   profile: operations
   summary: "The capabilities endpoint reports events, device_flow, key_rotation, user_crud, client_crud, denylist, audit_log and bulk_revoke as booleans."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#2.8-capabilities
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#28-capabilities
 - id: OPS-2.9-dashboard-totals
   spec: "Operations profile"
   clause: "2.9"
   level: MUST
   profile: operations
   summary: "The dashboard endpoint returns operator totals including total_clients, total_users, active_tokens and pending_device_codes."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#2.9-dashboard
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#29-dashboard
   notes: "The exact key set beyond these totals is not fixed; the listed totals must be present."

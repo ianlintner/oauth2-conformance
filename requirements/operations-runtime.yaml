@@ -10,28 +10,28 @@
   level: MUST
   profile: operations
   summary: "The liveness endpoint /health returns 200 with a service status body and requires no authentication."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#3.1-liveness
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#31-liveness
 - id: OPS-3.2-ready-200-database-ok
   spec: "Operations profile"
   clause: "3.2"
   level: MUST
   profile: operations
   summary: "The readiness endpoint /ready returns 200 with status ready and checks.database ok when the storage health check passes."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#3.2-readiness
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#32-readiness
 - id: OPS-3.2-ready-503-when-storage-unhealthy
   spec: "Operations profile"
   clause: "3.2"
   level: MUST
   profile: operations
   summary: "The readiness endpoint returns 503 when the storage health check fails."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#3.2-readiness
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#32-readiness
 - id: OPS-3.2-ready-conformance-detail
   spec: "Operations profile"
   clause: "3.2"
   level: MAY
   profile: operations
   summary: "In conformance mode /ready additionally reports a conformance object with seed state and signing key identifiers so a harness can wait for the seed."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#3.2-readiness
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#32-readiness
   notes: "Conformance mode is defined in contract/sut-interface.md."
 - id: OPS-3.2-ready-conformance-detail-no-secrets
   spec: "Operations profile"
@@ -39,42 +39,42 @@
   level: MUST NOT
   profile: operations
   summary: "The /ready conformance object never contains credentials or key material, only counts and identifiers."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#3.2-readiness
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#32-readiness
 - id: OPS-3.3-metrics-prometheus-text-format
   spec: "Operations profile"
   clause: "3.3"
   level: MUST
   profile: operations
   summary: "The /metrics endpoint returns Prometheus text exposition format text/plain version 0.0.4."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#3.3-metrics
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#33-metrics
 - id: OPS-3.3-metrics-request-counter-status-class
   spec: "Operations profile"
   clause: "3.3"
   level: MUST
   profile: operations
   summary: "A request counter labelled by response status class is exported."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#3.3-metrics
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#33-metrics
 - id: OPS-3.3-metrics-duration-histogram
   spec: "Operations profile"
   clause: "3.3"
   level: MUST
   profile: operations
   summary: "A request duration histogram is observed for every request."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#3.3-metrics
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#33-metrics
 - id: OPS-3.3-metrics-failed-authentications-counter
   spec: "Operations profile"
   clause: "3.3"
   level: MUST
   profile: operations
   summary: "Failed authentications increment a dedicated counter for bad password, unknown user, bad client secret and bad refresh token."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#3.3-metrics
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#33-metrics
 - id: OPS-3.4-event-ingest-health-endpoint
   spec: "Operations profile"
   clause: "3.4"
   level: MAY
   profile: operations
   summary: "When event ingest is enabled the server exposes a health endpoint for its ingest path reporting whether the path is available."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#3.4-event-ingest
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#34-event-ingest
   notes: "Support is optional and reported by the capabilities endpoint."
 - id: OPS-4.1-provider-not-configured
   spec: "Operations profile"
@@ -82,29 +82,30 @@
   level: MUST
   profile: operations
   summary: "Initiating login for a known provider with no configured credentials is rejected with provider_not_configured."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#4.1-provider-configuration
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#41-provider-configuration
 - id: OPS-4.1-provider-base-url-configurable
   spec: "Operations profile"
   clause: "4.1"
   level: SHOULD
   profile: operations
-  summary: "Provider endpoints are configurable by base URL so the flow runs against a local mock identity provider without third-party credentials."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#4.1-provider-configuration
-- id: OPS-4.2-login-redirect-state-and-pkce
+  summary: "Provider endpoints should be configurable by base URL so the flow runs against a local mock identity provider without third-party credentials."
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#41-provider-configuration
+  notes: "v0.6 target not yet implemented by the Rust reference: its provider URLs are currently hard-coded."
+- id: OPS-4.2-login-redirect-state
   spec: "Operations profile"
   clause: "4.2"
   level: MUST
   profile: operations
-  summary: "Initiating login records an expected state in the session and redirects to the provider authorization endpoint with that state and a PKCE challenge."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#4.2-csrf-state-binding
-  notes: "State binding is the RFC 6749 section 10.12 CSRF defence; PKCE is RFC 7636."
+  summary: "Initiating login records an expected state in the session and redirects to the provider authorization endpoint with that state."
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#42-csrf-state-binding
+  notes: "State binding is the RFC 6749 section 10.12 CSRF defence; not all reference providers send PKCE."
 - id: OPS-4.2-callback-state-missing-access-denied
   spec: "Operations profile"
   clause: "4.2"
   level: MUST
   profile: operations
   summary: "A social login callback with no state is rejected with access_denied."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#4.2-csrf-state-binding
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#42-csrf-state-binding
   notes: "RFC 6749 section 10.12 CSRF defence."
 - id: OPS-4.2-callback-state-mismatch-access-denied
   spec: "Operations profile"
@@ -112,7 +113,7 @@
   level: MUST
   profile: operations
   summary: "A social login callback whose state differs from the value recorded in the session is rejected with access_denied."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#4.2-csrf-state-binding
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#42-csrf-state-binding
   notes: "RFC 6749 section 10.12 CSRF defence."
 - id: OPS-4.3-callback-provider-mismatch-invalid-request
   spec: "Operations profile"
@@ -120,19 +121,19 @@
   level: MUST
   profile: operations
   summary: "A callback whose provider path segment differs from the provider recorded in the session is rejected with invalid_request."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#4.3-provider-binding
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#43-provider-binding
 - id: OPS-4.3-callback-unsupported-provider-invalid-request
   spec: "Operations profile"
   clause: "4.3"
   level: MUST
   profile: operations
   summary: "A callback for a provider the server does not support is rejected with invalid_request."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#4.3-provider-binding
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#43-provider-binding
 - id: OPS-4.4-post-login-redirect-validated
   spec: "Operations profile"
   clause: "4.4"
   level: MUST
   profile: operations
   summary: "A post-login redirect target is validated and an unsafe target is replaced by a default destination rather than followed."
-  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#4.4-post-login-redirect-safety
+  link: https://github.com/ianlintner/oauth2-conformance/blob/main/docs/operations-profile.md#44-post-login-redirect-safety
   notes: "Open-redirect hardening; no single RFC clause is cited."

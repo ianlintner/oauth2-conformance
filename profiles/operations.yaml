@@ -60,7 +60,7 @@ requirements:
   - OPS-3.4-event-ingest-health-endpoint
   - OPS-4.1-provider-not-configured
   - OPS-4.1-provider-base-url-configurable
-  - OPS-4.2-login-redirect-state-and-pkce
+  - OPS-4.2-login-redirect-state
   - OPS-4.2-callback-state-missing-access-denied
   - OPS-4.2-callback-state-mismatch-access-denied
   - OPS-4.3-callback-provider-mismatch-invalid-request
