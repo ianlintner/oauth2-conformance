@@ -36,16 +36,11 @@ Ordering: contract milestones are sequential. Ports run in parallel with each ot
 
 ## Status
 
-| Implementation | v0.1 | v0.2 | v0.3 | v0.4 | v0.5 | v0.6 | v0.7 |
-|---|---|---|---|---|---|---|---|
-| Rust (reference) | dev | — | — | dev | dev | — | — |
-| Python | — | — | — | — | — | — | — |
-| TypeScript | — | — | — | — | — | — | — |
-| Go | — | — | — | — | — | — | — |
+Status is generated, not hand-edited: see [`STATUS.md`](STATUS.md) for per-profile scenario counts (stable / reference-deviation / draft), MUST / MUST NOT requirement coverage, and the per-implementation x profile claim matrix. CI regenerates it (`pnpm conformance status --root .. --check`) and fails when the checked-in copy is stale.
 
-`—` not yet claimed · `pass` claimed and passing in CI on main · `dev` passing with recorded deviations.
+All four ports (Rust reference, Python, TypeScript, Go) now claim `core`, `token-lifecycle`, `oidc-basic`, `extended-grants` and `sender-constrained` in their `conformance.yaml`, pinned to contract commit `985fef7`, and run the claimed profiles in their own CI. Port claims in `STATUS.md` are read from `docs/ports/*.yaml`, snapshots of each port's `conformance.yaml` on `main` (refresh them when a port bumps its pin). `status --reports DIR` can ingest runner JSON reports for pass/fail/deferred counts, but CI does not yet collect reports from the ports, so those counts stay blank until it does (follow-up).
 
-Rust v0.1 is `dev`: measured manually against a freshly seeded SUT (core run: 33 pass, 0 fail, 8 reference deviations and 2 drafts deferred; see `docs/core-coverage.md`). CI does not yet start a SUT, so it is not `pass`. Python v0.1 is `—`: its repository has no conformance-mode SUT interface yet.
+The milestone notes below are historical; the live numbers are in `STATUS.md`.
 
 Contract v0.2 (`token-lifecycle`) is delivered: 31 scenarios (25 stable, 6 `reference-deviation`), 12 invariants, and the part-3/3 runner extensions (JWT header/payload captures, `$contains`/`$nonempty`/`$absent` matchers, expect-interpolation) are on `main` (see `docs/token-lifecycle-coverage.md`). Ports may now pin the contract commit and begin the v0.2 milestone; the two owner-gated gaps (`RFC7662-4-expiry-checked`, `RFC9700-2.2.2-public-refresh-rotated-or-bound`) remain documented deferrals rather than blockable failures.
 
