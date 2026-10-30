@@ -162,7 +162,19 @@ test('computePortStatus ingests reports: stable pass/fail, deferred, later repor
   const wildcard = report('*', [{ id: 'alpha.s2', status: 'stable', outcome: 'pass', profile: 'alpha' }]);
   const other = report('alpha', [{ id: 'alpha.s1', status: 'stable', outcome: 'fail', profile: 'alpha' }], 'someone-else');
   const port = computePortStatus(parsePortManifest(MANIFEST), [alpha, wildcard, other], fixtureRequirements);
-  assert.deepEqual(port.cells['alpha']?.results, { passed: 3, failed: 0, deferred: 2 });
+  assert.deepEqual(port.cells['alpha']?.results, { passed: 4, failed: 0, deferred: 2 });
+});
+
+test('computePortStatus counts non-stable pass and fail results instead of dropping them', () => {
+  const draftResults = report('alpha', [
+    { id: 'alpha.d1', status: 'draft', outcome: 'fail', profile: 'alpha' },
+    { id: 'alpha.d2', status: 'draft', outcome: 'pass', profile: 'alpha' },
+    { id: 'alpha.r1', status: 'reference-deviation', outcome: 'deferred', profile: 'alpha' },
+  ]);
+  const port = computePortStatus(parsePortManifest(MANIFEST), [draftResults], fixtureRequirements);
+  assert.deepEqual(port.cells['alpha']?.results, { passed: 1, failed: 1, deferred: 1 });
+  const markdown = renderStatus(computeContractStatus(fixtureScenarios, fixtureRequirements, fixtureProfiles), [port]);
+  assert.ok(markdown.includes('claimed: 1 pass / 1 fail / 1 deferred; 1 deviation'));
 });
 
 test('renderStatus renders the port matrix: claim, pin, snapshot, results and the deviation list', () => {

@@ -251,13 +251,9 @@ export function computePortStatus(manifest: PortManifest, reports: PortReport[],
     const cell = cells[result.profile];
     if (cell === undefined) continue;
     cell.results ??= { passed: 0, failed: 0, deferred: 0 };
-    if (result.status === 'stable') {
-      if (result.outcome === 'pass') cell.results.passed += 1;
-      else if (result.outcome === 'fail') cell.results.failed += 1;
-      else cell.results.deferred += 1;
-    } else if (result.outcome === 'deferred') {
-      cell.results.deferred += 1;
-    }
+    if (result.outcome === 'pass') cell.results.passed += 1;
+    else if (result.outcome === 'fail') cell.results.failed += 1;
+    else cell.results.deferred += 1;
   }
 
   return {
