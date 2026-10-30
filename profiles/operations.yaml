@@ -1,0 +1,31 @@
+id: operations
+title: "Operations - health and metrics, social login, persistence"
+description: "v0.6 operations profile. Liveness/readiness/metrics security, social login against a mock IdP, and single-use/replay guarantees across replicas and restarts (contract v0.6, requirements only). The admin JSON API is a separate optional admin-api profile (docs/operations-profile.md section 2). Clauses are defined by docs/operations-profile.md, not by an RFC; persistence clauses restate RFC requirements as deployment conditions. Strictness: the profile lists every catalogued level (MUST, MUST NOT, SHOULD, MAY); only MUST and MUST NOT entries gate a pass."
+requirements:
+  - OPS-3.1-health-200-no-auth
+  - OPS-3.2-ready-200-database-ok
+  - OPS-3.2-ready-503-when-storage-unhealthy
+  - OPS-3.2-ready-conformance-detail
+  - OPS-3.2-ready-conformance-detail-no-secrets
+  - OPS-3.3-metrics-prometheus-text-format
+  - OPS-3.3-metrics-request-counter-status-class
+  - OPS-3.3-metrics-duration-histogram
+  - OPS-3.3-metrics-failed-authentications-counter
+  - OPS-3.4-event-ingest-health-endpoint
+  - OPS-4.1-provider-not-configured
+  - OPS-4.1-provider-base-url-configurable
+  - OPS-4.2-login-redirect-state
+  - OPS-4.2-callback-state-missing-access-denied
+  - OPS-4.2-callback-state-mismatch-access-denied
+  - OPS-4.3-callback-provider-mismatch-invalid-request
+  - OPS-4.3-callback-unsupported-provider-invalid-request
+  - OPS-4.4-post-login-redirect-validated
+  - OPS-5.1-code-single-use-across-replicas
+  - OPS-5.1-code-used-survives-restart
+  - OPS-5.2-refresh-rotation-across-replicas
+  - OPS-5.2-refresh-reuse-revokes-family-across-replicas
+  - OPS-5.3-revocation-across-replicas
+  - OPS-5.4-dpop-replay-across-replicas
+  - OPS-5.4-dpop-replay-survives-restart
+  - OPS-5.5-par-request-uri-single-use-across-replicas
+  - OPS-5.5-device-code-single-use-across-replicas

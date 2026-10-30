@@ -1,0 +1,56 @@
+id: admin-api
+title: Admin API (optional JSON admin surface)
+description: "Optional admin JSON surface for the v0.6 operations contract. RBAC, the fail-closed bearer allow-list, revocation on disable/delete/password-change, secret-returned-once, CSRF protection for session-authenticated mutations, session-cookie attributes, and the no-secret-exposure rule are MUST. The HTML console redirect and product-specific shapes (audit action names, capabilities and dashboard keys) are SHOULD. Clauses are defined by docs/operations-profile.md section 2."
+requirements:
+  - ADMIN-2.1-api-unauthenticated-401
+  - ADMIN-2.1-console-unauthenticated-redirect-login
+  - ADMIN-2.1-session-without-admin-role-403
+  - ADMIN-2.1-bearer-admin-client-allowlist-fail-closed
+  - ADMIN-2.1-bearer-without-admin-scope-403
+  - ADMIN-2.1-bearer-invalid-token-401
+  - ADMIN-2.1-admin-credentials-reach-handler
+  - ADMIN-2.1-session-cookie-attributes
+  - ADMIN-2.1-session-mutation-csrf-protected
+  - ADMIN-2.2-page-envelope
+  - ADMIN-2.2-limit-offset-selects-slice
+  - ADMIN-2.2-empty-collection-200
+  - ADMIN-2.2-search-filters-by-name
+  - ADMIN-2.2-unknown-id-404
+  - ADMIN-2.3-user-create-201-password-hashed
+  - ADMIN-2.3-user-create-missing-field-400
+  - ADMIN-2.3-user-create-duplicate-409
+  - ADMIN-2.3-user-update-partial-unknown-404
+  - ADMIN-2.3-user-update-unknown-role-400
+  - ADMIN-2.3-user-delete-revokes-tokens
+  - ADMIN-2.3-user-disable-revokes-tokens
+  - ADMIN-2.3-user-set-role-invalid-400
+  - ADMIN-2.3-user-password-reset-revokes-tokens
+  - ADMIN-2.3-user-password-weak-400
+  - ADMIN-2.4-client-create-secret-returned-once
+  - ADMIN-2.4-client-create-public-no-secret
+  - ADMIN-2.4-client-create-empty-name-400
+  - ADMIN-2.4-client-update-partial-unknown-404
+  - ADMIN-2.4-client-disable-revokes-tokens
+  - ADMIN-2.4-client-regenerate-secret-replaces
+  - ADMIN-2.4-client-regenerate-secret-public-400
+  - ADMIN-2.5-token-list-and-detail
+  - ADMIN-2.5-token-listing-no-secret-values
+  - ADMIN-2.5-token-revoke-single
+  - ADMIN-2.5-token-revoke-by-user-scoped
+  - ADMIN-2.5-token-revoke-by-client-scoped
+  - ADMIN-2.6-denylist-entry-shape
+  - ADMIN-2.6-denylist-kind-validated-400
+  - ADMIN-2.6-denylist-add-201-upsert
+  - ADMIN-2.6-denylist-remove-clears-entry
+  - ADMIN-2.6-denylist-ip-blocked-403
+  - ADMIN-2.6-denylist-ip-not-listed-passes
+  - ADMIN-2.6-denylist-expired-entry-not-blocking
+  - ADMIN-2.6-denylist-subject-lookup-reason
+  - ADMIN-2.6-denylist-empty-subject-no-match
+  - ADMIN-2.7-audit-actor-and-action-recorded
+  - ADMIN-2.7-audit-action-vocabulary
+  - ADMIN-2.7-audit-newest-first-paged
+  - ADMIN-2.7-audit-write-failure-signalled
+  - ADMIN-2.7-audit-write-failure-nonfatal
+  - ADMIN-2.8-capabilities-boolean-flags
+  - ADMIN-2.9-dashboard-totals
