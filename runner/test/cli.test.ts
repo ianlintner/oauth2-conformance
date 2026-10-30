@@ -94,3 +94,25 @@ test('CLI usage error exits 2', async () => {
   const result = await cli(['bogus']);
   assert.equal(result.code, 2);
 });
+
+test('CLI status --check passes on the checked-in docs/STATUS.md', async () => {
+  const result = await cli(['status', '--root', repoRoot, '--check']);
+  assert.equal(result.code, 0, result.stdout + result.stderr);
+  assert.match(result.stdout, /is up to date/);
+});
+
+test('CLI status --check exits 1 when STATUS.md is stale or missing, and status writes a file that then passes', async () => {
+  const out = path.join(await mkdtemp(path.join(tmpdir(), 'status-')), 'STATUS.md');
+  const missing = await cli(['status', '--root', repoRoot, '--out', out, '--check']);
+  assert.equal(missing.code, 1, missing.stdout + missing.stderr);
+  assert.match(missing.stderr, /is stale/);
+
+  await writeFile(out, '# hand-edited\n', 'utf8');
+  const stale = await cli(['status', '--root', repoRoot, '--out', out, '--check']);
+  assert.equal(stale.code, 1, stale.stdout + stale.stderr);
+
+  const written = await cli(['status', '--root', repoRoot, '--out', out]);
+  assert.equal(written.code, 0, written.stdout + written.stderr);
+  const fresh = await cli(['status', '--root', repoRoot, '--out', out, '--check']);
+  assert.equal(fresh.code, 0, fresh.stdout + fresh.stderr);
+});

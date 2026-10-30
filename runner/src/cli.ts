@@ -5,11 +5,12 @@
  *   run       execute scenarios against a base URL, write a JSON report
  *   validate  load every data file, proving schemas and cross-references agree
  *   coverage  print the requirement/scenario coverage matrix
+ *   status    generate (or --check) docs/STATUS.md from the checked-out contract
  *
  * Ported from typescript-oauth2-server `src/conformance/cli.ts` (@d1999bf).
  */
 
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { loadProfiles, loadRequirements, loadScenarios } from './loader.js';
@@ -19,6 +20,7 @@ import { dpopProof } from './dpop.js';
 import { deviceVerify, loginAndAuthorize, logout } from './helpers.js';
 import { validateRepository } from './schema-validate.js';
 import { parseContractRef } from './manifest.js';
+import { computeContractStatus, computePortStatus, parsePortManifest, renderStatus, type PortManifest, type PortReport } from './status-report.js';
 
 interface ParsedArgs {
   command: string;
@@ -64,6 +66,7 @@ export function usage(): string {
     '  validate  --scenarios DIR [--requirements DIR] [--profiles DIR]',
     '  validate-schemas  [--root DIR]   JSON Schema 2020-12 check of every data file',
     '  coverage  --scenarios DIR --requirements DIR [--profiles DIR] [--profile ID] [--min PERCENT] [--json]',
+    '  status    [--root DIR] [--ports DIR] [--reports DIR] [--out FILE] [--check]   write (or --check) docs/STATUS.md',
     '',
     'Exit codes: 0 success, 1 conformance/validation failure, 2 usage error.',
   ].join('\n');
@@ -122,6 +125,65 @@ async function commandCoverage(flags: Record<string, string | boolean>): Promise
   return 0;
 }
 
+async function filesIn(dir: string, pattern: RegExp): Promise<string[]> {
+  try {
+    return (await readdir(dir)).filter((name) => pattern.test(name)).sort().map((name) => path.join(dir, name));
+  } catch (cause) {
+    if ((cause as NodeJS.ErrnoException).code === 'ENOENT') return [];
+    throw cause;
+  }
+}
+
+/** Render the data-derived status document; with --check, fail when the checked-in copy differs. */
+async function commandStatus(flags: Record<string, string | boolean>): Promise<number> {
+  const root = rootFlag(flags);
+  const scenarios = await loadScenarios(path.join(root, 'scenarios'));
+  const requirements = await loadRequirements(path.join(root, 'requirements'));
+  const profiles = await loadProfiles(path.join(root, 'profiles'));
+  const contract = computeContractStatus(scenarios, requirements, profiles);
+
+  const portsDir = path.resolve(stringFlag(flags, 'ports', path.join(root, 'docs', 'ports')));
+  const manifests: PortManifest[] = [];
+  for (const file of await filesIn(portsDir, /\.ya?ml$/)) {
+    try {
+      manifests.push(parsePortManifest(await readFile(file, 'utf8')));
+    } catch (cause) {
+      throw new Error(`invalid port manifest ${file}: ${cause instanceof Error ? cause.message : String(cause)}`, { cause });
+    }
+  }
+  const reports: PortReport[] = [];
+  if (flags.reports !== undefined) {
+    for (const file of await filesIn(path.resolve(stringFlag(flags, 'reports')), /\.json$/)) {
+      reports.push(await readReport(file));
+    }
+  }
+  manifests.sort((a, b) => a.implementation.localeCompare(b.implementation));
+  const markdown = renderStatus(
+    contract,
+    manifests.map((manifest) => computePortStatus(manifest, reports, requirements)),
+  );
+
+  const out = path.resolve(stringFlag(flags, 'out', path.join(root, 'docs', 'STATUS.md')));
+  if (flags.check === true) {
+    let current = '';
+    try {
+      current = await readFile(out, 'utf8');
+    } catch (cause) {
+      if ((cause as NodeJS.ErrnoException).code !== 'ENOENT') throw cause;
+    }
+    if (current !== markdown) {
+      console.error(`status: ${path.relative(process.cwd(), out)} is stale. Regenerate it with \`pnpm conformance status\` (from runner/) and commit the result.`);
+      return 1;
+    }
+    console.log(`status: ${path.relative(process.cwd(), out)} is up to date`);
+    return 0;
+  }
+  await mkdir(path.dirname(out), { recursive: true });
+  await writeFile(out, markdown, 'utf8');
+  console.log(`status: wrote ${path.relative(process.cwd(), out)}`);
+  return 0;
+}
+
 export async function commandRun(flags: Record<string, string | boolean>): Promise<number> {
   const baseUrl = stringFlag(flags, 'base-url');
   const scenarios = await loadScenarios(rootFlag(flags, 'scenarios'));
@@ -160,6 +222,8 @@ export async function main(argv: string[]): Promise<number> {
       return commandValidateSchemas(flags);
     case 'coverage':
       return commandCoverage(flags);
+    case 'status':
+      return commandStatus(flags);
     case 'help':
     case '--help':
     case '-h':

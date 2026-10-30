@@ -36,25 +36,20 @@ Ordering: contract milestones are sequential. Ports run in parallel with each ot
 
 ## Status
 
-| Implementation | v0.1 | v0.2 | v0.3 | v0.4 | v0.5 | v0.6 | v0.7 |
-|---|---|---|---|---|---|---|---|
-| Rust (reference) | dev | — | — | dev | dev | — | — |
-| Python | — | — | — | — | — | — | — |
-| TypeScript | — | — | — | — | — | — | — |
-| Go | — | — | — | — | — | — | — |
+Status is generated, not hand-edited: see [`STATUS.md`](STATUS.md) for per-profile scenario counts (stable / reference-deviation / draft), MUST / MUST NOT requirement coverage, and the per-implementation x profile claim matrix. CI regenerates it (`pnpm conformance status --root .. --check`) and fails when the checked-in copy is stale.
 
-`—` not yet claimed · `pass` claimed and passing in CI on main · `dev` passing with recorded deviations.
+All four ports (Rust reference, Python, TypeScript, Go) now claim `core`, `token-lifecycle`, `oidc-basic`, `extended-grants` and `sender-constrained` in their `conformance.yaml`, pinned to contract commit `985fef7`, and run the claimed profiles in their own CI. Port claims in `STATUS.md` are read from `docs/ports/*.yaml`, snapshots of each port's `conformance.yaml` on `main` (refresh them when a port bumps its pin). `status --reports DIR` can ingest runner JSON reports for pass/fail/deferred counts, but CI does not yet collect reports from the ports, so those counts stay blank until it does (follow-up).
 
-Rust v0.1 is `dev`: measured manually against a freshly seeded SUT (core run: 33 pass, 0 fail, 8 reference deviations and 2 drafts deferred; see `docs/core-coverage.md`). CI does not yet start a SUT, so it is not `pass`. Python v0.1 is `—`: its repository has no conformance-mode SUT interface yet.
+The milestone notes below describe status **as of each contract milestone**, not current port readiness. For current scenario counts and port claims, use [`STATUS.md`](STATUS.md); claims alone do not establish passing results.
 
 Contract v0.2 (`token-lifecycle`) is delivered: 31 scenarios (25 stable, 6 `reference-deviation`), 12 invariants, and the part-3/3 runner extensions (JWT header/payload captures, `$contains`/`$nonempty`/`$absent` matchers, expect-interpolation) are on `main` (see `docs/token-lifecycle-coverage.md`). Ports may now pin the contract commit and begin the v0.2 milestone; the two owner-gated gaps (`RFC7662-4-expiry-checked`, `RFC9700-2.2.2-public-refresh-rotated-or-bound`) remain documented deferrals rather than blockable failures.
 
-Contract v0.3 (`oidc-basic`) part 3/3 runner extensions delivered: numeric matchers (`$gt`, `$lt`), array membership (`$includes`), `assert` step type with JWT payload `source`, session-mode control on `login-and-authorize` (`none`/`create`/`reuse`), `logout` helper, JWT array/object capture support. Scenarios updated with executable assertions where possible. 13 scenarios (5 stable, 8 draft), 19 invariants, 19 requirements. Remaining draft-to-stable blockers: cross-claim comparison (`iat` < `exp`), signed-token fixture for logout hint, seed with deterministic user claims, and SUT conformance.yaml claiming `oidc-basic`. Rust and Python SUTs do not yet claim `oidc-basic`; full validation requires SUT-side OIDC endpoints.
+Contract v0.3 (`oidc-basic`) part 3/3 runner extensions delivered: numeric matchers (`$gt`, `$lt`), array membership (`$includes`), `assert` step type with JWT payload `source`, session-mode control on `login-and-authorize` (`none`/`create`/`reuse`), `logout` helper, JWT array/object capture support. Scenarios updated with executable assertions where possible. At that milestone: 13 scenarios (5 stable, 8 draft), 19 invariants, 19 requirements. Then-remaining draft-to-stable blockers included cross-claim comparison (`iat` < `exp`), a signed-token fixture for logout hint, and deterministic user-claim seeding. At the time, Rust and Python did not claim `oidc-basic`; both now do (see [`STATUS.md`](STATUS.md) for current claims).
 
 Contract v0.4 (`extended-grants`) part 2/3 delivered: 51 scenarios (all draft, none yet validated against a SUT), 51 invariants, coverage report (docs/extended-grants-coverage.md) and the part 3/3 runner/SUT gap list (docs/extended-grants-gaps.md). Scoped requirements amendments add RFC 8628 slow_down on too-fast polling and RFC 9126 expired request_uri rejection.
 
-Contract v0.4 (`extended-grants`) part 3/3: `device-verify` helper and seeded `client-dev` delivered. Rust measured manually: device 7 stable pass, 1 reference-deviation; the other 43 scenarios stay draft pending clock control, duplicate-key transport and JWT signing helpers (see `docs/extended-grants-gaps.md`). Rust is `dev`, not `pass`, until CI claims the profile.
+Contract v0.4 (`extended-grants`) part 3/3: `device-verify` helper and seeded `client-dev` delivered. At that milestone Rust measured manually: device 7 stable pass, 1 reference-deviation; the other 43 scenarios remained draft pending clock control, duplicate-key transport and JWT signing helpers (see `docs/extended-grants-gaps.md`). Rust had not yet claimed the profile in CI; it now does (current claims: [`STATUS.md`](STATUS.md)).
 
 Contract v0.5 (`sender-constrained`) part 2/3 delivered: 35 draft scenarios (one per catalogued requirement), 35 `INV-SC-*` invariants, and `docs/sender-constrained-coverage.md` with the runner/SUT gap list (DPoP proof signing, nonce mode, clock control, mTLS transport, step repetition) for part 3/3.
 
-Contract v0.5 (`sender-constrained`) part 3/3: `dpop-proof` runner helper delivered (no SUT interface change). Rust measured manually: 7 DPoP scenarios `stable` and passing; 28 remain draft (see `docs/sender-constrained-coverage.md`). Rust is `dev`, not `pass`, until CI claims the profile. Python v0.5 is `—`: no conformance-mode SUT interface.
+Contract v0.5 (`sender-constrained`) part 3/3: `dpop-proof` runner helper delivered (no SUT interface change). At that milestone Rust measured manually: 7 DPoP scenarios `stable` and passing; 28 remained draft (see `docs/sender-constrained-coverage.md`). Rust had not yet claimed the profile in CI, and Python had no conformance-mode SUT interface. Both now claim `sender-constrained` (see [`STATUS.md`](STATUS.md) for current claims; the dashboard does not yet contain CI run results).
