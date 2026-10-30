@@ -1,8 +1,18 @@
 # Operations profile surface (contract v0.6)
 
-Normative surface definition for the `operations` profile. This document is the
-clause text the requirements in `requirements/operations-*.yaml` cite (via the
-`clause` and `link` fields) and that `profiles/operations.yaml` lists.
+Normative surface definition for two profiles:
+
+- `operations` (sections 3 to 5): liveness, readiness and metrics, social login
+  security, and persistence across replicas and restarts. Requirements are in
+  `requirements/operations-runtime.yaml` and `requirements/operations-persistence.yaml`.
+- `admin-api` (section 2): the optional admin JSON surface. A server may claim
+  `operations` without exposing it. Requirements are in `requirements/admin-api.yaml`.
+
+This document is the clause text the requirements cite (via the `clause` and
+`link` fields) and that `profiles/operations.yaml` and `profiles/admin-api.yaml`
+list. Within `admin-api`, operational and security properties are MUST; shapes
+that only mirror the reference product (exact capability and dashboard keys,
+audit action names, the console redirect) are SHOULD.
 
 ## 1. Scope and provenance
 
@@ -35,14 +45,17 @@ user agent follows. Error bodies are JSON objects with a stable, machine-readabl
 
 ## 2. Admin API
 
-The admin console is an HTML surface under `/admin/...`; the JSON API is under
-`/admin/api/...`. Both sit behind the same guard.
+This section is the optional `admin-api` profile. The admin console is an HTML
+surface under `/admin/...`; the JSON API is under `/admin/api/...`. Both sit
+behind the same guard.
 
 ### 2.1 Authentication and RBAC
 
-- A request that presents neither an admin session nor an admin bearer token is
-  not served: the server answers `302` redirecting to the login page rather than
-  returning admin content.
+- A JSON API request (under `/admin/api`) that presents neither an admin session
+  nor an admin bearer token is not served: the server answers `401` with a
+  `WWW-Authenticate: Bearer` challenge (RFC 6750 section 3). It does not redirect.
+- An unauthenticated request to the HTML console SHOULD be answered with a `302`
+  redirect to the login page rather than returning admin content.
 - A request that presents an authenticated session without the admin role is
   rejected with `403` and `{"error":"insufficient_permissions"}`.
 - A bearer token is admin only when it both carries the `admin` scope and was
@@ -54,6 +67,14 @@ The admin console is an HTML surface under `/admin/...`; the JSON API is under
   `401` and `{"error":"invalid_token"}`.
 - A request that presents an admin session, or an allow-listed bearer token
   carrying the `admin` scope, reaches the handler.
+- The admin session cookie is set with `Secure`, `HttpOnly` and `SameSite=Lax`
+  or `SameSite=Strict`. `Secure` may be omitted only for a loopback HTTP
+  deployment used in local conformance runs.
+- A state-changing request (`POST`, `PUT`, `PATCH`, `DELETE`) authenticated by an
+  admin session is rejected with `403` unless it carries a valid CSRF defence:
+  an anti-CSRF token, or an `Origin` or `Fetch-Metadata` check proving a
+  same-origin request. The error code is implementation-defined. Requests
+  authenticated by a bearer token are not ambient credentials and are exempt.
 
 ### 2.2 Paging and listing
 
@@ -78,8 +99,9 @@ The admin console is an HTML surface under `/admin/...`; the JSON API is under
   `{"error":"already_exists"}`.
 - `PUT /users/{id}` applies only the supplied fields and rejects an unknown id
   with `404`.
-- An unrecognised `role` value in an update is ignored and the stored role is
-  unchanged.
+- An unrecognised `role` value in an update is rejected with `400`
+  `{"error":"invalid_request"}` and the stored role is unchanged. This matches
+  `POST /users/{id}/role`; an unknown role is never silently ignored.
 - `DELETE /users/{id}` removes the user and revokes that user's tokens.
 - `POST /users/{id}/enabled` toggles the enabled flag; disabling revokes that
   user's tokens.
@@ -110,6 +132,9 @@ The admin console is an HTML surface under `/admin/...`; the JSON API is under
 
 - `GET` lists tokens with the section 2.2 envelope; `GET /tokens/{id}` returns
   one token or `404`.
+- Token list and detail responses MUST NOT expose raw access or refresh token
+  values, client secrets or other credentials. Tokens are identified by an
+  opaque id and metadata only.
 - `POST /tokens/{id}/revoke` revokes one token.
 - `POST /tokens/revoke-by-user` and `POST /tokens/revoke-by-client` revoke every
   token belonging to the named user or client, and affect no other client's or
@@ -139,25 +164,32 @@ The admin console is an HTML surface under `/admin/...`; the JSON API is under
 `/admin/api/audit`
 
 - Admin mutations record the acting admin identity and a stable machine-readable
-  action name, for example `user.create`, `user.update`, `user.delete`,
-  `user.enable`, `user.disable`, `user.set_role`, `user.reset_password`,
-  `client.create`, `client.update`, `client.enable`, `client.disable`,
-  `client.regenerate_secret`, `denylist.add` and `denylist.remove`.
+  action name.
+- Action names SHOULD follow the reference vocabulary: `user.create`,
+  `user.update`, `user.delete`, `user.enable`, `user.disable`, `user.set_role`,
+  `user.reset_password`, `client.create`, `client.update`, `client.enable`,
+  `client.disable`, `client.regenerate_secret`, `denylist.add` and
+  `denylist.remove`. A port may use other stable names.
 - The audit log is listed newest-first with the section 2.2 envelope.
-- A failure to write an audit entry is logged and does not fail or roll back the
-  admin action that triggered it.
+- A failure to write an audit entry MUST emit an error-level log record or
+  increment an error metric, so a lost audit entry is observable.
+- A failure to write an audit entry SHOULD NOT fail or roll back the admin
+  action that triggered it (fail-open). This is a deliberate availability
+  trade-off: a deployment that needs fail-closed auditing may reject the action
+  instead, provided the failure is still signalled.
 
 ### 2.8 Capabilities
 
-`/admin/api/capabilities` reports which optional admin features the configured
-backend supports, as booleans: `events`, `device_flow`, `key_rotation`,
-`user_crud`, `client_crud`, `denylist`, `audit_log` and `bulk_revoke`.
+`/admin/api/capabilities` SHOULD report which optional admin features the
+configured backend supports, as booleans: `events`, `device_flow`,
+`key_rotation`, `user_crud`, `client_crud`, `denylist`, `audit_log` and
+`bulk_revoke`. The key set mirrors the reference product and is not a MUST.
 
 ### 2.9 Dashboard
 
-`/admin/api/dashboard` returns operator totals, including `total_clients`,
+`/admin/api/dashboard` SHOULD return operator totals, including `total_clients`,
 `total_users`, `active_tokens` and `pending_device_codes`. The exact key set is
-not fixed; the listed totals must be present.
+not fixed.
 
 ## 3. Operational endpoints
 
@@ -191,8 +223,8 @@ version=0.0.4`).
 
 ### 3.4 Event ingest
 
-Support for event ingest is optional and is reported by
-`/admin/api/capabilities` (section 2.8). When event ingest is enabled, the server
+Support for event ingest is optional and, where the `admin-api` profile is
+offered, is reported by `/admin/api/capabilities` (section 2.8). When event ingest is enabled, the server
 exposes a health endpoint for its ingest path reporting whether the path is
 available.
 
@@ -270,3 +302,10 @@ cache is not reset by a restart or instance replacement.
 
 Single-use artifacts the server issues - pushed authorization request URIs and
 device authorization codes - are consumed exactly once across replicas.
+
+## 6. Differences from current ports
+
+The normative paths here are `/health` for liveness and `/ready` for readiness.
+Some current ports differ (for example the Go port serves readiness on `/health`
+and liveness on `/healthz`). Port cards should plan the rename; the difference
+is a known coverage gap, not a reason to weaken the clause.
