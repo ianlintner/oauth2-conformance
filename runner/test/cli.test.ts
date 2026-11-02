@@ -106,6 +106,7 @@ test('CLI status --check exits 1 when STATUS.md is stale or missing, and status 
   const missing = await cli(['status', '--root', repoRoot, '--out', out, '--check']);
   assert.equal(missing.code, 1, missing.stdout + missing.stderr);
   assert.match(missing.stderr, /is stale/);
+  assert.match(missing.stderr, /pnpm conformance status --root \.\./);
 
   await writeFile(out, '# hand-edited\n', 'utf8');
   const stale = await cli(['status', '--root', repoRoot, '--out', out, '--check']);
@@ -115,4 +116,10 @@ test('CLI status --check exits 1 when STATUS.md is stale or missing, and status 
   assert.equal(written.code, 0, written.stdout + written.stderr);
   const fresh = await cli(['status', '--root', repoRoot, '--out', out, '--check']);
   assert.equal(fresh.code, 0, fresh.stdout + fresh.stderr);
+});
+
+test('the stale-file hint names a working recovery command when run from runner/', async () => {
+  const result = await cli(['status', '--root', '..', '--check']);
+  assert.equal(result.code, 0, result.stdout + result.stderr);
+  assert.match(result.stdout, /is up to date/);
 });

@@ -165,6 +165,23 @@ test('computePortStatus ingests reports: stable pass/fail, deferred, later repor
   assert.deepEqual(port.cells['alpha']?.results, { passed: 4, failed: 0, deferred: 2 });
 });
 
+test('computePortStatus ignores reports pinned to a different contract revision, even for the same scenario id', () => {
+  const pinned = report('alpha', [{ id: 'alpha.s1', status: 'stable', outcome: 'fail', profile: 'alpha' }]);
+  const otherContract: PortReport = {
+    contract: 'c'.repeat(40),
+    implementation: 'alpha-server',
+    profile: 'alpha',
+    results: [
+      { id: 'alpha.s1', status: 'stable', outcome: 'pass', profile: 'alpha' },
+      { id: 'alpha.s2', status: 'stable', outcome: 'pass', profile: 'alpha' },
+    ],
+  };
+  const port = computePortStatus(parsePortManifest(MANIFEST), [pinned, otherContract], fixtureRequirements);
+  // The mismatched-SHA pass for alpha.s1 must not overwrite the pinned-contract failure,
+  // and alpha.s2 (only present in the mismatched report) must not be counted at all.
+  assert.deepEqual(port.cells['alpha']?.results, { passed: 0, failed: 1, deferred: 0 });
+});
+
 test('computePortStatus counts non-stable pass and fail results instead of dropping them', () => {
   const draftResults = report('alpha', [
     { id: 'alpha.d1', status: 'draft', outcome: 'fail', profile: 'alpha' },

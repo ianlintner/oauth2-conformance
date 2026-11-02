@@ -172,7 +172,7 @@ async function commandStatus(flags: Record<string, string | boolean>): Promise<n
       if ((cause as NodeJS.ErrnoException).code !== 'ENOENT') throw cause;
     }
     if (current !== markdown) {
-      console.error(`status: ${path.relative(process.cwd(), out)} is stale. Regenerate it with \`pnpm conformance status\` (from runner/) and commit the result.`);
+      console.error(`status: ${path.relative(process.cwd(), out)} is stale. Regenerate it with \`pnpm conformance status --root ..\` (from runner/) and commit the result.`);
       return 1;
     }
     console.log(`status: ${path.relative(process.cwd(), out)} is up to date`);

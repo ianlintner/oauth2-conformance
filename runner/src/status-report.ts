@@ -219,6 +219,10 @@ function shortSha(sha: string): string {
  * claim/results matrix. A deviation is attributed to the profile of the
  * requirement it names (not to a `profile` key many manifests don't carry), so
  * declared deviations surface under the right profile column.
+ *
+ * Results are only merged from reports whose `contract` matches the
+ * manifest's pinned `contract`; reports for any other contract revision are
+ * ignored entirely.
  */
 export function computePortStatus(manifest: PortManifest, reports: PortReport[], requirements: Requirement[]): PortStatus {
   const claimSet = new Set(manifest.profiles);
@@ -240,6 +244,10 @@ export function computePortStatus(manifest: PortManifest, reports: PortReport[],
   const resultsByScenario = new Map<string, { status: ScenarioStatus; outcome: PortReportResult['outcome']; profile: string }>();
   for (const report of reports) {
     if (report.implementation !== manifest.implementation) continue;
+    // A report from a contract revision other than the one this manifest pins must be
+    // skipped entirely: merging it could overwrite a pinned-contract failure with a pass
+    // while the rendered row still displays the pinned contract.
+    if (report.contract !== manifest.contract) continue;
     for (const result of report.results) {
       // Later reports win; duplicate scenario ids collapse to the last one.
       resultsByScenario.set(result.id, { status: result.status, outcome: result.outcome, profile: result.profile });
