@@ -1,0 +1,16 @@
+# snapshot: ianlintner/rust-oauth2-server@2653bedc3555de8c701b7236fff4d65a7f690f6e
+# Conformance claim for this implementation, read by the language-neutral
+# `oauth2-conformance` runner contract
+# (https://github.com/ianlintner/oauth2-conformance).
+#
+# Pinned contract commit: 985fef7aca4835a7ab4fb92c94e8f979f7308189
+# (also pinned in the `conformance` job of .github/workflows/ci.yml; the
+# manifest schema has no field for a commit, so the two are kept in sync by
+# hand).
+#
+# Every profile listed under `profiles` MUST pass in the `conformance` CI job,
+# which starts the server in conformance mode and runs the contract runner
+# against it. A failing scenario in a claimed profile fails CI.
+implementation: rust-oauth2-server
+contract: 985fef7aca4835a7ab4fb92c94e8f979f7308189
+profiles: [core, token-lifecycle, oidc-basic, extended-grants, sender-constrained]

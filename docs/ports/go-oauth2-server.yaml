@@ -1,0 +1,32 @@
+# snapshot: ianlintner/go-oauth2-server@7ce54b9c48893e2da3edbe1c94462e08fce5cf36
+# Conformance claim for this implementation, read by the language-neutral
+# `oauth2-conformance` runner contract
+# (https://github.com/ianlintner/oauth2-conformance).
+#
+# Pinned contract commit: 985fef7aca4835a7ab4fb92c94e8f979f7308189
+# (also pinned in conformance-contract.yaml; the manifest schema's `contract`
+# field is a full 40-char SHA before a tag is cut, per ROADMAP.md flow step 2).
+#
+# Every profile listed under `profiles` is exercised by
+# `scripts/conformance-run.sh`. A stable scenario that fails in a claimed
+# profile fails that run.
+#
+# Extended grants (v0.4): only the RFC 8628 device-grant scenarios are
+# `stable` in the contract today; PAR (RFC 9126) and registration (RFC 7591/2)
+# scenarios are still `draft` because the contract runner cannot yet sign
+# client assertions/JWKs or send duplicate form keys. This implementation
+# ships all three, but `extended-grants` here claims device grant only —
+# do not read it as PAR/registration conformance. See docs/extended-grants.md.
+#
+# NOTE (token-lifecycle): all stable token-lifecycle scenarios now pass. The
+# two reference-deviation scenarios (revocation.cross-client and
+# revocation.refresh-cascades-to-access) are SHOULD-level deviations that the
+# runner defers rather than fails; this implementation intentionally matches the
+# reference SUT's behaviour for both.
+implementation: go-oauth2-server
+contract: 985fef7aca4835a7ab4fb92c94e8f979f7308189
+# sender-constrained (v0.5): see docs/sender-constrained.md. Only the 7
+# stable DPoP scenarios of the contract are exercised and pass; the other 28
+# are draft, so this claim does NOT cover nonces, mTLS, ath/key-binding
+# resource scenarios or rate limiting.
+profiles: [core, token-lifecycle, oidc-basic, extended-grants, sender-constrained]

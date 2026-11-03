@@ -1,0 +1,17 @@
+# snapshot: ianlintner/typescript-oauth2-server@b0e8633c2b7f4e6d377466f958dfd860d2e4a676
+# This repository's implementation manifest for the shared oauth2-conformance
+# contract (github.com/ianlintner/oauth2-conformance).
+#
+# `contract` pins the exact contract revision CI checks out and runs against.
+# Before a tagged release exists this is a full 40-hex commit SHA on the
+# contract's main branch (ROADMAP.md flow step 2). Bumping it is a reviewed
+# change, not a drive-by edit. `profiles` lists the profiles this server
+# truthfully claims; `deviations` enumerates the known, declared protocol gaps
+# the contract runner still reports as stable failures so CI can enforce a
+# ratchet: an undeclared failure is a regression, and a deviation that stops
+# failing must be removed.
+implementation: ts-oauth2-server
+contract: 985fef7aca4835a7ab4fb92c94e8f979f7308189
+profiles: [core, token-lifecycle, oidc-basic, extended-grants, sender-constrained]
+endpoint: http://localhost:8080
+deviations: []

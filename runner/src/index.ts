@@ -13,3 +13,4 @@ export * from './coverage.js';
 export * from './dpop.js';
 export * from './helpers.js';
 export * from './schema-validate.js';
+export * from './status-report.js';
