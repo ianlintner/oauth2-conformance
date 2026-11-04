@@ -143,9 +143,13 @@ Measure against a fresh SUT per run: a long-lived instance degrades across
 repeated runs (SQLite in-memory pool "no such table", login rate limit).
 
 Python port (python-oauth2-server main 7ee94ed, conformance mode):
-executed=43 passed=40 failed=2 deferred=1. Of the eight, six pass; the two
-failures are `core.authorize.response-type-missing` and
-`core.token.dual-auth-rejected`, which therefore stay `reference-deviation`.
+raw outcomes (all eight scenarios treated as stable) executed=43 passed=40
+failed=2 deferred=1. Of the eight, six pass; the two failures are
+`core.authorize.response-type-missing` and `core.token.dual-auth-rejected`,
+which therefore stay `reference-deviation`. The runner converts failures of
+non-stable scenarios to `deferred` (`runner/src/runner.ts`), so the final-status
+run with this PR's statuses reports executed=43 passed=40 failed=0 deferred=3
+(the two retained reference-deviations plus one draft).
 
 Stable core coverage is 43/55 = 78.2%. CI gates `--min 78.2` (the recorded
 floor, `CORE_STABLE_FLOOR = 43`); `runner/test/coverage-gate.test.ts` proves a
