@@ -9,7 +9,9 @@ note: |
   permitted client_credentials, so the single-method rule is what is tested
   (client-a is not, and would answer unauthorized_client first). RFC 6749
   section 5.2 lists multiple credentials / more than one authentication
-  mechanism under invalid_request (400).
+  mechanism under invalid_request (400). Rust passes this scenario on current
+  main; the Python port accepts credentials from both the Basic header and the
+  body and returns 200, so the scenario is not promoted to stable.
 steps:
   - id: token
     request:

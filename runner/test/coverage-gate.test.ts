@@ -47,7 +47,7 @@ const native = (id: string) => {
 
 // The floor must match docs/core-coverage.md. Bump both together when part 3/3
 // promotes draft scenarios to stable; never lower it to green a bad PR.
-const CORE_STABLE_FLOOR = 36;
+const CORE_STABLE_FLOOR = 43;
 
 test('core profile covers its documented stable floor and has no dangling/unknown references', () => {
   assert.equal(report.unknownProfiles.length, 0, `unknown scenario profiles: ${report.unknownProfiles.join(', ')}`);
