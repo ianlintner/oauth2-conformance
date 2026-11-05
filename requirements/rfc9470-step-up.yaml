@@ -3,11 +3,11 @@
 # Requirements only.
 - id: RFC9470-4-authz-acr-values
   spec: RFC 9470
-  clause: "4"
-  level: MUST
+  clause: "5"
+  level: SHOULD
   profile: resource
-  summary: "The authorization endpoint honours acr_values and either satisfies one value or fails the request; it does not silently ignore it."
-  link: https://www.rfc-editor.org/rfc/rfc9470#section-4
+  summary: "The authorization endpoint satisfies a requested acr value or fails the request with unmet_authentication_requirements; it does not silently ignore it."
+  link: https://www.rfc-editor.org/rfc/rfc9470#section-5
 - id: RFC9470-4-authz-max-age
   spec: RFC 9470
   clause: "4"
@@ -20,14 +20,14 @@
   clause: "6.1"
   level: MUST
   profile: resource
-  summary: "A JWT access token issued after authentication carries the acr and auth_time claims of the authentication event."
+  summary: "A JWT access token issued for a request that used acr_values or max_age carries the acr and auth_time claims of the authentication event."
   link: https://www.rfc-editor.org/rfc/rfc9470#section-6.1
 - id: RFC9470-6.2-introspection-acr-auth-time
   spec: RFC 9470
   clause: "6.2"
   level: MUST
   profile: resource
-  summary: "Introspection of an active token returns acr and auth_time matching the authentication event."
+  summary: "Introspection of an active token issued for a request that used acr_values or max_age returns acr and auth_time matching the authentication event."
   link: https://www.rfc-editor.org/rfc/rfc9470#section-6.2
 - id: RFC9470-3-insufficient-user-authentication-challenge
   spec: RFC 9470
@@ -38,11 +38,11 @@
   link: https://www.rfc-editor.org/rfc/rfc9470#section-3
 - id: RFC9470-5-acr-values-supported-metadata
   spec: RFC 9470
-  clause: "5"
-  level: SHOULD
+  clause: "7"
+  level: MAY
   profile: resource
-  summary: "AS metadata publishes acr_values_supported listing the context classes the server can satisfy."
-  link: https://www.rfc-editor.org/rfc/rfc9470#section-5
+  summary: "AS metadata may advertise acr_values_supported listing the context classes the server can satisfy."
+  link: https://www.rfc-editor.org/rfc/rfc9470#section-7
 - id: RFC9470-4-stepup-new-token-not-reused
   spec: RFC 9470
   clause: "4"

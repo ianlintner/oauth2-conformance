@@ -93,7 +93,7 @@ test('every token-lifecycle MUST and MUST NOT requirement is covered, provisiona
   const provisional = new Set(tokenLifecycleReport.provisional);
   for (const req of requirements.filter((r) => r.profile === 'token-lifecycle')) {
     if (req.level !== 'MUST' && req.level !== 'MUST NOT') continue;
-    const hasAny = CATALOGUED_NO_SCENARIO.test(req.id) || !uncovered.has(req.id) || provisional.has(req.id) || documented.has(req.id);
+    const hasAny = !uncovered.has(req.id) || provisional.has(req.id) || documented.has(req.id);
     assert.ok(hasAny, `token-lifecycle ${req.level} requirement ${req.id} has no scenario and no documented reason`);
   }
 });
@@ -105,7 +105,7 @@ test('token-lifecycle profile has no dangling/unknown references', () => {
 
 // Contract v0.7 gap catalog (docs/capability-inventory.md): requirements added
 // without scenarios. Scenarios land in later cards, then this pattern shrinks.
-const CATALOGUED_NO_SCENARIO = /^(RPINIT-2-(?!logout-id-token-hint-aud)|BCL-|FCL-|RFC8725-|RFC7517-|RFC9207-3-|RFC9700-4\.4)/;
+const CATALOGUED_NO_SCENARIO = /^(RPINIT-2-(?!logout-id-token-hint-aud)|BCL-|FCL-|RFC8725-|RFC7517-(?:4\.5-(?:kid-unique-across-rotation|new-tokens-use-new-kid|token-header-kid-present)|5-(?:old-key-published-during-grace|old-key-retired-after-grace|jwks-no-private-material|jwks-cache-headers))|RFC9207-3-|RFC9700-4\.4)/;
 
 test('every oidc-basic MUST-NOT and MUST requirement is covered, provisional, or documented', () => {
   // Every MUST / MUST-NOT requirement in the oidc-basic profile has a

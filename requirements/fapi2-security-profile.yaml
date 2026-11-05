@@ -40,16 +40,16 @@
 - id: FAPI2-5.3.2.1-no-refresh-rotation-default
   spec: FAPI 2.0 Security Profile
   clause: "5.3.2.1"
-  level: SHOULD NOT
+  level: MUST NOT
   profile: fapi2
-  summary: "Refresh tokens are not rotated except in extraordinary circumstances."
+  summary: "Refresh tokens are not rotated except in extraordinary circumstances; where rotation is used for such a circumstance it is time-limited, allowing the previous refresh token to be retried for a limited period."
   link: https://openid.net/specs/fapi-security-profile-2_0-final.html#section-5.3.2.1
 - id: FAPI2-5.3.2.1-future-iat-window-10s
   spec: FAPI 2.0 Security Profile
   clause: "5.3.2.1"
   level: MUST
   profile: fapi2
-  summary: "JWTs with iat or nbf up to 10 seconds in the future are accepted and later ones rejected."
+  summary: "JWTs with iat or nbf up to 10 seconds in the future are accepted and those more than 60 seconds in the future are rejected; the interval between 10 and 60 seconds is server policy and is not asserted."
   link: https://openid.net/specs/fapi-security-profile-2_0-final.html#section-5.3.2.1
 - id: FAPI2-5.3.2.2-par-required
   spec: FAPI 2.0 Security Profile

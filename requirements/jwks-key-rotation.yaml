@@ -1,33 +1,37 @@
 # JWKS key rotation: RFC 7517 kid semantics and RFC 8414 jwks_uri. Rust
 # reference rotates keys via POST /admin/api/keys/rotate with a grace period
 # (admin_keys.rs). Requirements only; hardening profile.
+# RFC 7517 makes kid optional (4.5) and defines only the JWK Set format (5);
+# the rules below are LOCAL HARDENING POLICY, not RFC 7517 MUSTs. The
+# RFC-level kid and overlap statements are RFC7517-4.5-jwks-distinct-kid
+# (SHOULD) and RFC7517-4.5-jwks-rollover-overlap (MAY) in rfc9068.yaml.
 - id: RFC7517-4.5-kid-unique-across-rotation
   spec: RFC 7517
   clause: "4.5"
-  level: MUST
+  level: SHOULD
   profile: hardening
-  summary: "Each signing key has a kid unique within the JWKS and a kid is never reused for a different key after rotation."
+  summary: "Local hardening policy: a kid is never reused for a different key after rotation (distinct kids in one JWKS are RFC7517-4.5-jwks-distinct-kid)."
   link: https://www.rfc-editor.org/rfc/rfc7517#section-4.5
 - id: RFC7517-4.5-new-tokens-use-new-kid
   spec: RFC 7517
   clause: "4.5"
-  level: MUST
+  level: SHOULD
   profile: hardening
-  summary: "After rotation, newly issued tokens carry the header kid of the new signing key."
+  summary: "Local hardening policy: after rotation, newly issued tokens carry the header kid of the new signing key."
   link: https://www.rfc-editor.org/rfc/rfc7517#section-4.5
 - id: RFC7517-5-old-key-published-during-grace
   spec: RFC 7517
   clause: "5"
-  level: MUST
+  level: SHOULD
   profile: hardening
-  summary: "The previous public key stays in the JWKS for a grace period so tokens issued before rotation still verify."
+  summary: "Local hardening policy: the previous public key stays in the JWKS for a grace period so tokens issued before rotation still verify (overlap itself is RFC7517-4.5-jwks-rollover-overlap, MAY)."
   link: https://www.rfc-editor.org/rfc/rfc7517#section-5
 - id: RFC7517-5-old-key-retired-after-grace
   spec: RFC 7517
   clause: "5"
-  level: MUST
+  level: SHOULD
   profile: hardening
-  summary: "After the grace period the retired key is removed from the JWKS and tokens signed with it no longer verify."
+  summary: "Local hardening policy: after the grace period the retired key is absent from the current JWKS. Tokens already verifiable from a verifier cache are not asserted revoked; revocation needs a separate mechanism."
   link: https://www.rfc-editor.org/rfc/rfc7517#section-5
 - id: RFC7517-5-jwks-no-private-material
   spec: RFC 7517

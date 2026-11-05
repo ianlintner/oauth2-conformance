@@ -41,14 +41,14 @@
   clause: "3.8"
   level: MUST
   profile: hardening
-  summary: "Verified JWTs have iss and sub checked against the expected issuer and client before any claim is trusted."
+  summary: "When iss or sub is present in a verified JWT it is checked as valid for the application (expected issuer, or an application-valid subject or issuer/subject pair); sub is not necessarily a client identity (an id_token_hint sub is the end user) and DPoP proofs without iss/sub are exempt."
   link: https://www.rfc-editor.org/rfc/rfc8725#section-3.8
 - id: RFC8725-3.9-audience-validated
   spec: RFC 8725
   clause: "3.9"
   level: MUST
   profile: hardening
-  summary: "Verified JWTs have aud checked against the receiving endpoint or issuer identifier; a token for another audience is rejected."
+  summary: "Where the JWT application uses aud, it is checked against that application's expected audience (the resource, the AS issuer, or for an id_token_hint at the logout endpoint a registered client_id per RPINIT-2-logout-id-token-hint-aud) and a token for another audience is rejected; DPoP proofs do not require aud."
   link: https://www.rfc-editor.org/rfc/rfc8725#section-3.9
 - id: RFC8725-3.11-explicit-typ
   spec: RFC 8725
@@ -76,5 +76,5 @@
   clause: "3.4"
   level: MUST NOT
   profile: hardening
-  summary: "Header jku, x5u and jwk values from untrusted JWTs are not used to select verification keys unless pinned or registered."
+  summary: "Header jku, x5u and jwk values from untrusted JWTs are not used to override trusted issuer or client keys. Exception: a DPoP proof carries its own jwk, which RFC9449-4-proof-signature-verified requires for proof verification."
   link: https://www.rfc-editor.org/rfc/rfc8725#section-3.4

@@ -31,11 +31,11 @@
   link: https://www.rfc-editor.org/rfc/rfc8707#section-2.2
 - id: RFC8707-3-aud-reflects-resource
   spec: RFC 8707
-  clause: "3"
-  level: MUST
+  clause: "2"
+  level: SHOULD
   profile: resource
-  summary: "The access token audience (aud for JWT, audience in introspection) is restricted to the requested resource values."
-  link: https://www.rfc-editor.org/rfc/rfc8707#section-3
+  summary: "The access token audience (aud in a JWT access token and in the introspection response) is restricted to the requested resource; the AS may map a resource URI to a more general URI or an abstract audience identifier."
+  link: https://www.rfc-editor.org/rfc/rfc8707#section-2
 - id: RFC8707-3-multiple-resources-aud-array
   spec: RFC 8707
   clause: "2.2"

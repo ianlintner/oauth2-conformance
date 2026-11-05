@@ -41,7 +41,7 @@ draft and can shift between drafts; RFC 9700 and FAPI 2.0 are final.
 | 2.6 | TLS | `RFC9700-2.6-*` | covered |
 | 4.1 | Insufficient redirect URI validation | `RFC6749-3.1.2-*` | covered |
 | 4.2 | Credential leakage via referrer | none | **hole** |
-| 4.3 | Open redirection on the AS | `RFC9700-4.4.*`, `RPINIT-2-*` | covered |
+| 4.3 | Credential leakage via browser history | none (single-use codes: `RFC9700-4.5-code-replay`; no browser-history requirement) | **hole** |
 | 4.4 | Mix-up | `RFC9207-*`, `RFC9700-4.4.2*` | covered |
 | 4.5 | Authorization code injection | `RFC9700-4.5-code-replay`, `RFC7636-*` | covered |
 | 4.6 | CSRF | `RFC9700-4.7-require-state-*` | covered |
@@ -52,7 +52,7 @@ draft and can shift between drafts; RFC 9700 and FAPI 2.0 are final.
 | 4.13 | Reverse proxy headers | `RFC9700-4.13-*` | covered |
 | 4.14 | Refresh token protection | `RFC9700-4.14.2-*` | covered |
 | 4.15 | Client impersonation | `RFC9700-2.5-*` | partial |
-| 4.16 | Authorization request leaks | `RFC9126-*`, `RFC9101-*` | covered |
+| 4.16 | Clickjacking (framing of the authorization page) | none | **hole** |
 
 Plus RFC 8725 (JWT BCP) via `RFC8725-*`, RFC 9068 via `RFC9068-*`, RFC 9470 via `RFC9470-*`.
 
@@ -91,7 +91,7 @@ Plus RFC 8725 (JWT BCP) via `RFC8725-*`, RFC 9068 via `RFC9068-*`, RFC 9470 via 
 | 5.4.2 / 5.4.3 | JWKS handling, duplicate `kid` | `FAPI2-5.4.2-jwks-no-duplicate-kid`, `RFC7517-4.5-jwks-distinct-kid` | covered |
 | Message Signing | Signed requests/responses | none | Out |
 
-Note: `FAPI2-5.3.2.1-no-refresh-rotation-default` is SHOULD NOT and only gates when
+Note: `FAPI2-5.3.2.1-no-refresh-rotation-default` is MUST NOT and only gates when
 `fapi2` is claimed; the general profile keeps RFC 9700 rotation requirements. Whether the
 two can both pass is a policy decision for the claiming implementation.
 
@@ -100,7 +100,9 @@ two can both pass is a policy decision for the claiming implementation.
 1. OAuth 2.1 5.1.1/5.1.2: access tokens in the query string must be rejected. No requirement.
 2. OAuth 2.1 7.10 clickjacking headers on login/consent pages. No requirement.
 3. RFC 9700 4.2 referrer leakage of codes (`Referrer-Policy`). No requirement.
-4. RFC 9700 4.15 client impersonation is only partially covered by client-auth requirements.
+4. RFC 9700 4.3 credential leakage via browser history. No requirement.
+5. RFC 9700 4.16 clickjacking (same gap as item 2).
+6. RFC 9700 4.15 client impersonation is only partially covered by client-auth requirements.
 
 These are listed rather than added now to keep this slice bounded; they are the first
 candidates for the next catalog slice.
