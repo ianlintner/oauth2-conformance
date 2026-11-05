@@ -1,0 +1,73 @@
+# RFC 9728 OAuth 2.0 Protected Resource Metadata. Rust reference serves
+# /.well-known/oauth-protected-resource and /.well-known/oauth-protected-
+# resource/{id}. Requirements only.
+- id: RFC9728-3-well-known-200
+  spec: RFC 9728
+  clause: "3"
+  level: MUST
+  profile: resource
+  summary: "GET /.well-known/oauth-protected-resource returns 200 application/json with a JSON object of resource metadata."
+  link: https://www.rfc-editor.org/rfc/rfc9728#section-3
+- id: RFC9728-2-resource-member
+  spec: RFC 9728
+  clause: "2"
+  level: MUST
+  profile: resource
+  summary: "The metadata document contains the REQUIRED resource member, a resource identifier URL without query or fragment."
+  link: https://www.rfc-editor.org/rfc/rfc9728#section-2
+- id: RFC9728-3.3-resource-identical
+  spec: RFC 9728
+  clause: "3.3"
+  level: MUST
+  profile: resource
+  summary: "The resource value is identical to the resource identifier the metadata URL was derived from."
+  link: https://www.rfc-editor.org/rfc/rfc9728#section-3.3
+- id: RFC9728-3.1-path-insertion
+  spec: RFC 9728
+  clause: "3.1"
+  level: MUST
+  profile: resource
+  summary: "A resource with a path publishes metadata at the well-known path inserted between host and path (/.well-known/oauth-protected-resource/{path})."
+  link: https://www.rfc-editor.org/rfc/rfc9728#section-3.1
+- id: RFC9728-2-authorization-servers-issuers
+  spec: RFC 9728
+  clause: "2"
+  level: SHOULD
+  profile: resource
+  summary: "authorization_servers, when present, is an array of issuer identifiers that resolve to RFC 8414 metadata."
+  link: https://www.rfc-editor.org/rfc/rfc9728#section-2
+- id: RFC9728-2-jwks-uri-https
+  spec: RFC 9728
+  clause: "2"
+  level: MUST
+  profile: resource
+  summary: "jwks_uri, when present, uses the https scheme."
+  link: https://www.rfc-editor.org/rfc/rfc9728#section-2
+- id: RFC9728-2-bearer-methods-supported
+  spec: RFC 9728
+  clause: "2"
+  level: SHOULD
+  profile: resource
+  summary: "bearer_methods_supported lists only header, body or query and matches what the resource accepts."
+  link: https://www.rfc-editor.org/rfc/rfc9728#section-2
+- id: RFC9728-5.1-www-authenticate-resource-metadata
+  spec: RFC 9728
+  clause: "5.1"
+  level: SHOULD
+  profile: resource
+  summary: "A 401 from a protected resource includes a resource_metadata parameter in WWW-Authenticate pointing at its metadata URL."
+  link: https://www.rfc-editor.org/rfc/rfc9728#section-5.1
+- id: RFC9728-3.2-unknown-resource-404
+  spec: RFC 9728
+  clause: "3.2"
+  level: SHOULD
+  profile: resource
+  summary: "A well-known request for an unregistered resource returns 404, not a metadata document for another resource."
+  link: https://www.rfc-editor.org/rfc/rfc9728#section-3.2
+- id: RFC9728-7.1-no-secrets-in-metadata
+  spec: RFC 9728
+  clause: "7"
+  level: MUST NOT
+  profile: resource
+  summary: "Metadata documents contain no secrets or credentials."
+  link: https://www.rfc-editor.org/rfc/rfc9728#section-7

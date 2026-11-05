@@ -1,0 +1,144 @@
+# FAPI 2.0 Security Profile (final) server-side delta over the existing
+# catalog. Clause numbers are the final spec's section 5.3.2 etc. Optional
+# fapi2 profile; many clauses reuse existing requirement IDs (see
+# profiles/fapi2.yaml). Requirements only.
+- id: FAPI2-5.3.2.1-code-lifetime-60s
+  spec: FAPI 2.0 Security Profile
+  clause: "5.3.2.1"
+  level: MUST
+  profile: fapi2
+  summary: "Authorization codes have a maximum lifetime of 60 seconds."
+  link: https://openid.net/specs/fapi-security-profile-2_0-final.html#section-5.3.2.1
+- id: FAPI2-5.3.2.1-only-sender-constrained-tokens
+  spec: FAPI 2.0 Security Profile
+  clause: "5.3.2.1"
+  level: MUST
+  profile: fapi2
+  summary: "Every access token issued is sender-constrained by DPoP or mTLS."
+  link: https://openid.net/specs/fapi-security-profile-2_0-final.html#section-5.3.2.1
+- id: FAPI2-5.3.2.1-confidential-clients-only
+  spec: FAPI 2.0 Security Profile
+  clause: "5.3.2.1"
+  level: MUST
+  profile: fapi2
+  summary: "Public clients are refused."
+  link: https://openid.net/specs/fapi-security-profile-2_0-final.html#section-5.3.2.1
+- id: FAPI2-5.3.2.1-client-auth-methods
+  spec: FAPI 2.0 Security Profile
+  clause: "5.3.2.1"
+  level: MUST
+  profile: fapi2
+  summary: "Only private_key_jwt or tls_client_auth/self_signed_tls_client_auth client authentication is accepted; client_secret_basic and client_secret_post are rejected."
+  link: https://openid.net/specs/fapi-security-profile-2_0-final.html#section-5.3.2.1
+- id: FAPI2-5.3.2.1-issuer-string-only
+  spec: FAPI 2.0 Security Profile
+  clause: "5.3.2.1"
+  level: MUST
+  profile: fapi2
+  summary: "Assertion aud accepts only the issuer identifier as a string, not an array or token endpoint URL."
+  link: https://openid.net/specs/fapi-security-profile-2_0-final.html#section-5.3.2.1
+- id: FAPI2-5.3.2.1-no-refresh-rotation-default
+  spec: FAPI 2.0 Security Profile
+  clause: "5.3.2.1"
+  level: SHOULD NOT
+  profile: fapi2
+  summary: "Refresh tokens are not rotated except in extraordinary circumstances."
+  link: https://openid.net/specs/fapi-security-profile-2_0-final.html#section-5.3.2.1
+- id: FAPI2-5.3.2.1-future-iat-window-10s
+  spec: FAPI 2.0 Security Profile
+  clause: "5.3.2.1"
+  level: MUST
+  profile: fapi2
+  summary: "JWTs with iat or nbf up to 10 seconds in the future are accepted and later ones rejected."
+  link: https://openid.net/specs/fapi-security-profile-2_0-final.html#section-5.3.2.1
+- id: FAPI2-5.3.2.2-par-required
+  spec: FAPI 2.0 Security Profile
+  clause: "5.3.2.2"
+  level: MUST
+  profile: fapi2
+  summary: "Authorization requests not sent through PAR are rejected."
+  link: https://openid.net/specs/fapi-security-profile-2_0-final.html#section-5.3.2.2
+- id: FAPI2-5.3.2.2-par-redirect-uri-required
+  spec: FAPI 2.0 Security Profile
+  clause: "5.3.2.2"
+  level: MUST
+  profile: fapi2
+  summary: "A pushed authorization request without redirect_uri is rejected."
+  link: https://openid.net/specs/fapi-security-profile-2_0-final.html#section-5.3.2.2
+- id: FAPI2-5.3.2.2-par-request-uri-expiry-600
+  spec: FAPI 2.0 Security Profile
+  clause: "5.3.2.2"
+  level: MUST
+  profile: fapi2
+  summary: "PAR request_uri expires_in is shorter than 600 seconds."
+  link: https://openid.net/specs/fapi-security-profile-2_0-final.html#section-5.3.2.2
+- id: FAPI2-5.3.2.2-pkce-s256-only
+  spec: FAPI 2.0 Security Profile
+  clause: "5.3.2.2"
+  level: MUST
+  profile: fapi2
+  summary: "PKCE with S256 is required on every authorization request; plain is rejected."
+  link: https://openid.net/specs/fapi-security-profile-2_0-final.html#section-5.3.2.2
+- id: FAPI2-5.3.2.2-no-http-307
+  spec: FAPI 2.0 Security Profile
+  clause: "5.3.2.2"
+  level: MUST NOT
+  profile: fapi2
+  summary: "A redirect that carries a request containing user credentials does not use HTTP 307."
+  link: https://openid.net/specs/fapi-security-profile-2_0-final.html#section-5.3.2.2
+- id: FAPI2-5.3.2.2-oidc-nonce-64
+  spec: FAPI 2.0 Security Profile
+  clause: "5.3.2.2"
+  level: SHOULD
+  profile: fapi2
+  summary: "When OIDC is supported, nonce values up to 64 characters are accepted."
+  link: https://openid.net/specs/fapi-security-profile-2_0-final.html#section-5.3.2.2
+- id: FAPI2-5.3.2.1-dpop-code-binding
+  spec: FAPI 2.0 Security Profile
+  clause: "5.3.2.1"
+  level: MUST
+  profile: fapi2
+  summary: "When DPoP is used, the server supports authorization code binding to the DPoP key (dpop_jkt on PAR/authorize)."
+  link: https://openid.net/specs/fapi-security-profile-2_0-final.html#section-5.3.2.1
+- id: FAPI2-5.4.1-signing-algs-ps256-es256-eddsa
+  spec: FAPI 2.0 Security Profile
+  clause: "5.4.1"
+  level: MUST
+  profile: fapi2
+  summary: "Advertised and accepted signing algorithms are limited to PS256, ES256 and EdDSA; RS256 and none are excluded."
+  link: https://openid.net/specs/fapi-security-profile-2_0-final.html#section-5.4.1
+- id: FAPI2-5.4.1-rsa-2048-minimum
+  spec: FAPI 2.0 Security Profile
+  clause: "5.4.1"
+  level: MUST
+  profile: fapi2
+  summary: "RSA keys are at least 2048 bits; elliptic-curve keys use P-256 or stronger."
+  link: https://openid.net/specs/fapi-security-profile-2_0-final.html#section-5.4.1
+- id: FAPI2-5.4.2-jwks-no-duplicate-kid
+  spec: FAPI 2.0 Security Profile
+  clause: "5.4.3"
+  level: MUST
+  profile: fapi2
+  summary: "A JWKS published or consumed has no duplicate kid values."
+  link: https://openid.net/specs/fapi-security-profile-2_0-final.html#section-5.4.3
+- id: FAPI2-5.2.1-tls-12-bcp195
+  spec: FAPI 2.0 Security Profile
+  clause: "5.2.1"
+  level: MUST
+  profile: fapi2
+  summary: "Endpoints use TLS 1.2 or later with BCP 195 cipher suites only."
+  link: https://openid.net/specs/fapi-security-profile-2_0-final.html#section-5.2.1
+- id: FAPI2-5.2.3-no-cors-authz-endpoint
+  spec: FAPI 2.0 Security Profile
+  clause: "5.2.3"
+  level: MUST NOT
+  profile: fapi2
+  summary: "The authorization endpoint does not support CORS."
+  link: https://openid.net/specs/fapi-security-profile-2_0-final.html#section-5.2.3
+- id: FAPI2-5.3.2.1-no-open-redirectors
+  spec: FAPI 2.0 Security Profile
+  clause: "5.3.2.1"
+  level: MUST NOT
+  profile: fapi2
+  summary: "The authorization server exposes no open redirector."
+  link: https://openid.net/specs/fapi-security-profile-2_0-final.html#section-5.3.2.1

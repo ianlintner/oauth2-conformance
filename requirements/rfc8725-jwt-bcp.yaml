@@ -1,0 +1,80 @@
+# RFC 8725 JSON Web Token Best Current Practices applied to every JWT the
+# server issues or verifies. Rust reference verifies with jsonwebtoken
+# Validation in many handlers. Requirements only; hardening profile.
+- id: RFC8725-3.1-alg-allow-list
+  spec: RFC 8725
+  clause: "3.1"
+  level: MUST
+  profile: hardening
+  summary: "Every JWT the server verifies (client assertions, request objects, DPoP, id_token_hint, assertion grants) is checked against an explicit algorithm allow-list, never the alg the attacker supplies."
+  link: https://www.rfc-editor.org/rfc/rfc8725#section-3.1
+- id: RFC8725-3.1-alg-none-rejected-everywhere
+  spec: RFC 8725
+  clause: "3.1"
+  level: MUST NOT
+  profile: hardening
+  summary: "No endpoint accepts a JWT with alg none or an unsigned JWT where a signature is required."
+  link: https://www.rfc-editor.org/rfc/rfc8725#section-3.1
+- id: RFC8725-3.1-key-algorithm-confusion
+  spec: RFC 8725
+  clause: "3.1"
+  level: MUST NOT
+  profile: hardening
+  summary: "A token signed with HS256 using the server's public key bytes as the HMAC secret is rejected (RS/ES-to-HS confusion)."
+  link: https://www.rfc-editor.org/rfc/rfc8725#section-3.1
+- id: RFC8725-3.2-no-weak-algorithms
+  spec: RFC 8725
+  clause: "3.2"
+  level: MUST NOT
+  profile: hardening
+  summary: "Advertised signing algorithms exclude none and weak choices (e.g. RSA below 2048 bits, HMAC with a short secret)."
+  link: https://www.rfc-editor.org/rfc/rfc8725#section-3.2
+- id: RFC8725-3.5-hs-secret-entropy
+  spec: RFC 8725
+  clause: "3.5"
+  level: MUST
+  profile: hardening
+  summary: "Symmetric signing secrets have entropy at least equal to the hash output size; the server refuses weaker configured secrets."
+  link: https://www.rfc-editor.org/rfc/rfc8725#section-3.5
+- id: RFC8725-3.8-issuer-subject-validated
+  spec: RFC 8725
+  clause: "3.8"
+  level: MUST
+  profile: hardening
+  summary: "Verified JWTs have iss and sub checked against the expected issuer and client before any claim is trusted."
+  link: https://www.rfc-editor.org/rfc/rfc8725#section-3.8
+- id: RFC8725-3.9-audience-validated
+  spec: RFC 8725
+  clause: "3.9"
+  level: MUST
+  profile: hardening
+  summary: "Verified JWTs have aud checked against the receiving endpoint or issuer identifier; a token for another audience is rejected."
+  link: https://www.rfc-editor.org/rfc/rfc8725#section-3.9
+- id: RFC8725-3.11-explicit-typ
+  spec: RFC 8725
+  clause: "3.11"
+  level: SHOULD
+  profile: hardening
+  summary: "Distinct JWT kinds carry distinct typ values (at+jwt, dpop+jwt, token-introspection+jwt, logout+jwt where defined) and verifiers enforce them."
+  link: https://www.rfc-editor.org/rfc/rfc8725#section-3.11
+- id: RFC8725-3.12-cross-jwt-confusion
+  spec: RFC 8725
+  clause: "3.12"
+  level: MUST
+  profile: hardening
+  summary: "A JWT minted for one purpose (id_token, access token, client assertion, logout token) is rejected when presented for another."
+  link: https://www.rfc-editor.org/rfc/rfc8725#section-3.12
+- id: RFC8725-3.3-signature-before-claims
+  spec: RFC 8725
+  clause: "3.3"
+  level: MUST
+  profile: hardening
+  summary: "Signatures are verified before any claim from the JWT influences behaviour (key selection by kid aside)."
+  link: https://www.rfc-editor.org/rfc/rfc8725#section-3.3
+- id: RFC8725-2.6-header-key-injection
+  spec: RFC 8725
+  clause: "3.4"
+  level: MUST NOT
+  profile: hardening
+  summary: "Header jku, x5u and jwk values from untrusted JWTs are not used to select verification keys unless pinned or registered."
+  link: https://www.rfc-editor.org/rfc/rfc8725#section-3.4

@@ -1,0 +1,137 @@
+# OpenID Connect RP-Initiated, Front-Channel and Back-Channel Logout 1.0. Rust
+# reference implements all three in handlers/oidc_logout.rs on GET
+# /oauth/logout. Requirements only; oidc-basic profile. RPINIT-2-logout-id-
+# token-hint-aud already exists in oidc-core.yaml.
+- id: RPINIT-2-end-session-endpoint-metadata
+  spec: OIDC RP-Initiated Logout 1.0
+  clause: "2.1"
+  level: MUST
+  profile: oidc-basic
+  summary: "OP metadata advertises end_session_endpoint when logout is supported."
+  link: https://openid.net/specs/openid-connect-rpinitiated-1_0.html#OPMetadata
+- id: RPINIT-2-id-token-hint-signature-validated
+  spec: OIDC RP-Initiated Logout 1.0
+  clause: "2"
+  level: MUST
+  profile: oidc-basic
+  summary: "An id_token_hint that is not a validly signed ID token issued by this OP is rejected and does not end any session."
+  link: https://openid.net/specs/openid-connect-rpinitiated-1_0.html#RPLogout
+- id: RPINIT-2-post-logout-redirect-registered-exact
+  spec: OIDC RP-Initiated Logout 1.0
+  clause: "2"
+  level: MUST
+  profile: oidc-basic
+  summary: "post_logout_redirect_uri is honoured only on exact match against a URI registered for the client."
+  link: https://openid.net/specs/openid-connect-rpinitiated-1_0.html#RPLogout
+- id: RPINIT-2-post-logout-redirect-unregistered-rejected
+  spec: OIDC RP-Initiated Logout 1.0
+  clause: "2"
+  level: MUST
+  profile: oidc-basic
+  summary: "An unregistered post_logout_redirect_uri is not redirected to (error page or no redirect)."
+  link: https://openid.net/specs/openid-connect-rpinitiated-1_0.html#RPLogout
+- id: RPINIT-2-state-echoed-on-redirect
+  spec: OIDC RP-Initiated Logout 1.0
+  clause: "2"
+  level: MUST
+  profile: oidc-basic
+  summary: "state supplied with a valid post_logout_redirect_uri is returned on the redirect."
+  link: https://openid.net/specs/openid-connect-rpinitiated-1_0.html#RPLogout
+- id: RPINIT-2-logout-ends-session
+  spec: OIDC RP-Initiated Logout 1.0
+  clause: "2"
+  level: MUST
+  profile: oidc-basic
+  summary: "A completed logout ends the OP session so a following authorization request with prompt=none returns login_required."
+  link: https://openid.net/specs/openid-connect-rpinitiated-1_0.html#RPLogout
+- id: RPINIT-2-no-redirect-without-hint-or-client
+  spec: OIDC RP-Initiated Logout 1.0
+  clause: "2"
+  level: SHOULD
+  profile: oidc-basic
+  summary: "Without id_token_hint or client_id the server does not redirect to a post-logout URI and may ask the user to confirm."
+  link: https://openid.net/specs/openid-connect-rpinitiated-1_0.html#RPLogout
+- id: BCL-2.4-logout-token-claims
+  spec: OIDC Back-Channel Logout 1.0
+  clause: "2.4"
+  level: MUST
+  profile: oidc-basic
+  summary: "The logout token is a signed JWT with iss, aud, iat, jti, an events claim containing http://schemas.openid.net/event/backchannel-logout, and sub or sid."
+  link: https://openid.net/specs/openid-connect-backchannel-1_0.html#LogoutToken
+- id: BCL-2.4-logout-token-no-nonce
+  spec: OIDC Back-Channel Logout 1.0
+  clause: "2.4"
+  level: MUST NOT
+  profile: oidc-basic
+  summary: "The logout token contains no nonce claim."
+  link: https://openid.net/specs/openid-connect-backchannel-1_0.html#LogoutToken
+- id: BCL-2.4-logout-token-explicit-typ
+  spec: OIDC Back-Channel Logout 1.0
+  clause: "2.4"
+  level: SHOULD
+  profile: oidc-basic
+  summary: "The logout token header uses typ logout+jwt so it cannot be confused with an ID token."
+  link: https://openid.net/specs/openid-connect-backchannel-1_0.html#LogoutToken
+- id: BCL-2.5-post-form-logout-token
+  spec: OIDC Back-Channel Logout 1.0
+  clause: "2.5"
+  level: MUST
+  profile: oidc-basic
+  summary: "The OP sends the logout token as an application/x-www-form-urlencoded logout_token parameter via HTTP POST to the registered backchannel_logout_uri."
+  link: https://openid.net/specs/openid-connect-backchannel-1_0.html#BCRequest
+- id: BCL-2.2-sid-when-session-required
+  spec: OIDC Back-Channel Logout 1.0
+  clause: "2.2"
+  level: MUST
+  profile: oidc-basic
+  summary: "When backchannel_logout_session_required is true the logout token includes sid and ID tokens issued to that client carry the same sid."
+  link: https://openid.net/specs/openid-connect-backchannel-1_0.html#BCRegistration
+- id: BCL-2.1-metadata-supported-flags
+  spec: OIDC Back-Channel Logout 1.0
+  clause: "2.1"
+  level: MUST
+  profile: oidc-basic
+  summary: "OP metadata publishes backchannel_logout_supported and backchannel_logout_session_supported accurately."
+  link: https://openid.net/specs/openid-connect-backchannel-1_0.html#BCSupport
+- id: BCL-2.6-only-registered-clients-notified
+  spec: OIDC Back-Channel Logout 1.0
+  clause: "2.6"
+  level: MUST
+  profile: oidc-basic
+  summary: "Only clients with a registered backchannel_logout_uri and a session at the OP are sent a logout token."
+  link: https://openid.net/specs/openid-connect-backchannel-1_0.html#BCRequest
+- id: BCL-2.7-receiver-failure-nonfatal
+  spec: OIDC Back-Channel Logout 1.0
+  clause: "2.8"
+  level: SHOULD
+  profile: oidc-basic
+  summary: "A failing or slow logout receiver does not prevent the OP from completing logout for the user."
+  link: https://openid.net/specs/openid-connect-backchannel-1_0.html#BCRequest
+- id: FCL-2-iframe-with-iss-sid
+  spec: OIDC Front-Channel Logout 1.0
+  clause: "3"
+  level: MUST
+  profile: oidc-basic
+  summary: "The OP page renders an iframe for each registered frontchannel_logout_uri adding iss and sid query parameters when frontchannel_logout_session_required is true."
+  link: https://openid.net/specs/openid-connect-frontchannel-1_0.html#OPLogout
+- id: FCL-2-metadata-supported-flags
+  spec: OIDC Front-Channel Logout 1.0
+  clause: "3"
+  level: MUST
+  profile: oidc-basic
+  summary: "OP metadata publishes frontchannel_logout_supported and frontchannel_logout_session_supported accurately."
+  link: https://openid.net/specs/openid-connect-frontchannel-1_0.html#OPLogout
+- id: FCL-2-registered-uri-only
+  spec: OIDC Front-Channel Logout 1.0
+  clause: "2"
+  level: MUST
+  profile: oidc-basic
+  summary: "Only registered frontchannel_logout_uri values are rendered; the logout page does not reflect request parameters into iframe URIs."
+  link: https://openid.net/specs/openid-connect-frontchannel-1_0.html#RPLogout
+- id: FCL-2-registration-uri-validated
+  spec: OIDC Front-Channel Logout 1.0
+  clause: "2"
+  level: MUST
+  profile: oidc-basic
+  summary: "A frontchannel_logout_uri or backchannel_logout_uri registered by a client is an absolute URI and, for back-channel, has no fragment."
+  link: https://openid.net/specs/openid-connect-frontchannel-1_0.html#RPLogout

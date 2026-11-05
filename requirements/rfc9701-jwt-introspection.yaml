@@ -1,0 +1,73 @@
+# RFC 9701 JWT Response for OAuth Token Introspection. Rust reference returns
+# application/token-introspection+jwt when asked (handlers/token.rs).
+# Requirements only.
+- id: RFC9701-4-accept-jwt-returns-jwt
+  spec: RFC 9701
+  clause: "4"
+  level: MUST
+  profile: resource
+  summary: "An introspection request with Accept: application/token-introspection+jwt receives a JWT response with Content-Type application/token-introspection+jwt."
+  link: https://www.rfc-editor.org/rfc/rfc9701#section-4
+- id: RFC9701-4-caller-authentication-required
+  spec: RFC 9701
+  clause: "4"
+  level: MUST
+  profile: resource
+  summary: "The server refuses an unauthenticated JWT introspection request with HTTP 400 rather than falling back to RFC 7662 behaviour."
+  link: https://www.rfc-editor.org/rfc/rfc9701#section-5
+- id: RFC9701-5-typ-header
+  spec: RFC 9701
+  clause: "5"
+  level: MUST
+  profile: resource
+  summary: "The JWT header typ is token-introspection+jwt."
+  link: https://www.rfc-editor.org/rfc/rfc9701#section-5
+- id: RFC9701-5-iss-aud-iat
+  spec: RFC 9701
+  clause: "5"
+  level: MUST
+  profile: resource
+  summary: "The JWT carries iss (the issuer), aud (the calling resource server) and iat."
+  link: https://www.rfc-editor.org/rfc/rfc9701#section-5
+- id: RFC9701-5-token-introspection-claim
+  spec: RFC 9701
+  clause: "5"
+  level: MUST
+  profile: resource
+  summary: "The RFC 7662 response members are nested inside a token_introspection JSON object claim, not at the top level."
+  link: https://www.rfc-editor.org/rfc/rfc9701#section-5
+- id: RFC9701-5-inactive-minimal
+  spec: RFC 9701
+  clause: "5"
+  level: MUST
+  profile: resource
+  summary: "For an invalid, expired, revoked or wrong-audience token, token_introspection contains active=false and no other members."
+  link: https://www.rfc-editor.org/rfc/rfc9701#section-5
+- id: RFC9701-5-no-sub-exp-toplevel
+  spec: RFC 9701
+  clause: "5"
+  level: SHOULD NOT
+  profile: resource
+  summary: "The JWT does not carry top-level sub or exp, so it cannot be replayed as an access token."
+  link: https://www.rfc-editor.org/rfc/rfc9701#section-5
+- id: RFC9701-5-signed-verifiable
+  spec: RFC 9701
+  clause: "5"
+  level: MUST
+  profile: resource
+  summary: "The JWT is signed with a key published in the issuer's jwks_uri and is not alg none."
+  link: https://www.rfc-editor.org/rfc/rfc9701#section-5
+- id: RFC9701-6-metadata-signing-alg-values
+  spec: RFC 9701
+  clause: "6"
+  level: SHOULD
+  profile: resource
+  summary: "AS metadata advertises introspection_signing_alg_values_supported when JWT introspection is supported."
+  link: https://www.rfc-editor.org/rfc/rfc9701#section-6
+- id: RFC9701-3-rs-audience-scoping
+  spec: RFC 9701
+  clause: "3"
+  level: MUST
+  profile: resource
+  summary: "The server determines whether the caller is an audience of the token and releases data only to authorized resource servers."
+  link: https://www.rfc-editor.org/rfc/rfc9701#section-3

@@ -1,0 +1,52 @@
+# JWKS key rotation: RFC 7517 kid semantics and RFC 8414 jwks_uri. Rust
+# reference rotates keys via POST /admin/api/keys/rotate with a grace period
+# (admin_keys.rs). Requirements only; hardening profile.
+- id: RFC7517-4.5-kid-unique-across-rotation
+  spec: RFC 7517
+  clause: "4.5"
+  level: MUST
+  profile: hardening
+  summary: "Each signing key has a kid unique within the JWKS and a kid is never reused for a different key after rotation."
+  link: https://www.rfc-editor.org/rfc/rfc7517#section-4.5
+- id: RFC7517-4.5-new-tokens-use-new-kid
+  spec: RFC 7517
+  clause: "4.5"
+  level: MUST
+  profile: hardening
+  summary: "After rotation, newly issued tokens carry the header kid of the new signing key."
+  link: https://www.rfc-editor.org/rfc/rfc7517#section-4.5
+- id: RFC7517-5-old-key-published-during-grace
+  spec: RFC 7517
+  clause: "5"
+  level: MUST
+  profile: hardening
+  summary: "The previous public key stays in the JWKS for a grace period so tokens issued before rotation still verify."
+  link: https://www.rfc-editor.org/rfc/rfc7517#section-5
+- id: RFC7517-5-old-key-retired-after-grace
+  spec: RFC 7517
+  clause: "5"
+  level: MUST
+  profile: hardening
+  summary: "After the grace period the retired key is removed from the JWKS and tokens signed with it no longer verify."
+  link: https://www.rfc-editor.org/rfc/rfc7517#section-5
+- id: RFC7517-5-jwks-no-private-material
+  spec: RFC 7517
+  clause: "5"
+  level: MUST NOT
+  profile: hardening
+  summary: "The published JWKS contains no private key parameters (d, p, q, dp, dq, qi, k)."
+  link: https://www.rfc-editor.org/rfc/rfc7517#section-5
+- id: RFC7517-4.5-token-header-kid-present
+  spec: RFC 7517
+  clause: "4.5"
+  level: SHOULD
+  profile: hardening
+  summary: "Issued JWTs carry a kid header so verifiers can select the key without trying every key."
+  link: https://www.rfc-editor.org/rfc/rfc7517#section-4.5
+- id: RFC7517-5-jwks-cache-headers
+  spec: RFC 7517
+  clause: "5"
+  level: SHOULD
+  profile: hardening
+  summary: "The JWKS response sets cache headers that bound staleness to a value shorter than the rotation grace period."
+  link: https://www.rfc-editor.org/rfc/rfc7517#section-5
