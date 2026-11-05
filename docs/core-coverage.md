@@ -10,14 +10,14 @@ with:
 
 Scenario statuses used by the core profile:
 
-- `stable`: fixture complete and passing against the pinned Rust reference.
-  Counts toward the coverage gate.
+- `stable`: fixture complete and passing against the pinned Rust reference and
+  against the Python port in conformance mode. Counts toward the coverage gate.
 - `reference-deviation`: fixture complete and correct against the profile's
-  conformance stance, but the Rust reference fails it. The RFC wins over Rust,
-  so the scenario is kept, the runner defers it (not a failure, not stable
-  coverage) and the justification is recorded below. It becomes `stable` when
-  Rust is fixed. (Most are RFC-correct fixtures; `core.pkce.plain-method-rejected`
-  instead encodes local S256-only policy, an explicit exception noted below.)
+  conformance stance, but a claimed implementation fails it. The RFC wins over
+  the implementation, so the scenario is kept, the runner defers it (not a
+  failure, not stable coverage) and the justification is recorded below. It
+  becomes `stable` when every claimed port passes it; the two remaining
+  core cases are held back by the Python port, not by Rust.
 - `draft`: needs a runner/SUT-interface feature or a contract decision.
 
 ## Documented non-coverage (no scenario by design)
@@ -49,31 +49,30 @@ the stable set and are absent from the CI ratchet.
 | core.authorize.require-state | RFC9700-4.7-require-state-* | Per-client `require_state` flag is not modelled in the seed schema (SUT interface change; owner-gated because all four ports must implement it; see "SUT interface changes" below). |
 | core.token.error-no-store | RFC6749-5.1-no-store | Contract decision, see the attribution section below. Demoted from stable: RFC 6749 5.1 states no-store for successful token responses only, so asserting it on errors is not an RFC MUST. |
 
-## Reference deviations (RFC wins over Rust)
+## Reference deviations (held back by current SUTs)
 
-Eight scenarios fail against the Rust reference. Seven fail for RFC-grounded
-reasons and one (`core.pkce.plain-method-rejected`) enforces local S256-only
-policy whose rejection is not an RFC MUST (see the note below). Each is
-`status: reference-deviation`; none is demoted to draft.
+Two scenarios remain `status: reference-deviation`. Both pass against current
+rust-oauth2-server main; both fail against the Python port in conformance mode,
+which is what keeps them out of the stable set. Six scenarios that carried this
+status because of the Rust reference were promoted to `stable`: Rust main now
+passes them and their expectations are RFC-correct.
 
-| Scenario | RFC basis | Rust behavior |
+| Scenario | RFC basis | Python behavior |
 |---|---|---|
-| core.authorize.error-redirect-iss, response-type-missing, response-type-unsupported | RFC 6749 4.1.2.1 (error returned by redirect once client_id and redirect_uri validate); RFC 9207 2 (iss on error) | 400 JSON on the authorize endpoint, no redirect. |
-| core.pkce.missing-challenge, method-without-challenge | RFC 7636 4.4.1 (when PKCE is required, a missing `code_challenge` yields invalid_request on the redirect) | 400 JSON on the authorize endpoint, no redirect. |
-| core.token.basic-auth-success | RFC 6749 2.3.1 (client id and secret MUST be form-urlencoded before Basic encoding) | 401 for the form-urlencoded form; accepts the raw unencoded form. |
-| core.token.dual-auth-rejected | RFC 6749 2.3 (clients MUST NOT use more than one authentication method), 5.2 invalid_request | 200 when credentials arrive in both header and body. |
+| core.authorize.response-type-missing | RFC 6749 4.1.2.1 (error returned by redirect once client_id and redirect_uri validate) | answers `unsupported_response_type` on the redirect instead of `invalid_request`. |
+| core.token.dual-auth-rejected | RFC 6749 2.3 (clients MUST NOT use more than one authentication method), 5.2 invalid_request | returns 200 when credentials arrive in both the Basic header and the body. |
 
-core.pkce.plain-method-rejected is a deliberate exception: rejecting `plain`
-altogether is the profile's local S256-only policy (RFC 7636 4.2 makes `plain` a
-server MAY to support), not an RFC MUST. It is kept as `reference-deviation`
-rather than `stable` because the reference does not itself pass it, and rather
-than `draft` because the fixture is a correct conformance check for the profile's
-S256-only stance. Its `method-without-challenge` sibling's cited clause is
-miscast: `requirements/rfc7636-core.yaml` pins it to RFC 7636 4.2, but section
-4.2 defines the transformation methods and does not state that a method sent
+`core.pkce.plain-method-rejected` is a deliberate local-policy scenario, not an
+RFC MUST: rejecting `plain` altogether is the profile's S256-only stance
+(RFC 7636 4.2 makes `plain` a server MAY to support). It is `stable` because
+both Rust and Python reject it, and it is kept rather than dropped because the
+fixture is a correct conformance check for the profile's S256-only policy. Its
+`method-without-challenge` sibling's cited clause is miscast:
+`requirements/rfc7636-core.yaml` pins it to RFC 7636 4.2, but that section
+defines the transformation methods and does not state that a method sent
 without a `code_challenge` must fail; the actual basis is RFC 7636 4.4.1
-(missing `code_challenge` when PKCE is required), listed above. That requirement
-citation is a follow-up to re-cite or re-id.
+(missing `code_challenge` when PKCE is required). That requirement citation is
+a follow-up to re-cite or re-id.
 
 ## Hardening profile
 
@@ -136,30 +135,34 @@ Measured on a freshly started seeded Rust SUT (PR 424), conformance mode, with
 the public URL set to `http://localhost:8080` (`OAUTH2_PUBLIC_URL` and
 `OAUTH2_SERVER_PUBLIC_BASE_URL` both set) so its issuer equals the seed's
 `issuer`; full `conformance run --profile core`:
-executed=43 passed=33 failed=0 deferred=10 (8 reference-deviation, 2 draft).
+executed=43 passed=41 failed=0 deferred=2 (the two drafts) against
+rust-oauth2-server main 1f31593. The earlier PR 424 baseline was passed=33
+deferred=10 (8 reference-deviation, 2 draft); all eight Rust-held deviations
+now pass.
 Measure against a fresh SUT per run: a long-lived instance degrades across
 repeated runs (SQLite in-memory pool "no such table", login rate limit).
 
-Python port: its repository has no conformance-mode SUT interface (no seed
-loader), so core was not run against it; this card comments that on its v0.1
-core card.
+Python port (python-oauth2-server main 7ee94ed, conformance mode):
+raw outcomes (all eight scenarios treated as stable) executed=43 passed=40
+failed=2 deferred=1. Of the eight, six pass; the two failures are
+`core.authorize.response-type-missing` and `core.token.dual-auth-rejected`,
+which therefore stay `reference-deviation`. The runner converts failures of
+non-stable scenarios to `deferred` (`runner/src/runner.ts`), so the final-status
+run with this PR's statuses reports executed=43 passed=40 failed=0 deferred=3
+(the two retained reference-deviations plus one draft).
 
-Stable core coverage is 36/55 = 65.5%. CI gates `--min 65.5` (the recorded
-floor, `CORE_STABLE_FLOOR = 36`); `runner/test/coverage-gate.test.ts` proves a
+Stable core coverage is 43/55 = 78.2%. CI gates `--min 78.2` (the recorded
+floor, `CORE_STABLE_FLOOR = 43`); `runner/test/coverage-gate.test.ts` proves a
 removed stable fixture fails the gate. CI (`runner.yml`) still does not start a
 SUT: a SUT job (build the Rust SUT in conformance mode, seed it, run
 `conformance run --profile core`) is a follow-up.
 
-Reference-deviation scenarios (listed for the register test):
+Reference-deviation scenarios (2):
 
-- core.authorize.error-redirect-iss
 - core.authorize.response-type-missing
-- core.authorize.response-type-unsupported
-- core.pkce.method-without-challenge
-- core.pkce.missing-challenge
-- core.pkce.plain-method-rejected
-- core.token.basic-auth-success
 - core.token.dual-auth-rejected
+
+Both pass against rust-oauth2-server main; both are held back by the Python port.
 
 ### Citation discrepancy (follow-up, ids unchanged)
 

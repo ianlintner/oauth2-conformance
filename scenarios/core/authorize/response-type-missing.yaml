@@ -5,8 +5,9 @@ profile: core
 status: reference-deviation
 note: |
   RFC 6749 section 4.1.2.1: with a valid client and redirect_uri the error is
-  returned as invalid_request on the redirect URI. The Rust reference answers
-  400 instead (part 3/3 records the deviation if it persists).
+  returned as invalid_request on the redirect URI. Rust passes this scenario on
+  current main; the Python port answers unsupported_response_type instead, so
+  the scenario is not promoted to stable.
 steps:
   - id: authorize
     request:

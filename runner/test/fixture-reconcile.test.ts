@@ -87,7 +87,7 @@ test('docs/core-coverage.md records the measured live run and every reference de
   assert.ok(list, 'a bulleted list of reference-deviation scenario ids must follow');
   const ids = [...(list[1] ?? '').matchAll(/- (core\.[\w.-]+)/g)].map((m) => m[1] as string);
   for (const id of ids) assert.equal(scenario(id).status, 'reference-deviation', `${id} must be reference-deviation`);
-  assert.equal(Number(match[3]), ids.length + 2, 'deferred = reference deviations plus two drafts (require-state, error-no-store)');
+  assert.equal(Number(match[3]), 2, 'deferred = two drafts (require-state, error-no-store) on Rust, where no reference deviation remains');
   assert.match(doc, /OAUTH2_PUBLIC_URL/, 'the SUT launch setting the fixtures assume must be documented');
   assert.match(doc, /rate limit/i, 'the SUT login rate limit that makes repeated runs flake must be documented');
 });
