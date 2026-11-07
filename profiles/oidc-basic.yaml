@@ -22,3 +22,22 @@ requirements:
   - OIDC-5.3-userinfo-rejects-client-credentials-token
   - OIDCDISC-3-userinfo-endpoint
   - RPINIT-2-logout-id-token-hint-aud
+  - RPINIT-2-end-session-endpoint-metadata
+  - RPINIT-2-id-token-hint-signature-validated
+  - RPINIT-2-post-logout-redirect-registered-exact
+  - RPINIT-2-post-logout-redirect-unregistered-rejected
+  - RPINIT-2-state-echoed-on-redirect
+  - RPINIT-2-logout-ends-session
+  - RPINIT-2-no-redirect-without-hint-or-client
+  - BCL-2.4-logout-token-claims
+  - BCL-2.4-logout-token-no-nonce
+  - BCL-2.4-logout-token-explicit-typ
+  - BCL-2.5-post-form-logout-token
+  - BCL-2.2-sid-when-session-required
+  - BCL-2.1-metadata-supported-flags
+  - BCL-2.6-only-registered-clients-notified
+  - BCL-2.7-receiver-failure-nonfatal
+  - FCL-2-iframe-with-iss-sid
+  - FCL-2-metadata-supported-flags
+  - FCL-2-registered-uri-only
+  - FCL-2-registration-uri-validated

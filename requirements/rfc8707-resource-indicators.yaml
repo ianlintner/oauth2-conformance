@@ -1,0 +1,59 @@
+# RFC 8707 Resource Indicators for OAuth 2.0. Rust reference threads
+# `resource` through authorize/token and the resources registry
+# (admin_resources.rs, agent_resources_registry tests). Requirements only.
+- id: RFC8707-2-resource-param-authz
+  spec: RFC 8707
+  clause: "2"
+  level: MUST
+  profile: resource
+  summary: "The authorization endpoint accepts one or more resource parameters, each an absolute URI without a fragment."
+  link: https://www.rfc-editor.org/rfc/rfc8707#section-2
+- id: RFC8707-2-resource-invalid-target
+  spec: RFC 8707
+  clause: "2"
+  level: MUST
+  profile: resource
+  summary: "A resource value that is not an absolute URI, has a fragment, or names a resource the client may not use is rejected with error invalid_target."
+  link: https://www.rfc-editor.org/rfc/rfc8707#section-2
+- id: RFC8707-2.2-token-request-resource
+  spec: RFC 8707
+  clause: "2.2"
+  level: MUST
+  profile: resource
+  summary: "The token endpoint accepts resource on a code exchange or other grant and applies it to the issued access token."
+  link: https://www.rfc-editor.org/rfc/rfc8707#section-2.2
+- id: RFC8707-2.2-resource-subset-of-authorized
+  spec: RFC 8707
+  clause: "2.2"
+  level: MUST
+  profile: resource
+  summary: "A resource requested at the token endpoint that was not authorized in the authorization request is rejected with invalid_target."
+  link: https://www.rfc-editor.org/rfc/rfc8707#section-2.2
+- id: RFC8707-3-aud-reflects-resource
+  spec: RFC 8707
+  clause: "2"
+  level: SHOULD
+  profile: resource
+  summary: "The access token audience (aud in a JWT access token and in the introspection response) is restricted to the requested resource; the AS may map a resource URI to a more general URI or an abstract audience identifier."
+  link: https://www.rfc-editor.org/rfc/rfc8707#section-2
+- id: RFC8707-3-multiple-resources-aud-array
+  spec: RFC 8707
+  clause: "2.2"
+  level: SHOULD
+  profile: resource
+  summary: "When several resources are requested, the token aud lists all of them or the server issues a token for a single audience."
+  link: https://www.rfc-editor.org/rfc/rfc8707#section-2.2
+- id: RFC8707-2.2-no-resource-default-policy
+  spec: RFC 8707
+  clause: "2.1"
+  level: SHOULD
+  profile: resource
+  summary: "A request without resource is handled by one of the three §2.1 policies: using a configured default resource, processing the request without a specific resource, or rejecting the request; the chosen single-resource policy is applied consistently."
+  link: https://www.rfc-editor.org/rfc/rfc8707#section-2.1
+- id: RFC8707-refresh-resource-not-widened
+  spec: RFC 8707
+  clause: "2.2"
+  level: MUST NOT
+  profile: resource
+  summary: "A refresh token grant does not widen the resource set beyond that of the original grant."
+  link: https://www.rfc-editor.org/rfc/rfc8707#section-2.2

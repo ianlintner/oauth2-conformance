@@ -9,7 +9,7 @@
  */
 
 import type { Requirement } from './requirement.js';
-import type { Profile } from './profile.js';
+import { scenarioInProfile, type Profile } from './profile.js';
 import type { Scenario } from './scenario.js';
 
 export interface RequirementCoverage {
@@ -48,8 +48,9 @@ export function buildCoverage(
   scopeProfile?: string,
 ): CoverageReport {
   const byRequirement = new Map<string, RequirementCoverage>();
+  const declared = scopeProfile === undefined ? undefined : new Set(profiles.find((profile) => profile.id === scopeProfile)?.requirements ?? []);
   for (const requirement of requirements) {
-    if (scopeProfile !== undefined && requirement.profile !== scopeProfile) continue;
+    if (scopeProfile !== undefined && requirement.profile !== scopeProfile && declared?.has(requirement.id) !== true) continue;
     byRequirement.set(requirement.id, {
       requirement: requirement.id,
       profile: requirement.profile,
@@ -66,16 +67,24 @@ export function buildCoverage(
   const dangling = new Set<string>();
   const unknownProfiles = new Set<string>();
   const knownProfileIds = new Set(profiles.map((profile) => profile.id));
+  // A scenario requirement is "dangling" only when the ID is not defined in the
+  // contract at all. A requirement that exists but is filtered out by
+  // `scopeProfile` is out-of-scope, not dangling: a scenario explicit shares
+  // into a profile may carry requirement IDs the profile does not declare.
+  const knownRequirementIds = new Set(requirements.map((requirement) => requirement.id));
 
   for (const scenario of scenarios) {
-    if (scopeProfile !== undefined && scenario.profile !== scopeProfile) continue;
-    if (profiles.length > 0 && !knownProfileIds.has(scenario.profile)) {
-      unknownProfiles.add(scenario.profile);
+    if (scopeProfile !== undefined && !scenarioInProfile(scenario, scopeProfile)) continue;
+    if (profiles.length > 0) {
+      const memberProfiles = scenario.profiles ?? [];
+      for (const memberProfile of [scenario.profile, ...memberProfiles]) {
+        if (!knownProfileIds.has(memberProfile)) unknownProfiles.add(memberProfile);
+      }
     }
     for (const id of scenario.requirements) {
       const entry = byRequirement.get(id);
       if (entry === undefined) {
-        dangling.add(id);
+        if (!knownRequirementIds.has(id)) dangling.add(id);
         continue;
       }
       if (scenario.status === 'stable') entry.stable.push(scenario.id);

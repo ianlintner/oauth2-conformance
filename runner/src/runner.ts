@@ -18,6 +18,7 @@ import { compareResponse, captureValue, type Diff } from './compare.js';
 import { interpolate, interpolateRecord, type Scenario, type ScenarioStep } from './scenario.js';
 import { encodeForm, resolveUrl, sendRequest, type TransportOptions } from './http.js';
 import { decodeJwtSegments } from './jwt.js';
+import { scenarioInProfile } from './profile.js';
 
 export interface ScenarioResult {
   id: string;
@@ -71,7 +72,9 @@ export type ScenarioHelper = (context: HelperContext) => Promise<import('./compa
 export function selectScenarios(scenarios: Scenario[], options: RunOptions): Scenario[] {
   return scenarios.filter((scenario) => {
     if (scenario.status === 'retired') return false;
-    if (options.profile !== undefined && scenario.profile !== options.profile) return false;
+    if (options.profile !== undefined && !scenarioInProfile(scenario, options.profile)) {
+      return false;
+    }
     if (options.only !== undefined && options.only.length > 0) {
       return scenario.requirements.some((requirement) => options.only?.includes(requirement));
     }
@@ -248,7 +251,9 @@ export async function runScenarios(scenarios: Scenario[], options: RunOptions): 
     results.push({
       id: scenario.id,
       ...(scenario.title !== undefined ? { title: scenario.title } : {}),
-      profile: scenario.profile,
+      // Label the result with the profile it was selected under, so a shared
+      // scenario runs for different profiles remain distinct in aggregation.
+      profile: options.profile ?? scenario.profile,
       status: scenario.status,
       requirements: scenario.requirements,
       outcome,
