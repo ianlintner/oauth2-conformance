@@ -53,8 +53,6 @@ export interface RunOptions extends TransportOptions {
   contract: string;
   /** Only run scenarios in this profile. */
   profile?: string;
-  /** Requirement IDs the selected profile declares; admits shared scenarios filed under another profile. */
-  profileRequirements?: string[];
   /** Only run scenarios whose requirements intersect this list. */
   only?: string[];
   /** Run helpers keyed by `use` name. */
@@ -74,10 +72,7 @@ export type ScenarioHelper = (context: HelperContext) => Promise<import('./compa
 export function selectScenarios(scenarios: Scenario[], options: RunOptions): Scenario[] {
   return scenarios.filter((scenario) => {
     if (scenario.status === 'retired') return false;
-    if (
-      options.profile !== undefined &&
-      !scenarioInProfile(scenario, options.profile, options.profileRequirements === undefined ? undefined : new Set(options.profileRequirements))
-    ) {
+    if (options.profile !== undefined && !scenarioInProfile(scenario, options.profile)) {
       return false;
     }
     if (options.only !== undefined && options.only.length > 0) {
@@ -256,7 +251,9 @@ export async function runScenarios(scenarios: Scenario[], options: RunOptions): 
     results.push({
       id: scenario.id,
       ...(scenario.title !== undefined ? { title: scenario.title } : {}),
-      profile: scenario.profile,
+      // Label the result with the profile it was selected under, so a shared
+      // scenario runs for different profiles remain distinct in aggregation.
+      profile: options.profile ?? scenario.profile,
       status: scenario.status,
       requirements: scenario.requirements,
       outcome,

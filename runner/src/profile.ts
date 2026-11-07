@@ -40,15 +40,18 @@ export function parseProfile(input: unknown): Profile {
 }
 
 /**
- * A scenario belongs to a profile when it is filed under it, or when every
- * requirement it checks is declared by the profile (a shared scenario for
- * requirements the profile reuses from another canonical profile).
+ * A scenario belongs to a profile when it is filed under it, or when the
+ * scenario *explicitly opts in* to that profile via `profiles`. Membership is
+ * never inferred from requirement-ID overlap: a profile that cites a
+ * requirement whose canonical fixture lives under another profile does so as
+ * intent, not as evidence that the foreign fixture's assumptions hold here
+ * (e.g. FAPI2 forbids the public-client no-PAR exchange that
+ * `core.pkce.s256-exchanged` performs, and the `client_secret_basic`
+ * authentication that `sender-constrained.dpop.jti-replay` relies on).
  */
 export function scenarioInProfile(
-  scenario: { profile: string; requirements: string[] },
+  scenario: { profile: string; profiles?: string[] },
   profileId: string,
-  declared: ReadonlySet<string> | undefined,
 ): boolean {
-  if (scenario.profile === profileId) return true;
-  return declared !== undefined && scenario.requirements.length > 0 && scenario.requirements.every((id) => declared.has(id));
+  return scenario.profile === profileId || scenario.profiles?.includes(profileId) === true;
 }

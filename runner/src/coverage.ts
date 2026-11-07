@@ -67,16 +67,21 @@ export function buildCoverage(
   const dangling = new Set<string>();
   const unknownProfiles = new Set<string>();
   const knownProfileIds = new Set(profiles.map((profile) => profile.id));
+  // A scenario requirement is "dangling" only when the ID is not defined in the
+  // contract at all. A requirement that exists but is filtered out by
+  // `scopeProfile` is out-of-scope, not dangling: a scenario explicit shares
+  // into a profile may carry requirement IDs the profile does not declare.
+  const knownRequirementIds = new Set(requirements.map((requirement) => requirement.id));
 
   for (const scenario of scenarios) {
-    if (scopeProfile !== undefined && !scenarioInProfile(scenario, scopeProfile, declared)) continue;
+    if (scopeProfile !== undefined && !scenarioInProfile(scenario, scopeProfile)) continue;
     if (profiles.length > 0 && !knownProfileIds.has(scenario.profile)) {
       unknownProfiles.add(scenario.profile);
     }
     for (const id of scenario.requirements) {
       const entry = byRequirement.get(id);
       if (entry === undefined) {
-        dangling.add(id);
+        if (!knownRequirementIds.has(id)) dangling.add(id);
         continue;
       }
       if (scenario.status === 'stable') entry.stable.push(scenario.id);

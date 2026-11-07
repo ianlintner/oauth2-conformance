@@ -117,9 +117,9 @@
 - id: FAPI2-5.4.2-jwks-no-duplicate-kid
   spec: FAPI 2.0 Security Profile
   clause: "5.4.3"
-  level: MUST
+  level: SHOULD
   profile: fapi2
-  summary: "A JWKS published or consumed has no duplicate kid values."
+  summary: "A JWKS published or consumed avoids duplicate kid values; where duplicates occur, the verifier selects the key using other JWK attributes such as alg, kty and use rather than rejecting the set."
   link: https://openid.net/specs/fapi-security-profile-2_0-final.html#section-5.4.3
 - id: FAPI2-5.2.1-tls-12-bcp195
   spec: FAPI 2.0 Security Profile

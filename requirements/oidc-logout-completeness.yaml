@@ -14,7 +14,7 @@
   clause: "2"
   level: MUST
   profile: oidc-basic
-  summary: "An id_token_hint that is not a validly signed ID token issued by this OP is rejected and does not end any session."
+  summary: "An id_token_hint that is not a validly signed ID token issued by this OP is not used to redirect or otherwise act on request values, and an error on the request does not trigger post-logout redirection; an OP may still ask the End-User whether to log out, and a logout the user independently confirms may end the session."
   link: https://openid.net/specs/openid-connect-rpinitiated-1_0.html#RPLogout
 - id: RPINIT-2-post-logout-redirect-registered-exact
   spec: OIDC RP-Initiated Logout 1.0
@@ -91,7 +91,7 @@
   clause: "2.1"
   level: MUST
   profile: oidc-basic
-  summary: "OP metadata publishes backchannel_logout_supported and backchannel_logout_session_supported accurately."
+  summary: "OP metadata publishes backchannel_logout_supported accurately; backchannel_logout_session_supported is OPTIONAL (omission is false), and when present its value is accurate."
   link: https://openid.net/specs/openid-connect-backchannel-1_0.html#BCSupport
 - id: BCL-2.6-only-registered-clients-notified
   spec: OIDC Back-Channel Logout 1.0
@@ -119,7 +119,7 @@
   clause: "3"
   level: MUST
   profile: oidc-basic
-  summary: "OP metadata publishes frontchannel_logout_supported and frontchannel_logout_session_supported accurately."
+  summary: "OP metadata publishes frontchannel_logout_supported accurately; frontchannel_logout_session_supported is OPTIONAL (omission is false), and when present its value is accurate."
   link: https://openid.net/specs/openid-connect-frontchannel-1_0.html#OPLogout
 - id: FCL-2-registered-uri-only
   spec: OIDC Front-Channel Logout 1.0

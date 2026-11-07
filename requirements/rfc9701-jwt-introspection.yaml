@@ -55,7 +55,7 @@
   clause: "5"
   level: MUST
   profile: resource
-  summary: "The JWT is signed with a key published in the issuer's jwks_uri and is not alg none."
+  summary: "The JWT is signed with a trusted key appropriate to the negotiated signing algorithm — a public key from the issuer's jwks_uri for asymmetric algorithms, or the shared symmetric key for a negotiated algorithm such as HS256 — and no response uses alg none. For a signed-and-encrypted (Nested JWT) response the signature is on the inner JWS, which is verified after decryption."
   link: https://www.rfc-editor.org/rfc/rfc9701#section-5
 - id: RFC9701-6-metadata-signing-alg-values
   spec: RFC 9701

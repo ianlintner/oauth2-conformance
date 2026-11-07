@@ -45,11 +45,11 @@
   link: https://www.rfc-editor.org/rfc/rfc8707#section-2.2
 - id: RFC8707-2.2-no-resource-default-policy
   spec: RFC 8707
-  clause: "2"
+  clause: "2.1"
   level: SHOULD
   profile: resource
-  summary: "A request without resource either uses a configured default audience or is rejected per server policy, and that policy is documented in metadata or docs."
-  link: https://www.rfc-editor.org/rfc/rfc8707#section-2
+  summary: "A request without resource is handled by one of the three §2.1 policies: using a configured default resource, processing the request without a specific resource, or rejecting the request; the chosen single-resource policy is applied consistently."
+  link: https://www.rfc-editor.org/rfc/rfc8707#section-2.1
 - id: RFC8707-refresh-resource-not-widened
   spec: RFC 8707
   clause: "2.2"
