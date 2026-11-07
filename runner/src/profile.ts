@@ -38,3 +38,17 @@ export function parseProfile(input: unknown): Profile {
     requirements: value.requirements.map((entry, index) => stringAt(entry, `profile.requirements[${index}]`)),
   };
 }
+
+/**
+ * A scenario belongs to a profile when it is filed under it, or when every
+ * requirement it checks is declared by the profile (a shared scenario for
+ * requirements the profile reuses from another canonical profile).
+ */
+export function scenarioInProfile(
+  scenario: { profile: string; requirements: string[] },
+  profileId: string,
+  declared: ReadonlySet<string> | undefined,
+): boolean {
+  if (scenario.profile === profileId) return true;
+  return declared !== undefined && scenario.requirements.length > 0 && scenario.requirements.every((id) => declared.has(id));
+}

@@ -188,11 +188,18 @@ export async function commandRun(flags: Record<string, string | boolean>): Promi
   const baseUrl = stringFlag(flags, 'base-url');
   const scenarios = await loadScenarios(rootFlag(flags, 'scenarios'));
   const contractRef = parseContractRef(stringFlag(flags, 'contract', '0.1.0'));
+  let profileRequirements: string[] | undefined;
+  if (flags.profile !== undefined) {
+    const profilesRoot = flags.profiles !== undefined ? rootFlag(flags, 'profiles') : path.resolve(rootFlag(flags, 'scenarios'), '..', 'profiles');
+    const declared = await loadProfiles(profilesRoot).catch(() => []);
+    profileRequirements = declared.find((profile) => profile.id === flags.profile)?.requirements;
+  }
   const report: RunReport = await runScenarios(scenarios, {
     baseUrl,
     implementation: stringFlag(flags, 'implementation', 'system-under-test'),
     contract: contractRef.value,
     ...(flags.profile !== undefined ? { profile: stringFlag(flags, 'profile') } : {}),
+    ...(profileRequirements !== undefined ? { profileRequirements } : {}),
     helpers: { 'login-and-authorize': loginAndAuthorize, 'logout': logout, 'device-verify': deviceVerify, 'dpop-proof': dpopProof },
   });
   const reportFile = flags.report !== undefined ? path.resolve(stringFlag(flags, 'report')) : undefined;

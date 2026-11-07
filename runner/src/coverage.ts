@@ -9,7 +9,7 @@
  */
 
 import type { Requirement } from './requirement.js';
-import type { Profile } from './profile.js';
+import { scenarioInProfile, type Profile } from './profile.js';
 import type { Scenario } from './scenario.js';
 
 export interface RequirementCoverage {
@@ -48,8 +48,9 @@ export function buildCoverage(
   scopeProfile?: string,
 ): CoverageReport {
   const byRequirement = new Map<string, RequirementCoverage>();
+  const declared = scopeProfile === undefined ? undefined : new Set(profiles.find((profile) => profile.id === scopeProfile)?.requirements ?? []);
   for (const requirement of requirements) {
-    if (scopeProfile !== undefined && requirement.profile !== scopeProfile) continue;
+    if (scopeProfile !== undefined && requirement.profile !== scopeProfile && declared?.has(requirement.id) !== true) continue;
     byRequirement.set(requirement.id, {
       requirement: requirement.id,
       profile: requirement.profile,
@@ -68,7 +69,7 @@ export function buildCoverage(
   const knownProfileIds = new Set(profiles.map((profile) => profile.id));
 
   for (const scenario of scenarios) {
-    if (scopeProfile !== undefined && scenario.profile !== scopeProfile) continue;
+    if (scopeProfile !== undefined && !scenarioInProfile(scenario, scopeProfile, declared)) continue;
     if (profiles.length > 0 && !knownProfileIds.has(scenario.profile)) {
       unknownProfiles.add(scenario.profile);
     }

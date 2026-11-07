@@ -86,14 +86,23 @@ export function computeContractStatus(
   const counts = countScenarios(scenarios);
   const stableReqs = stableRequirementIds(scenarios);
 
+  // Membership = canonical profile plus any profile that declares the ID.
   const requirementsByProfile = new Map<string, Requirement[]>();
-  for (const requirement of requirements) {
-    let list = requirementsByProfile.get(requirement.profile);
+  const add = (profileId: string, requirement: Requirement): void => {
+    let list = requirementsByProfile.get(profileId);
     if (list === undefined) {
       list = [];
-      requirementsByProfile.set(requirement.profile, list);
+      requirementsByProfile.set(profileId, list);
     }
-    list.push(requirement);
+    if (!list.includes(requirement)) list.push(requirement);
+  };
+  const byId = new Map(requirements.map((requirement) => [requirement.id, requirement] as const));
+  for (const requirement of requirements) add(requirement.profile, requirement);
+  for (const profile of profiles) {
+    for (const id of profile.requirements) {
+      const requirement = byId.get(id);
+      if (requirement !== undefined) add(profile.id, requirement);
+    }
   }
 
   const result: ProfileStatus[] = [];

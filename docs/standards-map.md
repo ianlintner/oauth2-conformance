@@ -35,8 +35,9 @@ draft and can shift between drafts; RFC 9700 and FAPI 2.0 are final.
 | Section | Topic | Requirement IDs | Status |
 |---|---|---|---|
 | 2.1 | Redirect URI validation, code replay, PKCE | `RFC9700-2.1.1-*`, `RFC9700-2.1.2-*`, `RFC7636-*` | covered |
-| 2.2 | Token privilege restriction, sender-constraint | `RFC9700-2.2.1-*`, `RFC9700-2.2.2-*`, `RFC8707-*`, `RFC9449-*`, `RFC8705-*` | covered |
-| 2.3 | Resource owner password credentials | `RFC9700-2.4-ropc-prohibited` | covered |
+| 2.2 | Token replay prevention (sender-constraint) | `RFC9700-2.2.1-*`, `RFC9700-2.2.2-*`, `RFC9449-*`, `RFC8705-*` | covered |
+| 2.3 | Access token privilege restriction (audience / resource) | `RFC8707-*` | covered |
+| 2.4 | Resource owner password credentials | `RFC9700-2.4-ropc-prohibited` | covered |
 | 2.5 | Client authentication, credential guessing | `RFC9700-2.5-*` | covered |
 | 2.6 | TLS | `RFC9700-2.6-*` | covered |
 | 4.1 | Insufficient redirect URI validation | `RFC6749-3.1.2-*` | covered |

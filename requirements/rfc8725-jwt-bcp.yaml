@@ -69,7 +69,7 @@
   clause: "3.3"
   level: MUST
   profile: hardening
-  summary: "Signatures are verified before any claim from the JWT influences behaviour (key selection by kid aside)."
+  summary: "Signatures are verified before any claim from the JWT influences behaviour (selecting verification keys by kid, or by an unverified iss solely to pick a trusted issuer's keys under the application's trust rules, aside; claims are not trusted for authentication or authorization until the signature verifies)."
   link: https://www.rfc-editor.org/rfc/rfc8725#section-3.3
 - id: RFC8725-2.6-header-key-injection
   spec: RFC 8725

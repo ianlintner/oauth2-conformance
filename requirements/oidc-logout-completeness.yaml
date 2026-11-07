@@ -112,7 +112,7 @@
   clause: "3"
   level: MUST
   profile: oidc-basic
-  summary: "The OP page renders an iframe for each registered frontchannel_logout_uri adding iss and sid query parameters when frontchannel_logout_session_required is true."
+  summary: "The OP page renders an iframe for the frontchannel_logout_uri of each RP logged in to the user's OP session (not every registered client), adding iss and sid query parameters when frontchannel_logout_session_required is true."
   link: https://openid.net/specs/openid-connect-frontchannel-1_0.html#OPLogout
 - id: FCL-2-metadata-supported-flags
   spec: OIDC Front-Channel Logout 1.0
@@ -133,5 +133,5 @@
   clause: "2"
   level: MUST
   profile: oidc-basic
-  summary: "A frontchannel_logout_uri or backchannel_logout_uri registered by a client is an absolute URI and, for back-channel, has no fragment."
+  summary: "A frontchannel_logout_uri or backchannel_logout_uri registered by a client is an absolute URI, and neither the front-channel nor the back-channel logout URI contains a fragment."
   link: https://openid.net/specs/openid-connect-frontchannel-1_0.html#RPLogout

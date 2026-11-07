@@ -8,7 +8,7 @@ profile until existing draft scenarios are stable.
 | Item | Spec | Why it is not in the contract |
 |---|---|---|
 | CIBA (backchannel authentication) | OpenID CIBA Core 1.0 | Needs a poll/ping/push mock authentication device the runner does not have. |
-| JARM (JWT-secured authorization response) | OpenID JARM | FAPI 2.0 final dropped it; `iss` (RFC 9207) is the response-integrity mechanism covered here. |
+| JARM (JWT-secured authorization response) | OpenID JARM | FAPI 2.0 final dropped it; `iss` (RFC 9207) is covered here only as mix-up protection (it identifies the authorization server; it does not authenticate the response or protect its other parameters), so JARM stays deferred. |
 | Token Status Lists | draft-ietf-oauth-status-list | Draft, and no reference implementation to anchor expected behaviour. |
 | SD-JWT / SD-JWT VC | RFC 9901 / draft VC | Credential issuance (OpenID4VCI) is a separate product surface. |
 | OpenID4VCI / OpenID4VP | OIDF | Same: wallet and verifier roles, not an authorization server core. |

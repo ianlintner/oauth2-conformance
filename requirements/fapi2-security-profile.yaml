@@ -89,7 +89,7 @@
 - id: FAPI2-5.3.2.2-oidc-nonce-64
   spec: FAPI 2.0 Security Profile
   clause: "5.3.2.2"
-  level: SHOULD
+  level: MUST
   profile: fapi2
   summary: "When OIDC is supported, nonce values up to 64 characters are accepted."
   link: https://openid.net/specs/fapi-security-profile-2_0-final.html#section-5.3.2.2

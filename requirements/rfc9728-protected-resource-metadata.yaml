@@ -13,7 +13,7 @@
   clause: "2"
   level: MUST
   profile: resource
-  summary: "The metadata document contains the REQUIRED resource member, a resource identifier URL without query or fragment."
+  summary: "The metadata document contains the REQUIRED resource member, a resource identifier URL that uses the https scheme and has no fragment component (a query component is permitted but SHOULD NOT be used, RFC 9728 section 1.2)."
   link: https://www.rfc-editor.org/rfc/rfc9728#section-2
 - id: RFC9728-3.3-resource-identical
   spec: RFC 9728

@@ -18,6 +18,7 @@ import { compareResponse, captureValue, type Diff } from './compare.js';
 import { interpolate, interpolateRecord, type Scenario, type ScenarioStep } from './scenario.js';
 import { encodeForm, resolveUrl, sendRequest, type TransportOptions } from './http.js';
 import { decodeJwtSegments } from './jwt.js';
+import { scenarioInProfile } from './profile.js';
 
 export interface ScenarioResult {
   id: string;
@@ -52,6 +53,8 @@ export interface RunOptions extends TransportOptions {
   contract: string;
   /** Only run scenarios in this profile. */
   profile?: string;
+  /** Requirement IDs the selected profile declares; admits shared scenarios filed under another profile. */
+  profileRequirements?: string[];
   /** Only run scenarios whose requirements intersect this list. */
   only?: string[];
   /** Run helpers keyed by `use` name. */
@@ -71,7 +74,12 @@ export type ScenarioHelper = (context: HelperContext) => Promise<import('./compa
 export function selectScenarios(scenarios: Scenario[], options: RunOptions): Scenario[] {
   return scenarios.filter((scenario) => {
     if (scenario.status === 'retired') return false;
-    if (options.profile !== undefined && scenario.profile !== options.profile) return false;
+    if (
+      options.profile !== undefined &&
+      !scenarioInProfile(scenario, options.profile, options.profileRequirements === undefined ? undefined : new Set(options.profileRequirements))
+    ) {
+      return false;
+    }
     if (options.only !== undefined && options.only.length > 0) {
       return scenario.requirements.some((requirement) => options.only?.includes(requirement));
     }
