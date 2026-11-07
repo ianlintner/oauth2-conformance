@@ -1,7 +1,8 @@
 /**
  * Declared profile membership (profiles/*.yaml requirement lists) drives which
  * requirements a profile *lists* and claims, but a scenario is only ever
- * attributed to the profile it is filed under (`scenario.profile`).
+ * attributed to the profile it is filed under (`scenario.profile`) plus the
+ * profiles it explicitly opts into via `profiles`.
  *
  * A profile may cite a requirement whose canonical profile is elsewhere; that
  * records an intent to satisfy it, not evidence that another profile's fixture
@@ -64,4 +65,17 @@ test('--profile selection admits a scenario that opts into the profile via `prof
   const shared = { ...scenarios[0]!, profiles: ['reuser'] };
   const ids = selectScenarios([shared], { baseUrl: 'x', implementation: 'x', contract: 'x', profile: 'reuser' }).map((s) => s.id);
   assert.deepEqual(ids, ['s-shared']);
+});
+
+test('coverage flags an unknown profile in the opt-in `profiles` list, not just the canonical `profile`', () => {
+  const shared = { ...scenarios[0]!, profile: 'owner', profiles: ['reuser', 'ghost'] };
+  const report = buildCoverage(requirements, [shared], profiles, undefined);
+  assert.ok(report.unknownProfiles.includes('ghost'), `expected ghost in unknownProfiles, got ${report.unknownProfiles.join(', ')}`);
+  assert.ok(!report.unknownProfiles.includes('reuser'), 'declared reuser profile must not be flagged unknown');
+});
+
+test('coverage does not flag a declared opt-in profile as unknown', () => {
+  const shared = { ...scenarios[0]!, profile: 'owner', profiles: ['reuser'] };
+  const report = buildCoverage(requirements, [shared], profiles, undefined);
+  assert.equal(report.unknownProfiles.length, 0, `expected no unknown profiles, got ${report.unknownProfiles.join(', ')}`);
 });

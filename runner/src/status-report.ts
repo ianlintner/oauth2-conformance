@@ -41,16 +41,21 @@ export interface ContractStatus {
   profiles: ProfileStatus[];
 }
 
-/** Count, per profile, each scenario status present on disk. */
+/** Count, per profile, each scenario status present on disk. A scenario that
+ *  opts into extra profiles via `profiles` is counted under each, deduplicated
+ *  so a self-listing (or a repeated entry) cannot inflate the count. */
 function countScenarios(scenarios: Scenario[]): Map<string, Map<ScenarioStatus, number>> {
   const counts = new Map<string, Map<ScenarioStatus, number>>();
   for (const scenario of scenarios) {
-    let byStatus = counts.get(scenario.profile);
-    if (byStatus === undefined) {
-      byStatus = new Map<ScenarioStatus, number>();
-      counts.set(scenario.profile, byStatus);
+    const memberProfiles = new Set<string>([scenario.profile, ...(scenario.profiles ?? [])]);
+    for (const memberProfile of memberProfiles) {
+      let byStatus = counts.get(memberProfile);
+      if (byStatus === undefined) {
+        byStatus = new Map<ScenarioStatus, number>();
+        counts.set(memberProfile, byStatus);
+      }
+      byStatus.set(scenario.status, (byStatus.get(scenario.status) ?? 0) + 1);
     }
-    byStatus.set(scenario.status, (byStatus.get(scenario.status) ?? 0) + 1);
   }
   return counts;
 }
@@ -77,7 +82,10 @@ function stableRequirementIdsByProfile(scenarios: Scenario[]): Map<string, Set<s
 /** Every profile id that appears on a scenario or requirement (or is declared). */
 function allProfileIds(scenarios: Scenario[], requirements: Requirement[], profiles: Profile[]): Set<string> {
   const ids = new Set<string>(profiles.map((profile) => profile.id));
-  for (const scenario of scenarios) ids.add(scenario.profile);
+  for (const scenario of scenarios) {
+    ids.add(scenario.profile);
+    for (const extra of scenario.profiles ?? []) ids.add(extra);
+  }
   for (const requirement of requirements) ids.add(requirement.profile);
   return ids;
 }

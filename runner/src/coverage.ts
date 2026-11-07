@@ -75,8 +75,11 @@ export function buildCoverage(
 
   for (const scenario of scenarios) {
     if (scopeProfile !== undefined && !scenarioInProfile(scenario, scopeProfile)) continue;
-    if (profiles.length > 0 && !knownProfileIds.has(scenario.profile)) {
-      unknownProfiles.add(scenario.profile);
+    if (profiles.length > 0) {
+      const memberProfiles = scenario.profiles ?? [];
+      for (const memberProfile of [scenario.profile, ...memberProfiles]) {
+        if (!knownProfileIds.has(memberProfile)) unknownProfiles.add(memberProfile);
+      }
     }
     for (const id of scenario.requirements) {
       const entry = byRequirement.get(id);
