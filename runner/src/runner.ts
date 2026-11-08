@@ -15,7 +15,7 @@
  */
 
 import { compareResponse, captureValue, type Diff } from './compare.js';
-import { interpolate, interpolateRecord, type Scenario, type ScenarioStep } from './scenario.js';
+import { formEntries, interpolate, type Scenario, type ScenarioStep } from './scenario.js';
 import { encodeForm, resolveUrl, sendRequest, type TransportOptions } from './http.js';
 import { decodeJwtSegments } from './jwt.js';
 import { scenarioInProfile } from './profile.js';
@@ -94,8 +94,8 @@ function buildRequest(
     headers[key] = interpolate(value, scope);
   }
   const url = new URL(resolveUrl('http://placeholder.invalid', request.path));
-  for (const [key, value] of Object.entries(request.query ?? {})) {
-    url.searchParams.append(key, interpolate(value, scope));
+  for (const entry of formEntries(request.query)) {
+    url.searchParams.append(entry.name, interpolate(entry.value, scope));
   }
   const request_ = {
     method: request.method,
@@ -116,9 +116,11 @@ export async function runScenarios(scenarios: Scenario[], options: RunOptions): 
     let steps = 0;
     let error: string | undefined;
 
-    for (const step of scenario.steps) {
-      try {
-        let actual: import('./compare.js').ActualResponse;
+    stepsLoop: for (const step of scenario.steps) {
+      const repetitions = step.repeat ?? 1;
+      for (let iteration = 0; iteration < repetitions; iteration += 1) {
+        try {
+          let actual: import('./compare.js').ActualResponse;
         if (step.use !== undefined) {
           const helper = options.helpers?.[step.use];
           if (helper === undefined) throw new Error(`unknown step helper: ${step.use}`);
@@ -137,7 +139,7 @@ export async function runScenarios(scenarios: Scenario[], options: RunOptions): 
           const headers = { ...request.headers };
           let body: string | undefined;
           if (step.request?.form !== undefined) {
-            body = encodeForm(interpolateRecord(step.request.form, scope));
+            body = encodeForm(formEntries(step.request.form).map(({ name, value }) => ({ name, value: interpolate(value, scope) })));
             headers['content-type'] ??= 'application/x-www-form-urlencoded';
           } else if (step.request?.json !== undefined) {
             body = JSON.stringify(
@@ -240,7 +242,8 @@ export async function runScenarios(scenarios: Scenario[], options: RunOptions): 
       } catch (cause) {
         error = cause instanceof Error ? cause.message : String(cause);
         diffs.push({ path: step.id, expected: '<step completes>', actual: undefined, reason: `step threw: ${error}` });
-        break;
+        break stepsLoop;
+      }
       }
     }
 

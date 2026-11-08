@@ -80,8 +80,12 @@ export function resolveUrl(baseUrl: string, requestPath: string): string {
   return `${base}${requestPath}`;
 }
 
-export function encodeForm(form: Record<string, string>): string {
+export function encodeForm(form: Record<string, string> | { name: string; value: string }[]): string {
   const params = new URLSearchParams();
-  for (const [key, value] of Object.entries(form)) params.append(key, value);
+  if (Array.isArray(form)) {
+    for (const { name, value } of form) params.append(name, value);
+  } else {
+    for (const [key, value] of Object.entries(form)) params.append(key, value);
+  }
   return params.toString();
 }
