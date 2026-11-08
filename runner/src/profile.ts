@@ -38,3 +38,20 @@ export function parseProfile(input: unknown): Profile {
     requirements: value.requirements.map((entry, index) => stringAt(entry, `profile.requirements[${index}]`)),
   };
 }
+
+/**
+ * A scenario belongs to a profile when it is filed under it, or when the
+ * scenario *explicitly opts in* to that profile via `profiles`. Membership is
+ * never inferred from requirement-ID overlap: a profile that cites a
+ * requirement whose canonical fixture lives under another profile does so as
+ * intent, not as evidence that the foreign fixture's assumptions hold here
+ * (e.g. FAPI2 forbids the public-client no-PAR exchange that
+ * `core.pkce.s256-exchanged` performs, and the `client_secret_basic`
+ * authentication that `sender-constrained.dpop.jti-replay` relies on).
+ */
+export function scenarioInProfile(
+  scenario: { profile: string; profiles?: string[] },
+  profileId: string,
+): boolean {
+  return scenario.profile === profileId || scenario.profiles?.includes(profileId) === true;
+}

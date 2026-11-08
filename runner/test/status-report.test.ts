@@ -93,6 +93,29 @@ test('a profile that appears only on a scenario or requirement is still reported
   assert.deepEqual(status.profiles.map((entry) => [entry.id, entry.stable, entry.coveredMust, entry.totalMust]), [['zeta', 1, 1, 1]]);
 });
 
+test('a scenario that opts into another profile via `profiles` counts in both, deduplicated', () => {
+  // `core.token.code-wrong-client-auth` shape: canonical profile `owner`, plus
+  // an explicit opt-in to `hardening`. selection/coverage admit it under both,
+  // so the dashboard counts must too — otherwise a stable hardening fixture is
+  // reported as zero stable scenarios.
+  const shared = { ...scenario('platform.s', 'owner', 'stable', ['SH-1']), profiles: ['hardening'] };
+  const status = computeContractStatus(
+    [shared],
+    [requirement('SH-1', 'owner', 'MUST')],
+    [profile('owner', ['SH-1']), profile('hardening', ['SH-1'])],
+  );
+  const owner = status.profiles.find((entry) => entry.id === 'owner');
+  const hardening = status.profiles.find((entry) => entry.id === 'hardening');
+  assert.equal(owner?.stable, 1, 'canonical profile counts the fixture once');
+  assert.equal(hardening?.stable, 1, 'opt-in profile counts the shared fixture once');
+  assert.equal(hardening?.total, 1);
+  assert.equal(hardening?.coveredMust, 1, 'shared fixture covers the requirement for the opt-in profile');
+  // A scenario listed in its own `profiles` must not be double-counted.
+  const selfListed = { ...scenario('dup.s', 'owner', 'stable', ['OWN-2']), profiles: ['owner'] };
+  const dupStatus = computeContractStatus([selfListed], [requirement('OWN-2', 'owner', 'MUST')], [profile('owner', ['OWN-2'])]);
+  assert.equal(dupStatus.profiles.find((entry) => entry.id === 'owner')?.stable, 1, 'canonical profile not double-counted when the profile also opts in to itself');
+});
+
 test('renderStatus writes the exact contract table and a totals row, deterministically', () => {
   const status = computeContractStatus(fixtureScenarios, fixtureRequirements, fixtureProfiles);
   const markdown = renderStatus(status, []);

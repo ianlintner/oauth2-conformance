@@ -1,0 +1,52 @@
+# RFC 9470 OAuth 2.0 Step Up Authentication Challenge Protocol. Rust reference
+# honours acr_values (handlers/oauth.rs) and has a TAC test family.
+# Requirements only.
+- id: RFC9470-4-authz-acr-values
+  spec: RFC 9470
+  clause: "5"
+  level: SHOULD
+  profile: resource
+  summary: "The authorization endpoint satisfies a requested acr value or fails the request with unmet_authentication_requirements; it does not silently ignore it."
+  link: https://www.rfc-editor.org/rfc/rfc9470#section-5
+- id: RFC9470-4-authz-max-age
+  spec: RFC 9470
+  clause: "4"
+  level: MUST
+  profile: resource
+  summary: "The authorization endpoint honours max_age, re-authenticating when the existing authentication is older."
+  link: https://www.rfc-editor.org/rfc/rfc9470#section-4
+- id: RFC9470-6.1-jwt-at-acr-auth-time
+  spec: RFC 9470
+  clause: "6.1"
+  level: MUST
+  profile: resource
+  summary: "A JWT access token issued for a request that used acr_values or max_age carries the acr and auth_time claims of the authentication event."
+  link: https://www.rfc-editor.org/rfc/rfc9470#section-6.1
+- id: RFC9470-6.2-introspection-acr-auth-time
+  spec: RFC 9470
+  clause: "6.2"
+  level: MUST
+  profile: resource
+  summary: "Introspection of an active token issued for a request that used acr_values or max_age returns acr and auth_time matching the authentication event."
+  link: https://www.rfc-editor.org/rfc/rfc9470#section-6.2
+- id: RFC9470-3-insufficient-user-authentication-challenge
+  spec: RFC 9470
+  clause: "3"
+  level: MUST
+  profile: resource
+  summary: "A resource rejecting a token for insufficient authentication responds 401 with WWW-Authenticate error=insufficient_user_authentication plus acr_values or max_age."
+  link: https://www.rfc-editor.org/rfc/rfc9470#section-3
+- id: RFC9470-5-acr-values-supported-metadata
+  spec: RFC 9470
+  clause: "7"
+  level: MAY
+  profile: resource
+  summary: "AS metadata may advertise acr_values_supported listing the context classes the server can satisfy."
+  link: https://www.rfc-editor.org/rfc/rfc9470#section-7
+- id: RFC9470-4-stepup-new-token-not-reused
+  spec: RFC 9470
+  clause: "4"
+  level: MUST
+  profile: resource
+  summary: "A step-up authorization produces a new access token reflecting the new authentication event; an old token is not upgraded in place."
+  link: https://www.rfc-editor.org/rfc/rfc9470#section-4

@@ -41,34 +41,51 @@ export interface ContractStatus {
   profiles: ProfileStatus[];
 }
 
-/** Count, per profile, each scenario status present on disk. */
+/** Count, per profile, each scenario status present on disk. A scenario that
+ *  opts into extra profiles via `profiles` is counted under each, deduplicated
+ *  so a self-listing (or a repeated entry) cannot inflate the count. */
 function countScenarios(scenarios: Scenario[]): Map<string, Map<ScenarioStatus, number>> {
   const counts = new Map<string, Map<ScenarioStatus, number>>();
   for (const scenario of scenarios) {
-    let byStatus = counts.get(scenario.profile);
-    if (byStatus === undefined) {
-      byStatus = new Map<ScenarioStatus, number>();
-      counts.set(scenario.profile, byStatus);
+    const memberProfiles = new Set<string>([scenario.profile, ...(scenario.profiles ?? [])]);
+    for (const memberProfile of memberProfiles) {
+      let byStatus = counts.get(memberProfile);
+      if (byStatus === undefined) {
+        byStatus = new Map<ScenarioStatus, number>();
+        counts.set(memberProfile, byStatus);
+      }
+      byStatus.set(scenario.status, (byStatus.get(scenario.status) ?? 0) + 1);
     }
-    byStatus.set(scenario.status, (byStatus.get(scenario.status) ?? 0) + 1);
   }
   return counts;
 }
 
-/** Requirement IDs with a stable scenario, keyed by profile. */
-function stableRequirementIds(scenarios: Scenario[]): Set<string> {
-  const ids = new Set<string>();
+/** Requirement IDs with a stable scenario, keyed by every profile the scenario belongs to. */
+function stableRequirementIdsByProfile(scenarios: Scenario[]): Map<string, Set<string>> {
+  const byProfile = new Map<string, Set<string>>();
+  const addFor = (profileId: string, ...requirements: string[]): void => {
+    let ids = byProfile.get(profileId);
+    if (ids === undefined) {
+      ids = new Set<string>();
+      byProfile.set(profileId, ids);
+    }
+    for (const requirement of requirements) ids.add(requirement);
+  };
   for (const scenario of scenarios) {
     if (scenario.status !== 'stable') continue;
-    for (const requirement of scenario.requirements) ids.add(requirement);
+    addFor(scenario.profile, ...scenario.requirements);
+    for (const extra of scenario.profiles ?? []) addFor(extra, ...scenario.requirements);
   }
-  return ids;
+  return byProfile;
 }
 
 /** Every profile id that appears on a scenario or requirement (or is declared). */
 function allProfileIds(scenarios: Scenario[], requirements: Requirement[], profiles: Profile[]): Set<string> {
   const ids = new Set<string>(profiles.map((profile) => profile.id));
-  for (const scenario of scenarios) ids.add(scenario.profile);
+  for (const scenario of scenarios) {
+    ids.add(scenario.profile);
+    for (const extra of scenario.profiles ?? []) ids.add(extra);
+  }
   for (const requirement of requirements) ids.add(requirement.profile);
   return ids;
 }
@@ -84,16 +101,25 @@ export function computeContractStatus(
   profiles: Profile[] = [],
 ): ContractStatus {
   const counts = countScenarios(scenarios);
-  const stableReqs = stableRequirementIds(scenarios);
+  const stableReqsByProfile = stableRequirementIdsByProfile(scenarios);
 
+  // Membership = canonical profile plus any profile that declares the ID.
   const requirementsByProfile = new Map<string, Requirement[]>();
-  for (const requirement of requirements) {
-    let list = requirementsByProfile.get(requirement.profile);
+  const add = (profileId: string, requirement: Requirement): void => {
+    let list = requirementsByProfile.get(profileId);
     if (list === undefined) {
       list = [];
-      requirementsByProfile.set(requirement.profile, list);
+      requirementsByProfile.set(profileId, list);
     }
-    list.push(requirement);
+    if (!list.includes(requirement)) list.push(requirement);
+  };
+  const byId = new Map(requirements.map((requirement) => [requirement.id, requirement] as const));
+  for (const requirement of requirements) add(requirement.profile, requirement);
+  for (const profile of profiles) {
+    for (const id of profile.requirements) {
+      const requirement = byId.get(id);
+      if (requirement !== undefined) add(profile.id, requirement);
+    }
   }
 
   const result: ProfileStatus[] = [];
@@ -106,7 +132,12 @@ export function computeContractStatus(
 
     const profileRequirements = requirementsByProfile.get(id) ?? [];
     const mustRequirements = profileRequirements.filter((requirement) => requirement.level === 'MUST' || requirement.level === 'MUST NOT');
-    const coveredMust = mustRequirements.filter((requirement) => stableReqs.has(requirement.id)).length;
+    // A requirement is covered by a profile only when a stable scenario filed
+    // under that same profile proves it; a cited requirement whose fixture
+    // lives under another profile stays uncovered until a native fixture is
+    // filed (see scenarioInProfile).
+    const stableHere = stableReqsByProfile.get(id);
+    const coveredMust = mustRequirements.filter((requirement) => stableHere?.has(requirement.id) === true).length;
 
     result.push({
       id,
@@ -249,8 +280,10 @@ export function computePortStatus(manifest: PortManifest, reports: PortReport[],
     // while the rendered row still displays the pinned contract.
     if (report.contract !== manifest.contract) continue;
     for (const result of report.results) {
-      // Later reports win; duplicate scenario ids collapse to the last one.
-      resultsByScenario.set(result.id, { status: result.status, outcome: result.outcome, profile: result.profile });
+      // Later reports win; duplicate scenario ids collapse to the last one, but a
+      // scenario run under different profiles stays distinct (keyed by profile + id)
+      // so a shared fixture cannot overwrite one profile's result with another's.
+      resultsByScenario.set(`${result.profile}\u0000${result.id}`, { status: result.status, outcome: result.outcome, profile: result.profile });
     }
   }
 

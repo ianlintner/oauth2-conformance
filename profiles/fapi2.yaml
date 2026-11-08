@@ -1,0 +1,36 @@
+id: fapi2
+title: "FAPI 2.0 Security Profile (optional)"
+description: "Contract v0.7 optional, requirements-only profile. Server-side FAPI 2.0 Security Profile delta plus reuse of existing PAR, PKCE, DPoP, mTLS, iss and RAR requirements. See docs/standards-map.md. No stable scenarios yet. Strictness: only MUST and MUST NOT entries gate a pass."
+requirements:
+  - FAPI2-5.3.2.1-code-lifetime-60s
+  - FAPI2-5.3.2.1-only-sender-constrained-tokens
+  - FAPI2-5.3.2.1-confidential-clients-only
+  - FAPI2-5.3.2.1-client-auth-methods
+  - FAPI2-5.3.2.1-issuer-string-only
+  - FAPI2-5.3.2.1-no-refresh-rotation-default
+  - FAPI2-5.3.2.1-future-iat-window-10s
+  - FAPI2-5.3.2.2-par-required
+  - FAPI2-5.3.2.2-par-redirect-uri-required
+  - FAPI2-5.3.2.2-par-request-uri-expiry-600
+  - FAPI2-5.3.2.2-pkce-s256-only
+  - FAPI2-5.3.2.2-no-http-307
+  - FAPI2-5.3.2.2-oidc-nonce-64
+  - FAPI2-5.3.2.1-dpop-code-binding
+  - FAPI2-5.4.1-signing-algs-ps256-es256-eddsa
+  - FAPI2-5.4.1-rsa-2048-minimum
+  - FAPI2-5.4.2-jwks-no-duplicate-kid
+  - FAPI2-5.2.1-tls-12-bcp195
+  - FAPI2-5.2.3-no-cors-authz-endpoint
+  - FAPI2-5.3.2.1-no-open-redirectors
+  - RFC9126-2-par-client-auth
+  - RFC9126-2.2-par-created-response
+  - RFC9126-2.2-par-request-uri-single-use
+  - RFC7636-4.2-s256-supported
+  - RFC7636-4.2-plain-rejected
+  - RFC9207-2-iss-on-success
+  - RFC9449-4.3-jti-replay-rejected
+  - RFC9449-8-use-dpop-nonce-error
+  - RFC8705-3.1-cnf-x5t-binding
+  - RFC9700-2.6-no-http-redirect-uri
+  - RFC9700-2.4-ropc-prohibited
+  - RFC9700-4.7-require-state-configurable

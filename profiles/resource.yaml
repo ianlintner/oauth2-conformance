@@ -1,0 +1,39 @@
+id: resource
+title: "Resource-server surface: indicators, metadata, JWT introspection, step-up"
+description: "Contract v0.7 requirements-only profile. RFC 8707 resource indicators, RFC 9728 protected resource metadata, RFC 9701 JWT introspection responses and RFC 9470 step-up authentication. No stable scenarios yet. Strictness: the profile lists every catalogued level; only MUST and MUST NOT entries gate a pass."
+requirements:
+  - RFC8707-2-resource-param-authz
+  - RFC8707-2-resource-invalid-target
+  - RFC8707-2.2-token-request-resource
+  - RFC8707-2.2-resource-subset-of-authorized
+  - RFC8707-3-aud-reflects-resource
+  - RFC8707-3-multiple-resources-aud-array
+  - RFC8707-2.2-no-resource-default-policy
+  - RFC8707-refresh-resource-not-widened
+  - RFC9728-3-well-known-200
+  - RFC9728-2-resource-member
+  - RFC9728-3.3-resource-identical
+  - RFC9728-3.1-path-insertion
+  - RFC9728-2-authorization-servers-issuers
+  - RFC9728-2-jwks-uri-https
+  - RFC9728-2-bearer-methods-supported
+  - RFC9728-5.1-www-authenticate-resource-metadata
+  - RFC9728-3.2-unknown-resource-404
+  - RFC9728-7.1-no-secrets-in-metadata
+  - RFC9701-4-accept-jwt-returns-jwt
+  - RFC9701-4-caller-authentication-required
+  - RFC9701-5-typ-header
+  - RFC9701-5-iss-aud-iat
+  - RFC9701-5-token-introspection-claim
+  - RFC9701-5-inactive-minimal
+  - RFC9701-5-no-sub-exp-toplevel
+  - RFC9701-5-signed-verifiable
+  - RFC9701-6-metadata-signing-alg-values
+  - RFC9701-3-rs-audience-scoping
+  - RFC9470-4-authz-acr-values
+  - RFC9470-4-authz-max-age
+  - RFC9470-6.1-jwt-at-acr-auth-time
+  - RFC9470-6.2-introspection-acr-auth-time
+  - RFC9470-3-insufficient-user-authentication-challenge
+  - RFC9470-5-acr-values-supported-metadata
+  - RFC9470-4-stepup-new-token-not-reused

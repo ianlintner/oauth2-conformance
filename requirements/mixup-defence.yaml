@@ -1,0 +1,45 @@
+# Authorization-server mix-up defence beyond iss (RFC 9700 4.4, OAuth 2.1
+# 7.14, RFC 9207 section 3). The iss response parameter itself is RFC9207-* in
+# rfc9207-core.yaml.
+- id: RFC9207-3-metadata-iss-parameter-supported
+  spec: RFC 9207
+  clause: "3"
+  level: SHOULD
+  profile: hardening
+  summary: "AS metadata publishes authorization_response_iss_parameter_supported=true when the server returns iss in authorization responses."
+  link: https://www.rfc-editor.org/rfc/rfc9207#section-3
+- id: RFC9700-4.4.2-iss-on-every-response-mode
+  spec: RFC 9700
+  clause: "4.4.2.1"
+  level: MUST
+  profile: hardening
+  summary: "iss is returned in every authorization response mode the server supports for redirect-delivered responses, including error responses."
+  link: https://www.rfc-editor.org/rfc/rfc9700#section-4.4.2.1
+- id: RFC9700-4.4.2-no-iss-from-request
+  spec: RFC 9700
+  clause: "4.4.2.1"
+  level: MUST NOT
+  profile: hardening
+  summary: "The iss value is always the server's own issuer identifier and is never derived from a request parameter or Host header."
+  link: https://www.rfc-editor.org/rfc/rfc9700#section-4.4.2.1
+- id: RFC9700-4.4.2-issuer-matches-metadata-and-tokens
+  spec: RFC 9700
+  clause: "4.4.2.1"
+  level: MUST
+  profile: hardening
+  summary: "The issuer in authorization responses, metadata, ID tokens and JWT access tokens is the same exact string."
+  link: https://www.rfc-editor.org/rfc/rfc9700#section-4.4.2.1
+- id: RFC9700-4.4.2.2-per-client-redirect-exact
+  spec: RFC 9700
+  clause: "4.4.2.2"
+  level: MUST
+  profile: hardening
+  summary: "Redirect URIs are matched exactly per client so a code issued for one redirect URI cannot be delivered to another AS-specific endpoint of the same client."
+  link: https://www.rfc-editor.org/rfc/rfc9700#section-4.4.2.2
+- id: RFC9700-4.4-metadata-endpoints-same-origin-policy
+  spec: RFC 9700
+  clause: "4.4.2"
+  level: SHOULD
+  profile: hardening
+  summary: "Authorization, token and other endpoints in metadata are under the issuer's own origin unless documented otherwise."
+  link: https://www.rfc-editor.org/rfc/rfc9700#section-4.4.2

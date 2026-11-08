@@ -68,6 +68,8 @@ export interface Scenario {
   title?: string;
   requirements: string[];
   profile: string;
+  /** Additional profiles this scenario is explicitly compatible with (opt-in). */
+  profiles?: string[];
   status: ScenarioStatus;
   note?: string;
   steps: ScenarioStep[];
@@ -96,6 +98,11 @@ function strings(input: unknown, label: string): Record<string, string> {
     if (typeof entry !== 'string') throw new TypeError(`${label}.${key} must be a string`);
   }
   return value as Record<string, string>;
+}
+
+function stringList(input: unknown, label: string): string[] {
+  if (!Array.isArray(input) || input.length === 0) throw new TypeError(`${label} must be a nonempty array`);
+  return input.map((entry, index) => stringAt(entry, `${label}[${index}]`));
 }
 
 /** Reject a path that can leave the configured server origin. */
@@ -216,6 +223,7 @@ export function parseScenario(input: unknown): Scenario {
     ...(value.title !== undefined ? { title: stringAt(value.title, 'scenario.title') } : {}),
     requirements,
     profile: stringAt(value.profile, 'scenario.profile'),
+    ...(value.profiles !== undefined ? { profiles: stringList(value.profiles, 'scenario.profiles') } : {}),
     status,
     ...(value.note !== undefined ? { note: value.note as string } : {}),
     steps: value.steps.map((step, index) => parseStep(step, index)),
