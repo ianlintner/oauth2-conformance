@@ -41,6 +41,22 @@ function countingServer(status: number, body: unknown): Promise<{ server: Server
   });
 }
 
+/** A server that returns a per-attempt status, for proving every iteration is asserted. */
+function sequencedServer(attempts: Array<{ status: number; body: unknown }>): Promise<{ server: Server; url: string; hits: { count: number } }> {
+  const hits = { count: 0 };
+  const server = createServer((_req, res) => {
+    const attempt = attempts[Math.min(hits.count, attempts.length - 1)]!;
+    hits.count += 1;
+    res.writeHead(attempt.status, { 'content-type': 'application/json' });
+    res.end(JSON.stringify(attempt.body));
+  });
+  return new Promise((resolve) => {
+    server.listen(0, '127.0.0.1', () => {
+      resolve({ server, url: `http://127.0.0.1:${(server.address() as AddressInfo).port}`, hits });
+    });
+  });
+}
+
 async function repeatScenarioDir(count: number, expectStatus: number): Promise<string> {
   const dir = await mkdtemp(path.join(tmpdir(), 'conf-repeat-'));
   await mkdir(path.join(dir, 'scenarios'), { recursive: true });
@@ -82,6 +98,24 @@ test('CLI exits 1 when a repeated step mismatches on every iteration (known mism
     const result = await cli(['run', '--base-url', url, '--scenarios', await repeatScenarioDir(count, 401)]);
     assert.equal(result.code, 1, result.stdout + result.stderr);
     assert.equal(hits.count, count, 'all iterations must still have executed');
+    assert.ok(result.stdout.includes('FAIL selftest.repeat-invalid-client'), result.stdout);
+  } finally {
+    server.close();
+  }
+});
+
+test('CLI exits 1 when one intermediate iteration mismatches but first and last match', async () => {
+  const count = 3;
+  // first and last match the expectation (401), only the middle attempt differs.
+  const { server, url, hits } = await sequencedServer([
+    { status: 401, body: { error: 'invalid_client' } },
+    { status: 200, body: { access_token: 'x' } },
+    { status: 401, body: { error: 'invalid_client' } },
+  ]);
+  try {
+    const result = await cli(['run', '--base-url', url, '--scenarios', await repeatScenarioDir(count, 401)]);
+    assert.equal(result.code, 1, result.stdout + result.stderr);
+    assert.equal(hits.count, count, 'every iteration must be sent and asserted, not just the first or last');
     assert.ok(result.stdout.includes('FAIL selftest.repeat-invalid-client'), result.stdout);
   } finally {
     server.close();
