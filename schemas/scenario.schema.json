@@ -149,7 +149,10 @@
         },
         {
           "if": { "required": ["repeat"] },
-          "then": { "required": ["request"] }
+          "then": {
+            "required": ["request"],
+            "not": { "required": ["use"] }
+          }
         }
       ]
     },
