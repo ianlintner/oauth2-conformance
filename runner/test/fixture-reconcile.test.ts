@@ -35,8 +35,9 @@ test('dual-auth-rejected uses a client permitted the grant, so the single-method
   // client-a is not allowed client_credentials; the SUT answers unauthorized_client
   // before it ever inspects the credential channels, which hides the rule under test.
   assert.equal(basicCredentials(step.request.headers?.authorization), 'client-cc:test-only-cc-secret');
-  assert.equal(step.request.form?.client_id, 'client-cc');
-  assert.equal(step.request.form?.client_secret, 'test-only-cc-secret');
+  const form = step.request.form as Record<string, string> | undefined;
+  assert.equal(form?.client_id, 'client-cc');
+  assert.equal(form?.client_secret, 'test-only-cc-secret');
   // RFC 6749 5.2 lists multiple credentials / more than one mechanism under invalid_request.
   assert.equal(step.expect?.status, 400);
   assert.deepEqual(step.expect?.json, { error: 'invalid_request' });

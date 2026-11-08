@@ -15,20 +15,32 @@
 
 import { parseHttpMethod, parseScenarioStatus, type HttpMethod, type ScenarioStatus } from './status.js';
 
+/** One ordered form/query field, so a parameter may be sent more than once. */
+export interface NameValuePair {
+  name: string;
+  value: string;
+}
+
+/** `form`/`query` are either a string map or an ordered list of pairs. */
+export type FormFields = Record<string, string> | NameValuePair[];
+
 export interface ScenarioRequest {
   method: HttpMethod;
   path: string;
-  query?: Record<string, string>;
+  query?: FormFields;
   /** Application/x-www-form-urlencoded body. */
-  form?: Record<string, string>;
+  form?: FormFields;
   /** JSON body. Mutually exclusive with `form`. */
   json?: Record<string, unknown>;
   headers?: Record<string, string>;
 }
 
+/** A response-header assertion: an exact value, or a matcher object. */
+export type HeaderExpectation = string | { $nonempty?: boolean; $regex?: string };
+
 export interface ScenarioExpectation {
   status?: number;
-  headers?: Record<string, string>;
+  headers?: Record<string, HeaderExpectation>;
   /** Declared top-level claims must be present and match normalized values. */
   json?: Record<string, unknown>;
   /** Inline JSON Schema the normalized body must satisfy. */
@@ -42,8 +54,13 @@ export interface ScenarioExpectation {
   };
 }
 
+/** Upper bound on a step's `repeat` count, so a scenario cannot loop unbounded. */
+export const MAX_REPEAT = 100;
+
 export interface ScenarioStep {
   id: string;
+  /** Bounded replay: run the request (and assert `expect`) this many times. */
+  repeat?: number;
   /** Runner helper invoked instead of a raw request (e.g. `login-and-authorize`). */
   use?: string;
   with?: Record<string, unknown>;
@@ -105,6 +122,21 @@ function stringList(input: unknown, label: string): string[] {
   return input.map((entry, index) => stringAt(entry, `${label}[${index}]`));
 }
 
+/** Parse `form`/`query`: a string map or an ordered list of { name, value }. */
+export function parseFormFields(input: unknown, label: string): Record<string, string> | NameValuePair[] {
+  if (Array.isArray(input)) {
+    if (input.length === 0) throw new TypeError(`${label} must be a nonempty array when given as a list`);
+    return input.map((entry, index) => {
+      const pair = record(entry, `${label}[${index}]`);
+      if (typeof pair.name !== 'string' || pair.name === '' || typeof pair.value !== 'string') {
+        throw new TypeError(`${label}[${index}] must be an object with nonempty string name and value`);
+      }
+      return { name: pair.name, value: pair.value };
+    });
+  }
+  return strings(input, label);
+}
+
 /** Reject a path that can leave the configured server origin. */
 export function parsePath(input: unknown, label: string): string {
   if (typeof input !== 'string' || !input.startsWith('/') || input.startsWith('//') || input.includes('\\')) {
@@ -123,11 +155,34 @@ export function parseRequest(input: unknown, label: string): ScenarioRequest {
   return {
     method,
     path,
-    ...(request.query !== undefined ? { query: strings(request.query, `${label}.query`) } : {}),
-    ...(request.form !== undefined ? { form: strings(request.form, `${label}.form`) } : {}),
+    ...(request.query !== undefined ? { query: parseFormFields(request.query, `${label}.query`) } : {}),
+    ...(request.form !== undefined ? { form: parseFormFields(request.form, `${label}.form`) } : {}),
     ...(request.json !== undefined ? { json: record(request.json, `${label}.json`) } : {}),
     ...(request.headers !== undefined ? { headers: strings(request.headers, `${label}.headers`) } : {}),
   };
+}
+
+/** Parse `expect.headers`: exact strings or `{ $nonempty }` / `{ $regex }` matchers. */
+function parseHeaderExpectations(input: unknown, label: string): Record<string, HeaderExpectation> {
+  const headers = record(input, label);
+  const out: Record<string, HeaderExpectation> = {};
+  for (const [name, raw] of Object.entries(headers)) {
+    if (raw !== null && typeof raw === 'object' && !Array.isArray(raw)) {
+      const matcher = raw as Record<string, unknown>;
+      const keys = Object.keys(matcher);
+      if (keys.length === 1 && keys[0] === '$nonempty' && matcher.$nonempty === true) {
+        out[name] = { $nonempty: true };
+        continue;
+      }
+      if (keys.length === 1 && keys[0] === '$regex' && typeof matcher.$regex === 'string' && matcher.$regex.length > 0) {
+        out[name] = { $regex: matcher.$regex };
+        continue;
+      }
+      throw new TypeError(`${label}.headers.${name} must be a string or a { $nonempty: true } / { $regex: "..." } matcher`);
+    }
+    out[name] = stringAt(raw, `${label}.headers.${name}`);
+  }
+  return out;
 }
 
 export function parseExpectation(input: unknown, label: string): ScenarioExpectation {
@@ -148,7 +203,7 @@ export function parseExpectation(input: unknown, label: string): ScenarioExpecta
   }
   return {
     ...(hasStatus ? { status: expect.status as number } : {}),
-    ...(expect.headers !== undefined ? { headers: strings(expect.headers, `${label}.headers`) } : {}),
+    ...(expect.headers !== undefined ? { headers: parseHeaderExpectations(expect.headers, `${label}.headers`) } : {}),
     ...(expect.json !== undefined ? { json: record(expect.json, `${label}.json`) } : {}),
     ...(expect.jsonSchema !== undefined ? { jsonSchema: record(expect.jsonSchema, `${label}.jsonSchema`) } : {}),
     ...(redirect !== undefined ? { redirect } : {}),
@@ -164,6 +219,16 @@ function parseCapture(input: unknown, label: string): Record<string, string> {
     }
   }
   return capture;
+}
+
+/** Parse a step-level `repeat` (`{ count: N }`), bounded by MAX_REPEAT. */
+function parseRepeat(input: unknown, label: string): number {
+  const rep = record(input, `${label}.repeat`);
+  const count = rep.count;
+  if (!Number.isInteger(count) || (count as number) < 1 || (count as number) > MAX_REPEAT) {
+    throw new TypeError(`${label}.repeat.count must be an integer between 1 and ${MAX_REPEAT}`);
+  }
+  return count as number;
 }
 
 function parseStep(input: unknown, index: number): ScenarioStep {
@@ -199,6 +264,7 @@ function parseStep(input: unknown, index: number): ScenarioStep {
     id,
     request: parseRequest(step.request, `${label}.request`),
     expect: parseExpectation(step.expect, `${label}.expect`),
+    ...(step.repeat !== undefined ? { repeat: parseRepeat(step.repeat, label) } : {}),
     ...(step.capture !== undefined ? { capture: parseCapture(step.capture, `${label}.capture`) } : {}),
   };
 }
@@ -228,6 +294,13 @@ export function parseScenario(input: unknown): Scenario {
     ...(value.note !== undefined ? { note: value.note as string } : {}),
     steps: value.steps.map((step, index) => parseStep(step, index)),
   };
+}
+
+/** Iterate `form`/`query` fields in order, preserving duplicate keys. */
+export function formEntries(fields: FormFields | undefined): NameValuePair[] {
+  if (fields === undefined) return [];
+  if (Array.isArray(fields)) return fields;
+  return Object.entries(fields).map(([name, value]) => ({ name, value }));
 }
 
 /** Resolve `{{name}}` (and `{{a.b}}`) references against a capture scope. */

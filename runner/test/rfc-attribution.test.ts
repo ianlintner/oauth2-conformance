@@ -165,12 +165,14 @@ test('hardening rfc9700.code-replay obtains a real code, redeems it once, then r
     for (const name of Object.keys(step.capture ?? {})) bound.add(name);
   }
   assert.ok(bound.has('code'), 'a step must capture code');
-  const exchanges = scenario.steps.filter((s) => s.request?.form?.grant_type === 'authorization_code');
+  const exchanges = scenario.steps.filter((s) => (s.request?.form as Record<string, string> | undefined)?.grant_type === 'authorization_code');
   assert.equal(exchanges.length, 2, 'the code is exchanged once and replayed once');
   assert.equal(exchanges[0]?.expect?.status, 200);
   assert.equal(exchanges[1]?.expect?.status, 400);
   assert.deepEqual(exchanges[1]?.expect?.json, { error: 'invalid_grant' });
-  assert.equal(exchanges[0]?.request?.form?.code, exchanges[1]?.request?.form?.code);
+  const first = exchanges[0]?.request?.form as Record<string, string> | undefined;
+  const second = exchanges[1]?.request?.form as Record<string, string> | undefined;
+  assert.equal(first?.code, second?.code);
 });
 
 test('every profile entry resolves to a requirement of that profile', () => {

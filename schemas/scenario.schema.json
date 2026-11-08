@@ -49,6 +49,49 @@
       "propertyNames": { "type": "string", "minLength": 1 },
       "additionalProperties": { "$ref": "#/$defs/variable" }
     },
+    "nameValuePair": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "value"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "value": { "$ref": "#/$defs/variable" }
+      },
+      "description": "One ordered form/query field; a list of these lets a parameter be repeated."
+    },
+    "nameValuePairList": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/nameValuePair" }
+    },
+    "formFields": {
+      "description": "Form/query fields: either a string map or an ordered list of name/value pairs (list preserves duplicate keys).",
+      "oneOf": [
+        { "$ref": "#/$defs/stringRecord" },
+        { "$ref": "#/$defs/nameValuePairList" }
+      ]
+    },
+    "headerMatcher": {
+      "description": "A response-header assertion: an exact value, or `$nonempty` / `$regex`.",
+      "oneOf": [
+        { "$ref": "#/$defs/variable" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "minProperties": 1,
+          "maxProperties": 1,
+          "properties": {
+            "$nonempty": { "const": true },
+            "$regex": { "type": "string", "minLength": 1 }
+          }
+        }
+      ]
+    },
+    "headerExpectationRecord": {
+      "type": "object",
+      "propertyNames": { "type": "string", "minLength": 1 },
+      "additionalProperties": { "$ref": "#/$defs/headerMatcher" }
+    },
     "step": {
       "type": "object",
       "additionalProperties": false,
@@ -62,6 +105,15 @@
         },
         "with": { "type": "object", "additionalProperties": true },
         "request": { "$ref": "#/$defs/request" },
+        "repeat": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["count"],
+          "properties": {
+            "count": { "type": "integer", "minimum": 1, "maximum": 100 }
+          },
+          "description": "Bounded step repetition: replay the request `count` times, asserting `expect` each time (drives rate-limit buckets to their limit). Only valid with a `request`."
+        },
         "expect": { "$ref": "#/$defs/expect" },
         "capture": {
           "type": "object",
@@ -94,6 +146,10 @@
             "then": { "not": { "required": ["request"] } },
             "else": { "required": ["request", "expect"] }
           }
+        },
+        {
+          "if": { "required": ["repeat"] },
+          "then": { "required": ["request"] }
         }
       ]
     },
@@ -108,8 +164,8 @@
           "pattern": "^/(?!/)[^\\\\\\s]*$",
           "description": "Server-local absolute path. Must not begin with // or contain a backslash."
         },
-        "query": { "$ref": "#/$defs/stringRecord" },
-        "form": { "$ref": "#/$defs/stringRecord" },
+        "query": { "$ref": "#/$defs/formFields" },
+        "form": { "$ref": "#/$defs/formFields" },
         "json": { "type": "object", "additionalProperties": true },
         "headers": { "$ref": "#/$defs/stringRecord" }
       },
@@ -121,7 +177,7 @@
       "required": ["status"],
       "properties": {
         "status": { "type": "integer", "minimum": 100, "maximum": 599 },
-        "headers": { "$ref": "#/$defs/stringRecord" },
+        "headers": { "$ref": "#/$defs/headerExpectationRecord" },
         "json": { "type": "object", "additionalProperties": true },
         "jsonSchema": { "type": "object", "description": "Inline JSON Schema the normalized body must satisfy." },
         "redirect": {

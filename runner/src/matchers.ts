@@ -67,3 +67,10 @@ export function isLtMatcher(value: unknown): boolean {
   if (key !== '$lt') return false;
   return typeof (value as Record<string, unknown>).$lt === 'number';
 }
+
+/** True when `value` is a `{ "$regex": "<pattern>" }` matcher with a string pattern. */
+export function isRegexMatcher(value: unknown): boolean {
+  const key = matcherKey(value);
+  if (key !== '$regex') return false;
+  return typeof (value as Record<string, unknown>).$regex === 'string';
+}

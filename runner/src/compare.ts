@@ -20,7 +20,7 @@
 import { NORMALIZED, normalizePayload } from './normalize.js';
 import type { ScenarioExpectation } from './scenario.js';
 import { interpolate } from './scenario.js';
-import { isAbsentMatcher, isContainsMatcher, isNonemptyMatcher, isGtMatcher, isLtMatcher, isIncludesMatcher } from './matchers.js';
+import { isAbsentMatcher, isContainsMatcher, isNonemptyMatcher, isGtMatcher, isLtMatcher, isIncludesMatcher, isRegexMatcher } from './matchers.js';
 import { decodeJwtSegments, fieldAt } from './jwt.js';
 
 /** Minimal view of the run's captured-value scope (`Map<string, string>`). */
@@ -198,8 +198,30 @@ export function compareResponse(expect: ScenarioExpectation, actual: ActualRespo
     });
   }
   for (const [name, value] of Object.entries(expect.headers ?? {})) {
-    const expected = scope === undefined ? value : interpolate(value, scope);
     const found = headerValue(actual.headers, name);
+    // A matcher object relaxes the exact-value assertion: `$nonempty` requires a
+    // non-empty value; `$regex` requires a regex match. Literal values still
+    // compare exactly (post-interpolation).
+    if (isNonemptyMatcher(value)) {
+      if (found === undefined) {
+        diffs.push({ path: `headers.${name}`, expected: '<nonempty>', actual: undefined, reason: 'missing header' });
+      } else if (found.trim() === '') {
+        diffs.push({ path: `headers.${name}`, expected: '<nonempty>', actual: found, reason: 'header value is empty' });
+      }
+      continue;
+    }
+    if (isRegexMatcher(value)) {
+      const pattern = (value as { $regex: string }).$regex;
+      const regex = new RegExp(pattern);
+      if (found === undefined) {
+        diffs.push({ path: `headers.${name}`, expected: `/$regex ${pattern}/`, actual: undefined, reason: 'missing header' });
+      } else if (!regex.test(found)) {
+        diffs.push({ path: `headers.${name}`, expected: `/$regex ${pattern}/`, actual: found, reason: 'header value does not match regex' });
+      }
+      continue;
+    }
+    const literal = value as string;
+    const expected = scope === undefined ? literal : interpolate(literal, scope);
     if (found === undefined) {
       diffs.push({ path: `headers.${name}`, expected, actual: undefined, reason: 'missing header' });
     } else if (found !== expected) {
