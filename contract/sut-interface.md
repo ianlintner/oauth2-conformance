@@ -18,6 +18,15 @@ The Rust reference implements it first, Python second; each is a scoped PR in it
 - `users`: seeded resource owners with a username and password for the test login. `auto_approve_clients` lists client IDs for which consent is skipped.
 - `signingKeys`: key IDs and algorithms the SUT must provision. The seed carries no private key material; the SUT generates or loads keys itself and publishes the public side.
 
+### 2a. Seeded client JWKs (extended-grants, v0.5)
+
+Additive, optional seed field; a port that does not implement `private_key_jwt` client auth or JAR request objects simply leaves it absent and is unaffected.
+
+- A confidential client using `token_endpoint_auth_method: private_key_jwt` MUST also carry a `jwks` object: a public-only JWK set (RFC 7517) with a `keys` array (each key at minimum a `kty`, optionally `kid` and `alg`). The SUT uses these public keys to verify the client's signed assertions and JAR request objects.
+- `jwks` holds **public key material only** — never a `d` (private) parameter. The seed never carries private keys. The runner produces the matching private key per run (its `client-assertion` / `request-object` signing helpers generate an ephemeral key and publish the public side for the scenario to copy into the seed); the SUT never needs, and must never accept, private key material from the seed.
+- Keys are clearly labelled synthetic test fixtures and are valid only while conformance mode is on, like every other seeded credential.
+- This field is additive: existing seeds without `jwks` remain valid, and `private_key_jwt` / JAR scenarios simply stay `draft` against a SUT that does not support them.
+
 The seed is applied once at startup, before readiness. The runner does not mutate it afterwards. A SUT that cannot apply the seed completely must not become ready.
 
 ## 3. Non-interactive test login
