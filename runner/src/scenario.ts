@@ -117,6 +117,22 @@ function strings(input: unknown, label: string): Record<string, string> {
   return value as Record<string, string>;
 }
 
+/** Return `input` as a string, string-type-only (an empty string stays valid). */
+function stringLiteral(input: unknown, label: string): string {
+  if (typeof input !== 'string') throw new TypeError(`${label} must be a string`);
+  return input;
+}
+
+/** True when `pattern` is a syntactically valid regular expression. */
+function isValidRegex(pattern: string): boolean {
+  try {
+    new RegExp(pattern);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function stringList(input: unknown, label: string): string[] {
   if (!Array.isArray(input) || input.length === 0) throw new TypeError(`${label} must be a nonempty array`);
   return input.map((entry, index) => stringAt(entry, `${label}[${index}]`));
@@ -165,7 +181,10 @@ export function parseRequest(input: unknown, label: string): ScenarioRequest {
 /** Parse `expect.headers`: exact strings or `{ $nonempty }` / `{ $regex }` matchers. */
 function parseHeaderExpectations(input: unknown, label: string): Record<string, HeaderExpectation> {
   const headers = record(input, label);
-  const out: Record<string, HeaderExpectation> = {};
+  // Null-prototype so a header named `__proto__` (allowed by the schema) is an
+  // own enumerable assertion rather than hitting the inherited setter and
+  // silently vanishing from the comparison.
+  const out = Object.create(null) as Record<string, HeaderExpectation>;
   for (const [name, raw] of Object.entries(headers)) {
     if (raw !== null && typeof raw === 'object' && !Array.isArray(raw)) {
       const matcher = raw as Record<string, unknown>;
@@ -175,12 +194,15 @@ function parseHeaderExpectations(input: unknown, label: string): Record<string, 
         continue;
       }
       if (keys.length === 1 && keys[0] === '$regex' && typeof matcher.$regex === 'string' && matcher.$regex.length > 0) {
+        if (!isValidRegex(matcher.$regex)) {
+          throw new TypeError(`${label}.headers.${name} has an invalid $regex pattern`);
+        }
         out[name] = { $regex: matcher.$regex };
         continue;
       }
       throw new TypeError(`${label}.headers.${name} must be a string or a { $nonempty: true } / { $regex: "..." } matcher`);
     }
-    out[name] = stringAt(raw, `${label}.headers.${name}`);
+    out[name] = stringLiteral(raw, `${label}.headers.${name}`);
   }
   return out;
 }
@@ -240,6 +262,7 @@ function parseStep(input: unknown, index: number): ScenarioStep {
   if (step.use !== undefined) {
     if (step.request !== undefined) throw new TypeError(`${label} cannot carry both use and request`);
     if (step.assert !== undefined) throw new TypeError(`${label} cannot carry both use and assert`);
+    if (step.repeat !== undefined) throw new TypeError(`${label} cannot carry repeat on a use step`);
     return {
       id,
       use: stringAt(step.use, `${label}.use`),
@@ -252,6 +275,7 @@ function parseStep(input: unknown, index: number): ScenarioStep {
   }
   if (step.assert !== undefined) {
     // Assert-only step: no HTTP request, runs against capture scope.
+    if (step.repeat !== undefined) throw new TypeError(`${label} cannot carry repeat on an assert step`);
     return {
       id,
       assert: parseExpectation(step.assert, `${label}.assert`),

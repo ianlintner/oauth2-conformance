@@ -116,9 +116,9 @@ export async function runScenarios(scenarios: Scenario[], options: RunOptions): 
     let steps = 0;
     let error: string | undefined;
 
-    for (const step of scenario.steps) {
+    stepsLoop: for (const step of scenario.steps) {
       const repetitions = step.repeat ?? 1;
-      stepLoop: for (let iteration = 0; iteration < repetitions; iteration += 1) {
+      for (let iteration = 0; iteration < repetitions; iteration += 1) {
         try {
           let actual: import('./compare.js').ActualResponse;
         if (step.use !== undefined) {
@@ -242,7 +242,7 @@ export async function runScenarios(scenarios: Scenario[], options: RunOptions): 
       } catch (cause) {
         error = cause instanceof Error ? cause.message : String(cause);
         diffs.push({ path: step.id, expected: '<step completes>', actual: undefined, reason: `step threw: ${error}` });
-        break stepLoop;
+        break stepsLoop;
       }
       }
     }
