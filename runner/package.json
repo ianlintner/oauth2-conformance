@@ -22,7 +22,7 @@
     "conformance": "tsx src/cli.ts"
   },
   "devDependencies": {
-    "@types/node": "^24.0.0",
+    "@types/node": "^26.6.6",
     "eslint": "^10.14.0",
     "tsx": "^4.0.0",
     "typescript": "^5.0.0",
