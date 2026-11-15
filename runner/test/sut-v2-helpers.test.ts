@@ -201,12 +201,12 @@ test('sut-restart fails when unconfigured, when the command fails, and when read
 
 // ---- mtls-request ---------------------------------------------------------
 
-test('mtls-request presents the selected client certificate; none/rogue are visible to the SUT', async () => {
+test('mtls-request presents the selected client certificate; a rogue-CA or missing certificate is refused', async () => {
   const files = await pki();
   const [serverCert, serverKey, ca, clientCert, clientKey, otherCert, otherKey] = (await Promise.all(
     [files.serverCert, files.serverKey, files.ca, files.clientCert, files.clientKey, files.otherCert, files.otherKey].map((f) => readFile(f, 'utf8')),
   )) as [string, string, string, string, string, string, string];
-  const server = createHttpsServer({ cert: serverCert, key: serverKey, ca, requestCert: true, rejectUnauthorized: false }, (req, res) => {
+  const server = createHttpsServer({ cert: serverCert, key: serverKey, ca, requestCert: true }, (req, res) => {
     const socket = req.socket as TLSSocket;
     const peer = socket.getPeerCertificate();
     res.setHeader('content-type', 'application/json');
@@ -220,11 +220,9 @@ test('mtls-request presents the selected client certificate; none/rogue are visi
     };
     const good = await mtlsRequest(ctx({ cert: 'good', method: 'GET', path: '/oauth/token' }, { sut }));
     assert.deepEqual(good.body, { authorized: true, cn: 'client-1', path: '/oauth/token' });
-    const rogue = await mtlsRequest(ctx({ cert: 'rogue', method: 'GET', path: '/p' }, { sut }));
-    assert.equal((rogue.body as { authorized: boolean }).authorized, false);
-    const none = await mtlsRequest(ctx({ method: 'GET', path: '/p' }, { sut }));
-    assert.equal((none.body as { cn: string | null }).cn, null);
-    assert.equal((none.body as { authorized: boolean }).authorized, false);
+    // The strict test listener refuses a certificate from another CA and a missing one at the handshake.
+    await assert.rejects(mtlsRequest(ctx({ cert: 'rogue', method: 'GET', path: '/p' }, { sut })));
+    await assert.rejects(mtlsRequest(ctx({ method: 'GET', path: '/p' }, { sut })));
     await assert.rejects(mtlsRequest(ctx({ cert: 'missing', path: '/p' }, { sut })), /unknown client certificate "missing"/);
     await assert.rejects(mtlsRequest(ctx({ path: '/p' })), /no mtls listener configured/);
     await assert.rejects(mtlsRequest(ctx({ path: 'https://x/p' }, { sut })), /path must start with \//);
