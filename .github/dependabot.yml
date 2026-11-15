@@ -1,0 +1,32 @@
+# Weekly, grouped: one PR per ecosystem for all minor+patch bumps; major bumps stay separate PRs.
+# cooldown waits 7 days after a release before proposing it (skips yanked/broken releases).
+# Patch/minor Dependabot PRs that pass every check are merged by the IkitClaw approved-PR sweep under
+# Ian's standing exception; majors, 0.x minor bumps and anything failing still go to Ian.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: "/runner"
+    schedule:
+      interval: weekly
+      day: monday
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: chore(deps)
+    groups:
+      runner-minor-patch:
+        update-types: [minor, patch]
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: chore(ci)
+    groups:
+      github-actions:
+        update-types: [minor, patch]
