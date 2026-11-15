@@ -17,6 +17,8 @@ import { loadProfiles, loadRequirements, loadScenarios } from './loader.js';
 import { buildCoverage, renderCoverage } from './coverage.js';
 import { runScenarios, type RunReport } from './runner.js';
 import { dpopProof } from './dpop.js';
+import { clientAssertion } from './client-assertion.js';
+import { requestObject } from './request-object.js';
 import { deviceVerify, loginAndAuthorize, logout } from './helpers.js';
 import { validateRepository } from './schema-validate.js';
 import { parseContractRef } from './manifest.js';
@@ -193,7 +195,7 @@ export async function commandRun(flags: Record<string, string | boolean>): Promi
     implementation: stringFlag(flags, 'implementation', 'system-under-test'),
     contract: contractRef.value,
     ...(flags.profile !== undefined ? { profile: stringFlag(flags, 'profile') } : {}),
-    helpers: { 'login-and-authorize': loginAndAuthorize, 'logout': logout, 'device-verify': deviceVerify, 'dpop-proof': dpopProof },
+    helpers: { 'login-and-authorize': loginAndAuthorize, 'logout': logout, 'device-verify': deviceVerify, 'dpop-proof': dpopProof, 'client-assertion': clientAssertion, 'request-object': requestObject },
   });
   const reportFile = flags.report !== undefined ? path.resolve(stringFlag(flags, 'report')) : undefined;
   if (reportFile !== undefined) {
