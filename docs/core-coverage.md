@@ -40,7 +40,7 @@ the stable set and are absent from the CI ratchet.
 | Requirement | Level | Missing extension |
 |---|---|---|
 | RFC9207-2.1-iss-form-urlencoded | MUST | An `expect.redirect` raw-Location / form-encoding assertion for the wire form of `iss`. Runner feature, not a SUT change. Folded out of core.authorize.code-issued, which now only asserts the decoded `iss`. |
-| RFC9700-2.1.1-code-replay-revokes-tokens | SHOULD | A token-introspection step after the replay (v0.2 token-lifecycle scope). Removed from core.hardening.code-single-use, which asserts rejection only. |
+| RFC9700-2.1.1-code-replay-revokes-tokens | SHOULD | Still uncovered under `core` (introspection is token-lifecycle scope); covered under `token-lifecycle` by `token-lifecycle.revocation.code-replay-revokes-tokens` (stable) and the `-no-refresh-grant` variant (reference-deviation), see `docs/security-review-batch-1.md`. |
 
 ## Draft scenarios
 
