@@ -57,6 +57,8 @@ export interface RunOptions extends TransportOptions {
   only?: string[];
   /** Run helpers keyed by `use` name. */
   helpers?: Record<string, ScenarioHelper>;
+  /** Optional SUT interface v2 runtime (instances, restart hook, mTLS listener). */
+  sut?: import('./sut-runtime.js').SutRuntime;
 }
 
 export interface HelperContext {
@@ -65,6 +67,10 @@ export interface HelperContext {
   with: Record<string, unknown>;
   /** Run-wide login sessions (loginPath\0username\0password -> cookie), shared by every scenario in one run. */
   sessions?: Map<string, string>;
+  /** Primary SUT base URL (readiness polling by `sut-restart`). */
+  baseUrl?: string;
+  /** SUT interface v2 runtime supplied by the harness; absent capabilities fail closed. */
+  sut?: import('./sut-runtime.js').SutRuntime;
 }
 
 export type ScenarioHelper = (context: HelperContext) => Promise<import('./compare.js').ActualResponse>;
@@ -133,6 +139,8 @@ export async function runScenarios(scenarios: Scenario[], options: RunOptions): 
             scope,
             with: step.with ?? {},
             sessions,
+            baseUrl: options.baseUrl,
+            ...(options.sut !== undefined ? { sut: options.sut } : {}),
           });
         } else {
           const request = buildRequest(step, scope);
