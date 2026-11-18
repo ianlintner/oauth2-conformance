@@ -80,7 +80,9 @@ Additive and owner-gated. A SUT that implements none of this is still a valid v1
   "instances": ["http://127.0.0.1:8081", "http://127.0.0.1:8082"] }
 ```
 
-`mtls` is required exactly when `mtls` is advertised, `instances` (at least two) exactly when `multi-instance` is. With conformance mode off the path is `404`, like every other `/conformance/*` path. The runner does not guess: a capability not listed must not be used.
+`mtls` is required exactly when `mtls` is advertised, `instances` (at least two) exactly when `multi-instance` is. With conformance mode off the path is `404`, like every other `/conformance/*` path.
+
+The advertisement tells a **scenario author** which capabilities a SUT claims; it is not enforced by the runner. The runner does not read `/conformance/capabilities` and does not cross-check the advertised `instances`/`mtls.base_url` against `--sut-config`. What the runner actually verifies is narrower: a helper whose harness configuration (`--sut-config`) is absent throws (section 7.7), and `advance-clock` requires a `2xx` from the SUT. Advertised capabilities and harness configuration are two independent claims; a mismatch between them is not detected by the runner. Do not rely on the advertisement alone as proof that a scenario can run or that a capability works.
 
 ### 7.2 `test-clock`
 
@@ -88,6 +90,8 @@ Additive and owner-gated. A SUT that implements none of this is still a valid v1
 - The clock is monotonic: it cannot be set backwards or reset except by restarting the process. Anything else (`N` negative, fractional, missing) is `400`.
 - Time moves only when advanced: the SUT clock is real time plus the accumulated offset, so scenarios stay deterministic as long as they advance by amounts well above real elapsed time.
 - Issued timestamps (`iat`, `exp`) reflect the advanced clock, and relative lifetimes are computed from it.
+- The offset is **process-local**. Runner side, `advance-clock` posts only to the primary `--base-url` (it has no `instance` option), so it advances only that process. Scenarios that combine `test-clock` with `multi-instance` (for example, expiry observed on another instance) are **unsupported**: the instances' clocks would diverge. Such scenarios must not be written or promoted.
+- Runner input: `with.seconds` is an integer or a string of ASCII decimal digits (after `{{var}}` interpolation). Blank, whitespace-padded, signed, fractional, or non-decimal values (`1e3`, `0x10`) are rejected before any request is sent.
 
 ### 7.3 `dpop-nonce-mode` (RFC 9449 sections 8 and 9)
 
@@ -98,11 +102,11 @@ Additive and owner-gated. A SUT that implements none of this is still a valid v1
 
 - The **harness**, not the SUT, restarts the process. The SUT provides no endpoint; it must keep durable state (codes, grants, tokens, refresh families, replay records) across a restart of its own process, and must be ready (section 4) afterwards with the same seed re-applied idempotently.
 - Process-local conformance state is exempt: the test clock offset and the DPoP nonce toggle reset on restart.
-- Runner side: `use: sut-restart` runs the program configured in the harness's `--sut-config` (`restart.command`, executed directly without a shell, with `OAUTH2_CONFORMANCE_BASE_URL` in its environment), then polls `restart.readyPath` (default `/health`) until `2xx`. A scenario can never choose the command.
+- Runner side: `use: sut-restart` runs the program configured in the harness's `--sut-config` (`restart.command`, executed directly without a shell, with `OAUTH2_CONFORMANCE_BASE_URL` in its environment). The command **must return only after the old process has exited**: the runner starts readiness polling after the command exits and does not first observe not-ready, so a command that returns early could let the old process answer `/health`. The runner then polls `restart.readyPath` (default `/health`) until `2xx`. A scenario can never choose the command.
 
 ### 7.5 `multi-instance`
 
-- Several SUT processes share one durable store and one seed and are individually addressable at the advertised `instances` origins. The primary `--base-url` is one of them. Used for replay across instances and persistence checks.
+- Several SUT processes share one durable store and one seed and are individually addressable at the advertised `instances` origins. The primary `--base-url` is one of them. Process-local state (test clock, DPoP nonce toggle) is per instance and the runner drives it on the primary only; do not combine those with multi-instance assertions. Used for replay across instances and persistence checks.
 - Runner side: `use: request-on-instance` with `with.instance` (a name from `--sut-config` `instances`) plus `method`, `path`, `query`, `headers`, and `form` or `json`; values may use `{{var}}`.
 
 ### 7.6 `mtls` (RFC 8705)

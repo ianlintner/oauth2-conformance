@@ -82,7 +82,9 @@ function requireStringMap(helper: string, name: string, value: unknown): Record<
 /** `use: advance-clock` — `with.seconds` (integer, may use `{{var}}`), optional `clockPath`. */
 export async function advanceClock(context: HelperContext): Promise<ActualResponse> {
   const raw = context.with.seconds;
-  const value = typeof raw === 'string' ? (raw.trim() === '' ? Number.NaN : Number(sub(context, raw))) : raw;
+  // Validate the *substituted* string as plain ASCII decimal digits: Number() would
+  // accept '', whitespace ('0'), '1e3' and '0x10'.
+  const value = typeof raw === 'string' ? (/^[0-9]+$/.test(sub(context, raw)) ? Number(sub(context, raw)) : Number.NaN) : raw;
   if (typeof value !== 'number' || !Number.isInteger(value) || value < 0 || value > MAX_CLOCK_ADVANCE_SECONDS) {
     throw new Error(`advance-clock: with.seconds must be an integer between 0 and ${MAX_CLOCK_ADVANCE_SECONDS}`);
   }
