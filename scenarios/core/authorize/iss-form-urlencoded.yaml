@@ -1,0 +1,31 @@
+id: core.authorize.iss-form-urlencoded
+title: The iss parameter on the authorization redirect is form-urlencoded on the wire
+requirements: [RFC9207-2.1-iss-form-urlencoded]
+profile: core
+status: stable
+note: |
+  RFC 9207 2.1: iss is form-urlencoded. This asserts the RAW Location value
+  (expect.redirect.formEncodedQuery), distinct from the decoded comparison in
+  core.authorize.code-issued. It is not a byte-for-byte match: any valid
+  application/x-www-form-urlencoded serialization that decodes to the seed
+  issuer passes (hex case, unreserved characters), but reserved characters such
+  as ":" and "/" left unescaped fail.
+steps:
+  - id: auth
+    use: login-and-authorize
+    with:
+      username: alice
+      password: test-only-password
+      loginPath: /auth/login
+      authorizePath: /oauth/authorize
+      query:
+        response_type: code
+        client_id: client-a
+        redirect_uri: https://client.example/callback
+        state: s-iss-form
+        code_challenge: E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM
+        code_challenge_method: S256
+    expect:
+      status: 302
+      redirect:
+        formEncodedQuery: { iss: "http://localhost:8080" }

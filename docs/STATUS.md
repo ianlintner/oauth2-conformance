@@ -8,7 +8,7 @@
 | Profile | Stable | Reference-deviation | Draft | Scenarios | MUST / MUST NOT with a stable scenario | Requirements |
 |---|---|---|---|---|---|---|
 | `admin-api` | 0 | 0 | 0 | 0 | 0 / 46 (0%) | 52 |
-| `core` | 39 | 2 | 2 | 43 | 40 / 45 (89%) | 55 |
+| `core` | 40 | 2 | 2 | 44 | 41 / 45 (91%) | 55 |
 | `extended-grants` | 7 | 1 | 43 | 51 | 6 / 61 (10%) | 70 |
 | `fapi2` | 0 | 0 | 0 | 0 | 0 / 26 (0%) | 32 |
 | `hardening` | 1 | 0 | 2 | 3 | 1 / 18 (6%) | 27 |
@@ -18,7 +18,7 @@
 | `resource` | 0 | 0 | 0 | 0 | 0 / 24 (0%) | 35 |
 | `sender-constrained` | 7 | 0 | 28 | 35 | 6 / 22 (27%) | 35 |
 | `token-lifecycle` | 25 | 6 | 0 | 31 | 32 / 41 (78%) | 67 |
-| **Total** | **85** | **9** | **85** | **179** | **92 / 333 (28%)** | **441** |
+| **Total** | **86** | **9** | **85** | **180** | **93 / 333 (28%)** | **441** |
 
 ## Ports
 
