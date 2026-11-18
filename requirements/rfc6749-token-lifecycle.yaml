@@ -93,4 +93,8 @@
   profile: token-lifecycle
   summary: "Local hardening policy: a request naming a public client with an empty client_secret (form field or empty HTTP Basic password) is not treated as confidential-client authentication and is refused."
   link: https://www.rfc-editor.org/rfc/rfc6749#section-2.3.1
-  notes: "Local hardening policy, not an RFC keyword. RFC 6749 2.3.1 defines client_secret as the credential of a client issued a password and says nothing about an empty value; RFC 9700 2.5 covers client authentication in general (authorization servers SHOULD enforce client authentication where feasible) without addressing empty secrets. Recorded at MAY so it does not gate a pass, as with the other local-policy requirements."
+  notes: >-
+    RFC 6749 section 2.3.1 says, "The client MAY omit the parameter if the client secret is an empty string."
+    That rule concerns a client issued a password. This local policy concerns a public client that was issued no secret:
+    an empty value is not evidence of confidential-client authentication. Refusal is a local policy choice (MAY),
+    not a server requirement imposed by section 2.3.1 or RFC 9700 section 2.5.
