@@ -190,7 +190,11 @@
             "location": { "type": "string", "minLength": 1 },
             "locationPrefix": { "type": "string", "minLength": 1 },
             "query": { "$ref": "#/$defs/stringRecord" },
-            "fragment": { "$ref": "#/$defs/stringRecord" }
+            "fragment": { "$ref": "#/$defs/stringRecord" },
+            "formEncodedQuery": {
+              "$ref": "#/$defs/stringRecord",
+              "description": "Raw Location query values must be valid application/x-www-form-urlencoded serializations decoding to the given strings (equivalent encodings accepted)."
+            }
           }
         }
       }

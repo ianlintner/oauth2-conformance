@@ -164,6 +164,15 @@ function deepDiff(expected: unknown, actual: unknown, path: string, diffs: Diff[
   }
 }
 
+/** Decode a percent-encoded component; a malformed escape keeps the raw text so the response can still be asserted on. */
+function safeDecode(text: string): string {
+  try {
+    return decodeURIComponent(text);
+  } catch {
+    return text;
+  }
+}
+
 function parseRedirect(location: string): { location: string; query: Record<string, string>; fragment: Record<string, string> } {
   const query: Record<string, string> = {};
   const fragment: Record<string, string> = {};
@@ -179,12 +188,56 @@ function parseRedirect(location: string): { location: string; query: Record<stri
     for (const pair of segment.split('&')) {
       if (pair === '') continue;
       const eq = pair.indexOf('=');
-      const key = decodeURIComponent(eq === -1 ? pair : pair.slice(0, eq));
-      const value = eq === -1 ? '' : decodeURIComponent(pair.slice(eq + 1).replace(/\+/g, ' '));
+      const key = safeDecode(eq === -1 ? pair : pair.slice(0, eq));
+      const value = eq === -1 ? '' : safeDecode(pair.slice(eq + 1).replace(/\+/g, ' '));
       target[key] = value;
     }
   }
   return { location, query, fragment };
+}
+
+/** Characters a form-urlencoded value may carry unescaped (plus unreserved `~`); everything else must be %XX. */
+const FORM_VALUE = /^(?:[A-Za-z0-9*\-._~+]|%[0-9A-Fa-f]{2})*$/;
+
+/**
+ * Check the RAW query value of `key` in `location`: exactly one occurrence, only
+ * form-urlencoded characters (reserved characters such as `:` `/` must be
+ * percent-encoded), and it decodes to `expected`. Hex case and `+`/%20 are
+ * equivalent encodings and are accepted.
+ */
+function checkFormEncodedQuery(location: string, key: string, expected: string): Diff | undefined {
+  const path = `redirect.formEncodedQuery.${key}`;
+  const hash = location.indexOf('#');
+  const noFragment = hash === -1 ? location : location.slice(0, hash);
+  const question = noFragment.indexOf('?');
+  const queryString = question === -1 ? '' : noFragment.slice(question + 1);
+  const raws: string[] = [];
+  for (const pair of queryString.split('&')) {
+    if (pair === '') continue;
+    const eq = pair.indexOf('=');
+    const rawKey = eq === -1 ? pair : pair.slice(0, eq);
+    let name: string;
+    try {
+      name = decodeURIComponent(rawKey.replace(/\+/g, ' '));
+    } catch {
+      continue;
+    }
+    if (name === key) raws.push(eq === -1 ? '' : pair.slice(eq + 1));
+  }
+  if (raws.length === 0) return { path, expected, actual: undefined, reason: 'missing query parameter' };
+  if (raws.length > 1) return { path, expected, actual: raws, reason: 'query parameter appears more than once' };
+  const raw = raws[0] as string;
+  if (!FORM_VALUE.test(raw)) {
+    return { path, expected, actual: raw, reason: 'raw value is not form-urlencoded (reserved characters must be percent-encoded)' };
+  }
+  let decoded: string;
+  try {
+    decoded = decodeURIComponent(raw.replace(/\+/g, ' '));
+  } catch {
+    return { path, expected, actual: raw, reason: 'raw value is not form-urlencoded (invalid percent escape)' };
+  }
+  if (decoded !== expected) return { path, expected, actual: decoded, reason: `raw value decodes to a different string (${raw})` };
+  return undefined;
 }
 
 export function compareResponse(expect: ScenarioExpectation, actual: ActualResponse, scope?: CaptureScope): Diff[] {
@@ -256,6 +309,10 @@ export function compareResponse(expect: ScenarioExpectation, actual: ActualRespo
         } else if (found !== value) {
           diffs.push({ path: `redirect.query.${key}`, expected: value, actual: found, reason: 'query parameter differs' });
         }
+      }
+      for (const [key, value] of Object.entries(expect.redirect.formEncodedQuery ?? {})) {
+        const diff = checkFormEncodedQuery(parsed.location, key, value);
+        if (diff !== undefined) diffs.push(diff);
       }
       for (const [key, value] of Object.entries(expect.redirect.fragment ?? {})) {
         const found = parsed.fragment[key];
