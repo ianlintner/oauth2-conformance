@@ -51,6 +51,12 @@ export interface ScenarioExpectation {
     locationPrefix?: string;
     query?: Record<string, string>;
     fragment?: Record<string, string>;
+    /**
+     * Raw-wire assertion: each named query parameter's RAW Location value must be a valid
+     * application/x-www-form-urlencoded serialization that decodes to the given string.
+     * Equivalent encodings (hex case) pass; it is not a byte-for-byte comparison.
+     */
+    formEncodedQuery?: Record<string, string>;
   };
 }
 
@@ -221,6 +227,7 @@ export function parseExpectation(input: unknown, label: string): ScenarioExpecta
       ...(raw.locationPrefix !== undefined ? { locationPrefix: stringAt(raw.locationPrefix, `${label}.redirect.locationPrefix`) } : {}),
       ...(raw.query !== undefined ? { query: strings(raw.query, `${label}.redirect.query`) } : {}),
       ...(raw.fragment !== undefined ? { fragment: strings(raw.fragment, `${label}.redirect.fragment`) } : {}),
+      ...(raw.formEncodedQuery !== undefined ? { formEncodedQuery: strings(raw.formEncodedQuery, `${label}.redirect.formEncodedQuery`) } : {}),
     };
   }
   return {
