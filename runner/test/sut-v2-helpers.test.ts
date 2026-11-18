@@ -116,6 +116,28 @@ test('advance-clock rejects missing, negative, fractional and absurd durations b
   }
 });
 
+test('advance-clock rejects invalid interpolated values (blank, whitespace, nondecimal notation) before any request', async () => {
+  const send = async (): Promise<ActualResponse> => assert.fail('must not send');
+  for (const value of ['', ' ', '  ', '\t', ' 5', '5 ', '1e3', '0x10', '0b1', '0o7', '+5', '-1', '1.5', '1_000', '\u0665', 'Infinity', 'NaN', '99999999999999999999']) {
+    await assert.rejects(
+      advanceClock(ctx({ seconds: '{{n}}' }, { scope: new Map([['n', value]]), send })),
+      /advance-clock: with\.seconds/,
+      `value ${JSON.stringify(value)} must be rejected`,
+    );
+  }
+});
+
+test('advance-clock still accepts legal decimal integers, zero and the upper bound (literal or interpolated)', async () => {
+  for (const [value, expected] of [['0', 0], ['7', 7], ['007', 7], ['31536000', 31_536_000]] as const) {
+    const sent: string[] = [];
+    const send = async (req: { body?: string }): Promise<ActualResponse> => (sent.push(req.body ?? ''), { status: 200, headers: {}, body: undefined });
+    await advanceClock(ctx({ seconds: '{{n}}' }, { scope: new Map([['n', value]]), send }));
+    await advanceClock(ctx({ seconds: value }, { send }));
+    await advanceClock(ctx({ seconds: expected }, { send }));
+    assert.deepEqual(sent, Array(3).fill(`{"advance_seconds":${expected}}`));
+  }
+});
+
 test('advance-clock fails closed when the SUT does not offer the capability (non-2xx)', async () => {
   await assert.rejects(advanceClock(ctx({ seconds: 5 }, { send: async () => ({ status: 404, headers: {}, body: undefined }) })), /advance-clock: SUT answered 404/);
 });
