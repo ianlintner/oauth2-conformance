@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ianlintner/oauth2-conformance/schemas/sut-capabilities.schema.json",
+  "title": "SUT capability advertisement (interface v2)",
+  "description": "Body of GET /conformance/capabilities. Served only in conformance mode (404 otherwise). Each optional capability is independently advertised; a capability not listed must not be assumed.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["interface_version", "capabilities"],
+  "properties": {
+    "interface_version": { "const": 2 },
+    "capabilities": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "enum": ["test-clock", "dpop-nonce-mode", "restart", "multi-instance", "mtls"] }
+    },
+    "mtls": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["base_url"],
+      "properties": {
+        "base_url": { "type": "string", "pattern": "^https://", "description": "Origin of the TLS listener that requests (and does not require) a client certificate." }
+      }
+    },
+    "instances": {
+      "type": "array",
+      "minItems": 2,
+      "items": { "type": "string", "pattern": "^https?://" },
+      "description": "Origins of the SUT processes sharing one store when `multi-instance` is advertised."
+    }
+  },
+  "allOf": [
+    { "if": { "properties": { "capabilities": { "type": "array", "contains": { "const": "mtls" } } }, "required": ["capabilities"] }, "then": { "required": ["mtls"] }, "else": { "not": { "required": ["mtls"] } } },
+    { "if": { "properties": { "capabilities": { "type": "array", "contains": { "const": "multi-instance" } } }, "required": ["capabilities"] }, "then": { "required": ["instances"] }, "else": { "not": { "required": ["instances"] } } }
+  ]
+}

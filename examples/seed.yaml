@@ -8,7 +8,7 @@ clients:
   - client_id: client-a
     client_secret: test-only-secret
     token_endpoint_auth_method: client_secret_basic
-    redirect_uris: [https://client.example/callback]
+    redirect_uris: ["https://client.example/callback"]
     grant_types: [authorization_code, refresh_token]
   # Fixture client for token-endpoint scenarios that need a 200 without a live
   # authorization code. client_credentials is outside the core profile; this
@@ -17,7 +17,7 @@ clients:
   - client_id: client-cc
     client_secret: test-only-cc-secret
     token_endpoint_auth_method: client_secret_basic
-    redirect_uris: [https://client.example/callback]
+    redirect_uris: ["https://client.example/callback"]
     grant_types: [client_credentials]
   # Confidential client whose secret needs form-urlencoding in a Basic header
   # (RFC 6749 section 2.3.1). The secret is the literal string  p@ss:w+rd %
@@ -26,13 +26,13 @@ clients:
   - client_id: client-enc
     client_secret: "p@ss:w+rd %"
     token_endpoint_auth_method: client_secret_basic
-    redirect_uris: [https://client.example/callback]
+    redirect_uris: ["https://client.example/callback"]
     grant_types: [authorization_code, client_credentials]
   # Public client; PKCE is the only protection, no secret.
   - client_id: client-public
     public: true
     token_endpoint_auth_method: none
-    redirect_uris: [https://client.example/callback]
+    redirect_uris: ["https://client.example/callback"]
     grant_types: [authorization_code]
   # RFC 8252 native clients: IPv4 loopback, IPv6 loopback, localhost hostname
   # and a claimed private-use scheme, all public.
@@ -61,8 +61,24 @@ clients:
   - client_id: client-dev
     client_secret: test-only-dev-secret
     token_endpoint_auth_method: client_secret_basic
-    redirect_uris: [https://client.example/callback]
-    grant_types: [urn:ietf:params:oauth:grant-type:device_code]
+    redirect_uris: ["https://client.example/callback"]
+    grant_types: ["urn:ietf:params:oauth:grant-type:device_code"]
+  # private_key_jwt client (RFC 7523), extended-grants profile. The jwks entry
+  # is a synthetic test fixture carrying public key material only (no private
+  # key); the runner-side client-assertion helper generates the matching
+  # private key per run and the scenario copies the public side into this field.
+  - client_id: client-jwt
+    token_endpoint_auth_method: private_key_jwt
+    redirect_uris: ["https://client.example/callback"]
+    grant_types: [client_credentials, "urn:ietf:params:oauth:grant-type:jwt-bearer"]
+    jwks:
+      keys:
+        - kty: EC
+          kid: client-assertion
+          crv: P-256
+          x: MKBCTNIcKUSDii11ySs3526iDZ8AiTo7Tu6KPAqv7D4
+          y: 4Etl6SRW2YiLUrN5vfvVHuhp7x8PxltmWWlbbM4IFyM
+          alg: ES256
 users:
   - username: alice
     password: test-only-password
