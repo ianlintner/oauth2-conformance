@@ -17,7 +17,11 @@ import { loadProfiles, loadRequirements, loadScenarios } from './loader.js';
 import { buildCoverage, renderCoverage } from './coverage.js';
 import { runScenarios, type RunReport } from './runner.js';
 import { dpopProof } from './dpop.js';
+import { clientAssertion } from './client-assertion.js';
+import { requestObject } from './request-object.js';
 import { deviceVerify, loginAndAuthorize, logout } from './helpers.js';
+import { advanceClock, mtlsRequest, requestOnInstance, sutRestart, x5tThumbprint } from './sut-helpers.js';
+import { parseSutConfig } from './sut-runtime.js';
 import { validateRepository } from './schema-validate.js';
 import { parseContractRef } from './manifest.js';
 import { computeContractStatus, computePortStatus, parsePortManifest, renderStatus, type PortManifest, type PortReport } from './status-report.js';
@@ -62,7 +66,7 @@ export function usage(): string {
     'oauth2-conformance <command> [options]',
     '',
     'Commands:',
-    '  run       --base-url URL --scenarios DIR [--requirements DIR] [--profile ID] [--report FILE]',
+    '  run       --base-url URL --scenarios DIR [--requirements DIR] [--profile ID] [--report FILE] [--sut-config FILE]',
     '  validate  --scenarios DIR [--requirements DIR] [--profiles DIR]',
     '  validate-schemas  [--root DIR]   JSON Schema 2020-12 check of every data file',
     '  coverage  --scenarios DIR --requirements DIR [--profiles DIR] [--profile ID] [--min PERCENT] [--json]',
@@ -188,12 +192,26 @@ export async function commandRun(flags: Record<string, string | boolean>): Promi
   const baseUrl = stringFlag(flags, 'base-url');
   const scenarios = await loadScenarios(rootFlag(flags, 'scenarios'));
   const contractRef = parseContractRef(stringFlag(flags, 'contract', '0.1.0'));
+  const sutConfigFile = flags['sut-config'] !== undefined ? path.resolve(stringFlag(flags, 'sut-config')) : undefined;
   const report: RunReport = await runScenarios(scenarios, {
     baseUrl,
     implementation: stringFlag(flags, 'implementation', 'system-under-test'),
     contract: contractRef.value,
     ...(flags.profile !== undefined ? { profile: stringFlag(flags, 'profile') } : {}),
-    helpers: { 'login-and-authorize': loginAndAuthorize, 'logout': logout, 'device-verify': deviceVerify, 'dpop-proof': dpopProof },
+    helpers: {
+      'login-and-authorize': loginAndAuthorize,
+      'logout': logout,
+      'device-verify': deviceVerify,
+      'dpop-proof': dpopProof,
+      'client-assertion': clientAssertion,
+      'request-object': requestObject,
+      'advance-clock': advanceClock,
+      'sut-restart': sutRestart,
+      'request-on-instance': requestOnInstance,
+      'mtls-request': mtlsRequest,
+      'x5t-s256': x5tThumbprint,
+    },
+    ...(sutConfigFile !== undefined ? { sut: await parseSutConfig(await readFile(sutConfigFile, 'utf8'), path.dirname(sutConfigFile)) } : {}),
   });
   const reportFile = flags.report !== undefined ? path.resolve(stringFlag(flags, 'report')) : undefined;
   if (reportFile !== undefined) {
