@@ -64,4 +64,68 @@ Owner-gated SUT interface extension; all ports implementing `extended-grants` mu
 
 ## 6. Out of scope for v0.1
 
-Clock control, admin/seed-reload endpoints, social login, sender-constrained tokens. Scenarios needing them stay `draft` until a later milestone extends this contract.
+Clock control, admin/seed-reload endpoints, social login, sender-constrained tokens. Scenarios needing them stay `draft` until a later milestone extends this contract. Clock control, DPoP nonce mode, restart/multi-instance and mTLS are now specified, as optional capabilities, in section 7 (SUT interface v2).
+
+## 7. SUT interface v2: optional capabilities
+
+Additive and owner-gated. A SUT that implements none of this is still a valid v1 SUT; scenarios needing a capability it does not advertise stay `draft`/deferred. **Each capability is independent**: implement and advertise only what you support. Nothing here applies outside conformance mode (section 1); the fail-closed rules of section 5 cover every item below.
+
+### 7.1 Advertisement
+
+`GET /conformance/capabilities` returns `200` JSON validated by [`schemas/sut-capabilities.schema.json`](../schemas/sut-capabilities.schema.json):
+
+```json
+{ "interface_version": 2, "capabilities": ["test-clock", "dpop-nonce-mode", "restart", "multi-instance", "mtls"],
+  "mtls": { "base_url": "https://127.0.0.1:8443" },
+  "instances": ["http://127.0.0.1:8081", "http://127.0.0.1:8082"] }
+```
+
+`mtls` is required exactly when `mtls` is advertised, `instances` (at least two) exactly when `multi-instance` is. With conformance mode off the path is `404`, like every other `/conformance/*` path.
+
+The advertisement tells a **scenario author** which capabilities a SUT claims; it is not enforced by the runner. The runner does not read `/conformance/capabilities` and does not cross-check the advertised `instances`/`mtls.base_url` against `--sut-config`. What the runner actually verifies is narrower: a helper whose harness configuration (`--sut-config`) is absent throws (section 7.7), and `advance-clock` requires a `2xx` from the SUT. Advertised capabilities and harness configuration are two independent claims; a mismatch between them is not detected by the runner. Do not rely on the advertisement alone as proof that a scenario can run or that a capability works.
+
+### 7.2 `test-clock`
+
+- `POST /conformance/clock` with `{"advance_seconds": N}` (integer, `0 <= N <= 31536000`) moves the SUT's notion of "now" forward by `N` seconds, cumulatively, for **every** time-dependent decision: token/code/`device_code`/`request_uri` expiry, `expires_in`-derived values, RFC 8628 polling `interval`/`slow_down`, the DPoP `iat` acceptance window, OIDC `auth_time`/`max_age`. Answers `200` `{"now": <epoch seconds>}`.
+- The clock is monotonic: it cannot be set backwards or reset except by restarting the process. Anything else (`N` negative, fractional, missing) is `400`.
+- Time moves only when advanced: the SUT clock is real time plus the accumulated offset, so scenarios stay deterministic as long as they advance by amounts well above real elapsed time.
+- Issued timestamps (`iat`, `exp`) reflect the advanced clock, and relative lifetimes are computed from it.
+- The offset is **process-local**. Runner side, `advance-clock` posts only to the primary `--base-url` (it has no `instance` option), so it advances only that process. Scenarios that combine `test-clock` with `multi-instance` (for example, expiry observed on another instance) are **unsupported**: the instances' clocks would diverge. Such scenarios must not be written or promoted.
+- Runner input: `with.seconds` is an integer or a string of ASCII decimal digits (after `{{var}}` interpolation). Blank, whitespace-padded, signed, fractional, or non-decimal values (`1e3`, `0x10`) are rejected before any request is sent.
+
+### 7.3 `dpop-nonce-mode` (RFC 9449 sections 8 and 9)
+
+- `POST /conformance/dpop-nonce` with `{"required": true|false}` toggles server-provided nonces for both the token endpoint and resource requests; answers `200` `{"required": <bool>}`. Default is `false` (no nonce required).
+- While `true`, a DPoP proof without a valid `nonce` claim is rejected exactly as RFC 9449 prescribes (`use_dpop_nonce` error at the token endpoint, `WWW-Authenticate: DPoP error="use_dpop_nonce"` at resource servers) with a fresh `DPoP-Nonce` response header; a proof carrying that nonce is accepted. Nonce values are opaque; the runner reads them from the header.
+
+### 7.4 `restart`
+
+- The **harness**, not the SUT, restarts the process. The SUT provides no endpoint; it must keep durable state (codes, grants, tokens, refresh families, replay records) across a restart of its own process, and must be ready (section 4) afterwards with the same seed re-applied idempotently.
+- Process-local conformance state is exempt: the test clock offset and the DPoP nonce toggle reset on restart.
+- Runner side: `use: sut-restart` runs the program configured in the harness's `--sut-config` (`restart.command`, executed directly without a shell, with `OAUTH2_CONFORMANCE_BASE_URL` in its environment). The command **must return only after the old process has exited**: the runner starts readiness polling after the command exits and does not first observe not-ready, so a command that returns early could let the old process answer `/health`. The runner then polls `restart.readyPath` (default `/health`) until `2xx`. A scenario can never choose the command.
+
+### 7.5 `multi-instance`
+
+- Several SUT processes share one durable store and one seed and are individually addressable at the advertised `instances` origins. The primary `--base-url` is one of them. Process-local state (test clock, DPoP nonce toggle) is per instance and the runner drives it on the primary only; do not combine those with multi-instance assertions. Used for replay across instances and persistence checks.
+- Runner side: `use: request-on-instance` with `with.instance` (a name from `--sut-config` `instances`) plus `method`, `path`, `query`, `headers`, and `form` or `json`; values may use `{{var}}`.
+
+### 7.6 `mtls` (RFC 8705)
+
+- The SUT exposes a TLS listener at `mtls.base_url` that **requests but does not require** a client certificate (so a no-cert negative case is observable). Client certificates are validated against the seed's `mtls.client_ca` (a public CA certificate; the seed never carries private keys). Clients with `token_endpoint_auth_method: tls_client_auth` carry `tls_client_auth_subject_dn`; `tls_client_certificate_bound_access_tokens: true` binds issued tokens to the presented certificate via `cnf` `x5t#S256` (the base64url SHA-256 of the DER certificate, no padding).
+- The SUT's server certificate and the client certificates/keys are harness-provisioned test fixtures. The runner holds the client private keys (`--sut-config` `mtls.clients`); the runner never writes them to a report and the SUT never receives one.
+- Runner side: `use: mtls-request` with `with.cert` (a configured client certificate name; omit to connect without one) plus the same request fields as `request-on-instance`; the server is verified against `mtls.caFile`. `use: x5t-s256` with `with.cert` or `with.pem` returns `{ "x5t_s256": ... }` for comparison with a token's `cnf` claim.
+
+### 7.7 Runner configuration (`--sut-config FILE`, JSON or YAML)
+
+```yaml
+instances: { a: http://127.0.0.1:8081, b: http://127.0.0.1:8082 }   # origins only
+restart: { command: ./restart.sh, readyPath: /health, readyTimeoutMs: 60000 }
+mtls:
+  baseUrl: https://127.0.0.1:8443
+  caFile: server-ca.pem
+  clients: { client-mtls: { certFile: client.pem, keyFile: client.key } }
+```
+
+Unknown keys are rejected. Relative paths resolve against the config file's directory. A helper whose capability is not configured in `--sut-config` (`sut-restart`, `request-on-instance`, `mtls-request`) throws, so the scenario fails (stable) or defers (draft) instead of passing vacuously. `advance-clock` itself requires a `2xx` from the SUT and throws otherwise.
+
+No scenario is promoted by this contract: the SUT-side implementations are separate port work, and a scenario becomes `stable` only after it passes on a SUT that advertises the capability it uses.

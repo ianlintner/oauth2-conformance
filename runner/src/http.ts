@@ -48,7 +48,11 @@ export async function sendRequest(request: HttpRequest, options: TransportOption
     headers[key] = value;
   });
 
-  const raw = await response.text();
+  return toActualResponse(response.status, headers, await response.text());
+}
+
+/** Build the comparison-layer response from a status, lower-cased headers and a raw body. */
+export function toActualResponse(status: number, headers: Record<string, string>, raw: string): ActualResponse {
   let body: unknown;
   let text: string | undefined;
   const contentType = headers['content-type'] ?? '';
@@ -65,7 +69,7 @@ export async function sendRequest(request: HttpRequest, options: TransportOption
 
   const location = headers['location'];
   return {
-    status: response.status,
+    status,
     headers,
     body,
     ...(text !== undefined ? { text } : {}),
