@@ -1,0 +1,154 @@
+name: Security
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: ${{ format('{0}-{1}', github.workflow, github.event.pull_request.number || github.ref) }}
+  cancel-in-progress: true
+
+jobs:
+  # BLOCKING secret scanner. Runs against the full git history (fetch-depth: 0) so
+  # committed-but-later-removed secrets are caught, not just the working tree.
+  gitleaks:
+    name: Gitleaks (blocking)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Download gitleaks release and checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="8.30.1"
+          base="https://github.com/gitleaks/gitleaks/releases/download/v${version}"
+          curl -fsSL -o "gitleaks_${version}_linux_x64.tar.gz" "${base}/gitleaks_${version}_linux_x64.tar.gz"
+          curl -fsSL -o "gitleaks_${version}_checksums.txt" "${base}/gitleaks_${version}_checksums.txt"
+
+      - name: Verify gitleaks sha256
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep "gitleaks_8.30.1_linux_x64.tar.gz" gitleaks_8.30.1_checksums.txt | sha256sum -c -
+          tar xzf "gitleaks_8.30.1_linux_x64.tar.gz" gitleaks
+
+      - name: Run gitleaks (blocking)
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gitleaks git --redact --exit-code 1 --report-format sarif --report-path gitleaks.sarif .
+
+      - name: Upload gitleaks SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          sarif_file: gitleaks.sarif
+          category: gitleaks
+
+  # Advisory: known-vulnerability scan of the locked dependency set (advisories only).
+  # Recursive scan covers runner/pnpm-lock.yaml. Reports but does not fail on findings.
+  osv-scanner:
+    name: OSV-Scanner (advisory)
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@32d3cd482bdadfb38b186c0ad1b031902d55d932 # v2.7.1
+    with:
+      scan-args: |-
+        --recursive
+        ./
+      fail-on-vuln: false
+      upload-sarif: true
+
+  # Advisory: workflow hardening / supply-chain lint of these GitHub Actions.
+  zizmor:
+    name: Zizmor (advisory)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Run zizmor (uploads its own SARIF)
+        uses: zizmorcore/zizmor-action@45d7276c9ca790aabd705e31ca99c6185c3e76dd # v0.8.1
+        with:
+          advanced-security: true
+
+  # Advisory: static analysis via Semgrep (default + secrets + jwt + typescript + javascript).
+  semgrep:
+    name: Semgrep (advisory)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    container:
+      image: semgrep/semgrep:1.185.0@sha256:f83a64e8a7d985eaa51ee3978c9c882be946964c68633fba5d2817cf297a3912
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Run Semgrep scan
+        run: >-
+          semgrep scan
+          --metrics=off
+          --config p/default
+          --config p/secrets
+          --config p/jwt
+          --config p/typescript
+          --config p/javascript
+          --sarif --output semgrep.sarif
+
+      - name: Upload SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          sarif_file: semgrep.sarif
+          category: semgrep
+
+  # Advisory: dependency advisory scan of the runner's locked production deps (pnpm audit).
+  pnpm-audit:
+    name: pnpm audit (advisory)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: runner
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+        with:
+          version: 10.29.3
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+
+      - name: Install frozen lockfile
+        run: pnpm install --frozen-lockfile
+
+      - name: Audit dependencies (advisory findings)
+        continue-on-error: true
+        run: pnpm audit --prod --json >> "$GITHUB_STEP_SUMMARY"
