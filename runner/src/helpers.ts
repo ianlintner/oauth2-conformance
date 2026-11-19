@@ -180,13 +180,53 @@ export async function deviceVerify(context: HelperContext): Promise<import('./co
   });
   if (login.status >= 400) throw new Error(`device-verify: SUT login failed with status ${login.status}`);
   const cookie = cookieFrom(login);
+  const cookieHeader: Record<string, string> = cookie !== undefined ? { cookie } : {};
+
+  // Load the verification page first and echo whatever hidden fields it emits.
+  const page = await context.send({
+    method: 'GET',
+    url: `${verifyPath}?${new URLSearchParams({ user_code: userCode }).toString()}`,
+    headers: cookieHeader,
+  });
+  if (page.status >= 400) throw new Error(`device-verify: verification page returned status ${page.status}`);
+
+  const form = new URLSearchParams();
+  for (const [name, value] of hiddenInputs(page.text ?? '')) form.append(name, value);
+  // The scenario's code and action always win over page-provided values; with
+  // no hidden inputs this leaves exactly `user_code` + `action`.
+  form.set('user_code', userCode);
+  form.set('action', action);
+
   return context.send({
     method: 'POST',
     url: verifyPath,
-    headers: {
-      'content-type': 'application/x-www-form-urlencoded',
-      ...(cookie !== undefined ? { cookie } : {}),
-    },
-    body: new URLSearchParams({ user_code: userCode, action }).toString(),
+    headers: { 'content-type': 'application/x-www-form-urlencoded', ...cookieHeader },
+    body: form.toString(),
   });
+}
+
+const HTML_ENTITIES: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'" };
+
+function unescapeHtml(value: string): string {
+  return value.replace(/&(?:#(\d+)|#[xX]([0-9a-fA-F]+)|([a-zA-Z]+));/g, (match, dec?: string, hex?: string, named?: string) => {
+    if (dec !== undefined) return String.fromCodePoint(Number(dec));
+    if (hex !== undefined) return String.fromCodePoint(parseInt(hex, 16));
+    return (named !== undefined ? HTML_ENTITIES[named] : undefined) ?? match;
+  });
+}
+
+/** Extract `<input type="hidden" name=".." value="..">` pairs, in document order. */
+function hiddenInputs(html: string): Array<[string, string]> {
+  const pairs: Array<[string, string]> = [];
+  for (const tag of html.match(/<input\b[^>]*>/gi) ?? []) {
+    const attrs = new Map<string, string>();
+    for (const m of tag.matchAll(/([a-zA-Z_:][-a-zA-Z0-9_:.]*)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>]+))/g)) {
+      attrs.set(m[1]!.toLowerCase(), m[2] ?? m[3] ?? m[4] ?? '');
+    }
+    const name = attrs.get('name');
+    if (attrs.get('type')?.toLowerCase() === 'hidden' && name !== undefined && name !== '') {
+      pairs.push([unescapeHtml(name), unescapeHtml(attrs.get('value') ?? '')]);
+    }
+  }
+  return pairs;
 }
