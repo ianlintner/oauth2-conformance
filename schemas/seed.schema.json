@@ -122,7 +122,16 @@
           },
           "grant_types": {
             "type": "array",
-            "items": { "enum": ["authorization_code", "refresh_token", "client_credentials", "urn:ietf:params:oauth:grant-type:device_code", "urn:ietf:params:oauth:grant-type:jwt-bearer"] }
+            "items": {
+              "enum": [
+                "authorization_code",
+                "refresh_token",
+                "client_credentials",
+                "urn:ietf:params:oauth:grant-type:device_code",
+                "urn:ietf:params:oauth:grant-type:jwt-bearer",
+                "urn:ietf:params:oauth:grant-type:token-exchange"
+              ]
+            }
           }
         }
       }
