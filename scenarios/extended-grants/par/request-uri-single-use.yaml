@@ -2,8 +2,61 @@ id: extended-grants.par.request-uri-single-use
 title: "A request_uri is rejected on second use"
 requirements: ["RFC9126-2.2-par-request-uri-single-use"]
 profile: extended-grants
-status: draft
-note: "Invariant INV-EXT-PAR-SINGLE-USE. Draft: needs a PAR-capable SUT claim of extended-grants (part 3/3). Needs a first successful use via login-and-authorize with request_uri (part 3/3)."
+status: stable
+note: "Invariant INV-EXT-PAR-SINGLE-USE. RFC 9126 2.2: a request_uri is single-use. The first step must redeem the request_uri completely (a real authorization returning a code) so the second use is asserted against a request_uri the SUT actually consumed; a push-then-reuse without the first use only proves the value is unknown. response_type=code is also sent on the authorize query: RFC 9126 4 requires only client_id+request_uri, but both Rust and Python currently demand response_type (deviation recorded in extended-grants-gaps.md)."
 steps:
-  - {"id": "push", "request": {"method": "POST", "path": "/oauth/par", "headers": {"authorization": "Basic Y2xpZW50LWE6dGVzdC1vbmx5LXNlY3JldA=="}, "form": {"client_id": "client-a", "response_type": "code", "redirect_uri": "https://client.example/callback", "scope": "read", "state": "s-par", "code_challenge": "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM", "code_challenge_method": "S256"}}, "expect": {"status": 201, "jsonSchema": {"type": "object", "required": ["request_uri", "expires_in"]}}, "capture": {"ru": "body.request_uri"}}
-  - {"id": "second-use", "request": {"method": "GET", "path": "/oauth/authorize", "query": {"client_id": "client-a", "request_uri": "{{ru}}"}}, "expect": {"status": 400}}
+  - id: push
+    request:
+      method: POST
+      path: /oauth/par
+      headers: {"authorization":"Basic Y2xpZW50LWE6dGVzdC1vbmx5LXNlY3JldA=="}
+      form: {"client_id":"client-a","response_type":"code","redirect_uri":"https://client.example/callback","scope":"read","state":"s-par","code_challenge":"E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM","code_challenge_method":"S256"}
+    expect:
+      status: 201
+      jsonSchema: {"type":"object","required":["request_uri","expires_in"]}
+    capture:
+      ru: body.request_uri
+  - id: login
+    use: login-and-authorize
+    with:
+      username: alice
+      password: test-only-password
+      loginPath: /auth/login
+      authorizePath: /oauth/authorize
+      session: create
+      query:
+        response_type: code
+        client_id: client-a
+        redirect_uri: https://client.example/callback
+        state: s-login
+        scope: read
+        code_challenge: E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM
+        code_challenge_method: S256
+    expect:
+      status: 302
+  - id: first-use
+    use: login-and-authorize
+    with:
+      username: alice
+      password: test-only-password
+      loginPath: /auth/login
+      authorizePath: /oauth/authorize
+      session: reuse
+      query:
+        response_type: code
+        client_id: client-a
+        request_uri: "{{ru}}"
+    expect:
+      status: 302
+    capture:
+      code: redirect.query.code
+  - id: second-use
+    request:
+      method: GET
+      path: /oauth/authorize
+      query:
+        response_type: code
+        client_id: client-a
+        request_uri: "{{ru}}"
+    expect:
+      status: 400
