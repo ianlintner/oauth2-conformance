@@ -1,0 +1,61 @@
+id: resource.indicators.refresh-resource-not-widened
+title: "A refresh request cannot widen the resource set beyond the original authorization"
+requirements: [RFC8707-refresh-resource-not-widened, RFC8707-2.2-resource-subset-of-authorized]
+profile: resource
+status: draft
+note: |
+  Authorize for resource A, exchange, then refresh asking for resource B:
+  expect 400 invalid_target. Draft: RFC 8707 section 2.2 says the acceptable
+  resources are "at its sole discretion based on local policy or configuration"
+  and that for refresh_token and authorization_code requests "such policy may
+  limit the acceptable resources to those that were originally granted by the
+  resource owner or a subset thereof", so rejecting a widened set is an
+  optional policy, not an RFC MUST. Python (supports resource indicators)
+  rejects it; Rust accepts it (200). Left draft pending a decision on whether
+  the contract adopts this policy; the requirement levels were corrected to MAY.
+steps:
+  - id: auth
+    use: login-and-authorize
+    with:
+      username: alice
+      password: test-only-password
+      loginPath: /auth/login
+      authorizePath: /oauth/authorize
+      query:
+        response_type: code
+        client_id: client-a
+        redirect_uri: https://client.example/callback
+        state: s-cov1
+        scope: read
+        resource: https://api-a.example/
+        code_challenge: E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM
+        code_challenge_method: S256
+    expect:
+      status: 302
+    capture:
+      code: redirect.query.code
+  - id: exchange
+    request:
+      method: POST
+      path: /oauth/token
+      headers: { authorization: "Basic Y2xpZW50LWE6dGVzdC1vbmx5LXNlY3JldA==" }
+      form:
+        grant_type: authorization_code
+        code: "{{code}}"
+        redirect_uri: https://client.example/callback
+        code_verifier: dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk
+        resource: https://api-a.example/
+    expect:
+      status: 200
+      json: { access_token: "x" }
+    capture:
+      rt: body.refresh_token
+  - id: refresh-widened
+    request:
+      method: POST
+      path: /oauth/token
+      headers: { authorization: "Basic Y2xpZW50LWE6dGVzdC1vbmx5LXNlY3JldA==" }
+      form: { grant_type: refresh_token, refresh_token: "{{rt}}", resource: "https://api-b.example/" }
+    expect:
+      status: 400
+      json: { error: invalid_target }

@@ -69,3 +69,5 @@ requirements:
   - RFC9700-4.14.2-refresh-revoked-on-security-event
   - RFC7523-3-client-assertion-jti-replay-rejected
   - RFC7523-3-client-assertion-fresh-jti-accepted
+  - RFC6749-2.3.1-empty-secret-not-authentication-policy
+  - RFC9700-2.1.1-code-replay-revokes-tokens

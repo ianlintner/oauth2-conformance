@@ -1,0 +1,10 @@
+# gitleaks false positives — no real credentials. Every entry is a `generic-api-key`
+# match on a documentation table cell whose RFC-trace identifier (e.g.
+# "OIDC-3.1.2.1-nonce-echoed") trips the generic key heuristic. Format is
+# `file:rule-id:start-line` (global, no commit). Added 2026-11-15 for the
+# Phase 1 security-tooling parity baseline.
+
+# docs/oidc-basic-coverage.md — the scenario-identifier column of the coverage
+# table at line 17 contains "OIDC-3.1.2.1-nonce-echoed", a documentation string
+# identifying a conformance scenario, not a secret.
+docs/oidc-basic-coverage.md:generic-api-key:17

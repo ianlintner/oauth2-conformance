@@ -86,3 +86,15 @@
   summary: "An unknown, expired or revoked refresh token is rejected with an invalid_grant error response."
   link: https://www.rfc-editor.org/rfc/rfc6749#section-5.2
   notes: "Section 5.2 defines invalid_grant; the rule that an invalid refresh token yields it follows from section 6, where the server issues an access token only if the grant is valid and authorized."
+- id: RFC6749-2.3.1-empty-secret-not-authentication-policy
+  spec: "RFC 6749"
+  clause: "2.3.1"
+  level: MAY
+  profile: token-lifecycle
+  summary: "Local hardening policy: a request naming a public client with an empty client_secret (form field or empty HTTP Basic password) is not treated as confidential-client authentication and is refused."
+  link: https://www.rfc-editor.org/rfc/rfc6749#section-2.3.1
+  notes: >-
+    RFC 6749 section 2.3.1 says, "The client MAY omit the parameter if the client secret is an empty string."
+    That rule concerns a client issued a password. This local policy concerns a public client that was issued no secret:
+    an empty value is not evidence of confidential-client authentication. Refusal is a local policy choice (MAY),
+    not a server requirement imposed by section 2.3.1 or RFC 9700 section 2.5.

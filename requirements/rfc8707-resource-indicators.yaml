@@ -11,10 +11,11 @@
 - id: RFC8707-2-resource-invalid-target
   spec: RFC 8707
   clause: "2"
-  level: MUST
+  level: SHOULD
   profile: resource
   summary: "A resource value that is not an absolute URI, has a fragment, or names a resource the client may not use is rejected with error invalid_target."
   link: https://www.rfc-editor.org/rfc/rfc8707#section-2
+  notes: "RFC 8707 section 2: the resource value \"MUST be an absolute URI\" and \"MUST NOT include a fragment component\"; if the server \"fails to parse the provided value(s) or does not consider the resource(s) acceptable, it should reject the request with an error response using the error code invalid_target\" (lowercase should, so SHOULD). Which resources a server considers acceptable is local policy (section 2.2)."
 - id: RFC8707-2.2-token-request-resource
   spec: RFC 8707
   clause: "2.2"
@@ -25,10 +26,11 @@
 - id: RFC8707-2.2-resource-subset-of-authorized
   spec: RFC 8707
   clause: "2.2"
-  level: MUST
+  level: MAY
   profile: resource
   summary: "A resource requested at the token endpoint that was not authorized in the authorization request is rejected with invalid_target."
   link: https://www.rfc-editor.org/rfc/rfc8707#section-2.2
+  notes: "RFC 8707 section 2.2: acceptable resources are \"at its sole discretion based on local policy or configuration\"; for refresh_token and authorization_code requests \"such policy may limit the acceptable resources to those that were originally granted by the resource owner or a subset thereof\". An optional policy, not a MUST."
 - id: RFC8707-3-aud-reflects-resource
   spec: RFC 8707
   clause: "2"
@@ -53,7 +55,8 @@
 - id: RFC8707-refresh-resource-not-widened
   spec: RFC 8707
   clause: "2.2"
-  level: MUST NOT
+  level: MAY
   profile: resource
   summary: "A refresh token grant does not widen the resource set beyond that of the original grant."
   link: https://www.rfc-editor.org/rfc/rfc8707#section-2.2
+  notes: "Same text as RFC8707-2.2-resource-subset-of-authorized: limiting a refresh request to the originally granted resources is an optional local policy (\"may limit\"), not a MUST NOT."

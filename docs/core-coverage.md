@@ -39,8 +39,7 @@ the stable set and are absent from the CI ratchet.
 
 | Requirement | Level | Missing extension |
 |---|---|---|
-| RFC9207-2.1-iss-form-urlencoded | MUST | An `expect.redirect` raw-Location / form-encoding assertion for the wire form of `iss`. Runner feature, not a SUT change. Folded out of core.authorize.code-issued, which now only asserts the decoded `iss`. |
-| RFC9700-2.1.1-code-replay-revokes-tokens | SHOULD | A token-introspection step after the replay (v0.2 token-lifecycle scope). Removed from core.hardening.code-single-use, which asserts rejection only. |
+| RFC9700-2.1.1-code-replay-revokes-tokens | SHOULD | Still uncovered under `core` (introspection is token-lifecycle scope); covered under `token-lifecycle` by `token-lifecycle.revocation.code-replay-revokes-tokens` (stable) and the `-no-refresh-grant` variant (reference-deviation), see `docs/security-review-batch-1.md`. |
 
 ## Draft scenarios
 
@@ -151,8 +150,25 @@ non-stable scenarios to `deferred` (`runner/src/runner.ts`), so the final-status
 run with this PR's statuses reports executed=43 passed=40 failed=0 deferred=3
 (the two retained reference-deviations plus one draft).
 
-Stable core coverage is 43/55 = 78.2%. CI gates `--min 78.2` (the recorded
-floor, `CORE_STABLE_FLOOR = 43`); `runner/test/coverage-gate.test.ts` proves a
+RFC9207-2.1-iss-form-urlencoded is covered by `core.authorize.iss-form-urlencoded`,
+which uses the runner's `expect.redirect.formEncodedQuery` raw-Location
+assertion (distinct from the decoded `redirect.query` comparison in
+core.authorize.code-issued): the raw `iss` value must be a valid
+application/x-www-form-urlencoded serialization (single occurrence, reserved
+characters percent-encoded) that decodes to the seed issuer. Equivalent
+encodings such as lowercase hex pass; it is not a byte-for-byte match.
+Measured on fresh SUTs at origin/main, conformance mode, issuer
+`http://localhost:8080`, full `run --profile core` (44 scenarios, seed
+without client `jwks`, see below): rust-oauth2-server 4bc51f3 executed=44
+passed=42 failed=0 deferred=2; python-oauth2-server 3a3a59b executed=44
+passed=41 failed=0 deferred=3. The new scenario passes on both. Note:
+rust-oauth2-server 4bc51f3 rejects the current `examples/seed.yaml` (unknown
+client field `jwks`, added by the JWT-helper PR), so the Rust run used the
+pre-`jwks` seed; that is a seed-schema gap in the SUT unrelated to this
+scenario.
+
+Stable core coverage is 44/55 = 80.0%. CI gates `--min 80` (the recorded
+floor, `CORE_STABLE_FLOOR = 44`); `runner/test/coverage-gate.test.ts` proves a
 removed stable fixture fails the gate. CI (`runner.yml`) still does not start a
 SUT: a SUT job (build the Rust SUT in conformance mode, seed it, run
 `conformance run --profile core`) is a follow-up.

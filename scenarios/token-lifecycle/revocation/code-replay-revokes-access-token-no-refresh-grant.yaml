@@ -1,0 +1,73 @@
+id: token-lifecycle.revocation.code-replay-revokes-access-token-no-refresh-grant
+title: "Code replay makes the first access token unusable for a client without the refresh_token grant"
+requirements: [RFC9700-2.1.1-code-replay-revokes-tokens]
+profile: token-lifecycle
+status: reference-deviation
+note: |
+  SHOULD-level (RFC 6749 section 4.1.2; RFC 9700 section 4.2.4). client-enc is
+  the seeded confidential client whose grant_types omit refresh_token, so only
+  the access token is checked. client-public (also without refresh_token) is not
+  used here because introspection needs a confidential caller; client-enc
+  introspects its own token.
+  reference-deviation: passes Python, fails Rust. RFC 6749 section 4.1.2 says
+  "If an authorization code is used more than once, the authorization server
+  MUST deny the request and SHOULD revoke (when possible) all tokens previously
+  issued based on that authorization code." (SHOULD, so the Rust behavior is a
+  deviation from a recommendation, not a MUST violation.)
+steps:
+  - id: auth
+    use: login-and-authorize
+    with:
+      username: alice
+      password: test-only-password
+      loginPath: /auth/login
+      authorizePath: /oauth/authorize
+      query:
+        response_type: code
+        client_id: client-enc
+        redirect_uri: https://client.example/callback
+        state: s-cov1
+        scope: read
+        code_challenge: E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM
+        code_challenge_method: S256
+    expect:
+      status: 302
+    capture:
+      code: redirect.query.code
+  - id: exchange
+    request:
+      method: POST
+      path: /oauth/token
+      headers: { authorization: "Basic Y2xpZW50LWVuYzpwJTQwc3MlM0F3JTJCcmQrJTI1" }
+      form:
+        grant_type: authorization_code
+        code: "{{code}}"
+        redirect_uri: https://client.example/callback
+        code_verifier: dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk
+    expect:
+      status: 200
+      json: { access_token: "x" }
+    capture:
+      at: body.access_token
+  - id: replay
+    request:
+      method: POST
+      path: /oauth/token
+      headers: { authorization: "Basic Y2xpZW50LWVuYzpwJTQwc3MlM0F3JTJCcmQrJTI1" }
+      form:
+        grant_type: authorization_code
+        code: "{{code}}"
+        redirect_uri: https://client.example/callback
+        code_verifier: dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk
+    expect:
+      status: 400
+      json: { error: invalid_grant }
+  - id: access-token-inactive
+    request:
+      method: POST
+      path: /oauth/introspect
+      headers: { authorization: "Basic Y2xpZW50LWVuYzpwJTQwc3MlM0F3JTJCcmQrJTI1" }
+      form: { token: "{{at}}" }
+    expect:
+      status: 200
+      json: { active: false }
