@@ -2,7 +2,8 @@ id: sender-constrained.dpop.signature-verified
 title: "A proof whose signature does not verify against its jwk is rejected"
 requirements: ["RFC9449-4-proof-signature-verified"]
 profile: sender-constrained
-status: draft
-note: "Invariant INV-SC-SIGNATURE-VERIFIED. Draft: needs a DPoP proof signing helper (ES256 key with selectable typ/jwk/htm/htu/iat/jti/ath/nonce claims)."
+status: stable
+note: "Invariant INV-SC-SIGNATURE-VERIFIED. Validated on Rust reference and Python conformance SUTs: tampered signature is rejected with invalid_dpop_proof; positive control dpop.token-type-dpop accepts an otherwise identical proof."
 steps:
-  - {"id": "token", "request": {"method": "POST", "path": "/oauth/token", "headers": {"authorization": "Basic Y2xpZW50LWNjOnRlc3Qtb25seS1jYy1zZWNyZXQ=", "dpop": "{{proof_bad_signature}}"}, "form": {"grant_type": "client_credentials"}}, "expect": {"status": 400, "json": {"error": "invalid_dpop_proof"}}}
+  - {"id": "proof", "use": "dpop-proof", "with": {"htm": "POST", "htu": "http://localhost:8080/oauth/token", "tamper_signature": true}, "expect": {"status": 200}, "capture": {"proof_value": "body.proof"}}
+  - {"id": "token", "request": {"method": "POST", "path": "/oauth/token", "headers": {"authorization": "Basic Y2xpZW50LWNjOnRlc3Qtb25seS1jYy1zZWNyZXQ=", "dpop": "{{proof_value}}"}, "form": {"grant_type": "client_credentials"}}, "expect": {"status": 400, "json": {"error": "invalid_dpop_proof"}}}

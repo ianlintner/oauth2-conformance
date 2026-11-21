@@ -105,6 +105,41 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+const DEFAULT_NONCE_PATH = '/conformance/dpop-nonce';
+
+/**
+ * `dpop-nonce-mode`: POST /conformance/dpop-nonce {required: boolean}.
+ * Fails closed on a non-boolean input or a non-2xx answer, so a SUT without
+ * the capability cannot make a nonce scenario pass vacuously (contract §7.3/7.7).
+ */
+export async function dpopNonceMode(context: HelperContext): Promise<import('./compare.js').ActualResponse> {
+  const raw = context.with.required;
+  let required: boolean;
+  if (typeof raw === 'boolean') {
+    required = raw;
+  } else if (typeof raw === 'string') {
+    const value = interpolate(raw, context.scope);
+    if (value === 'true') required = true;
+    else if (value === 'false') required = false;
+    else throw new Error('dpop-nonce-mode: with.required must be a boolean or {{var}} resolving to true/false');
+  } else {
+    throw new Error('dpop-nonce-mode: with.required must be a boolean or {{var}} resolving to true/false');
+  }
+  const path = context.with.path === undefined
+    ? DEFAULT_NONCE_PATH
+    : localPath('dpop-nonce-mode', sub(context, String(context.with.path)));
+  const response = await context.send({
+    method: 'POST',
+    url: path,
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ required }),
+  });
+  if (response.status < 200 || response.status > 299) {
+    throw new Error(`dpop-nonce-mode: SUT answered ${response.status} to ${path}`);
+  }
+  return response;
+}
+
 /**
  * `use: sut-restart` — run the harness-configured restart command (never taken
  * from the scenario), then poll readiness until the SUT answers 2xx again.

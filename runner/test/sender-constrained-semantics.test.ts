@@ -25,7 +25,7 @@ const userinfoSteps = (s: Scenario) => s.steps.filter((st) => st.request?.path =
 /** Scenarios validated against the Rust reference with the `dpop-proof` helper (part 3/3). Any other scenario stays draft. */
 const VALIDATED_STABLE = [
   'dpop.token-type-dpop', 'dpop.jti-required', 'dpop.jti-replay', 'dpop.htm-binding',
-  'dpop.htu-binding', 'dpop.typ-header', 'dpop.iat-stale',
+  'dpop.htu-binding', 'dpop.typ-header', 'dpop.iat-stale', 'dpop.signature-verified',
 ].map((id) => `sender-constrained.${id}`);
 
 test('only the Rust-validated dpop-proof scenarios are stable; every other sender-constrained scenario is draft', () => {

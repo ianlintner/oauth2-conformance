@@ -89,3 +89,19 @@ Rust reference run (conformance mode, seeded with `examples/seed.yaml`, `OAUTH2_
 Python: its repository has no conformance-mode seed loader (the string only appears in its README and CI), so the profile was not run there.
 
 Still draft (need more than `dpop-proof`): user-bound token flows with `ath` and `wrong-key` (need the proof for the resource request built from a captured token and a `jkt` capture; scenario rewrites are a follow-up), nonce scenarios (SUT nonce-required mode, owner-gated), clock control, step repetition, mTLS transport, `sut-restart` / `request-on-instance`.
+
+## K4 slice (2026-11-21): nonce helper, proof overrides, one promotion
+
+Runner changes (TDD, `pnpm check` 212/212):
+
+- `dpop-nonce-mode` step helper (`runner/src/sut-helpers.ts`, wired in `cli.ts`, declared in `schemas/scenario.schema.json`): POSTs `{"required": bool}` to `/conformance/dpop-nonce` (path overridable, local-path checked), accepts interpolated booleans, and fails closed on non-2xx. It makes the nonce scenarios executable where the SUT advertises that capability.
+- `dpop-proof` gains `tamper_signature`, `alg` and `private_jwk` options, each covered by unit tests. The tampered proof stays syntactically valid but cannot verify against its embedded JWK.
+- `signature-verified` was rewritten as an executable negative scenario (valid-proof positive control in `dpop.token-type-dpop`, single deliberate difference: signature validity) and promoted to `stable`.
+
+Real runs (local Rust reference at `874be4d`, Python conformance SUT at `e985d48`, both on non-default ports to avoid a local proxy on 8080; reports in the card's scratch evidence):
+
+- Python (fresh SUT per run, not reused): `executed=35 passed=13 failed=0 deferred=22 verdict=pass`. The promoted `dpop.signature-verified` passes, as do the newly executable `dpop.replay-in-memory`, `dpop.use-dpop-nonce` and `dpop.nonce-response-header`. Fixed `jti` values were removed from these drafts so repeated runs against a long-lived SUT do not fail on replay of a previous run's proof.
+- Rust: `executed=35 passed=10 failed=2 verdict=fail`. `dpop.signature-verified` passes on the reference. The two failures (`dpop.token-type-dpop`, `dpop.jti-replay`) and the nonce/replay drafts being deferred come from a **pre-existing Rust regression at HEAD**: after #497 (`874be4d`), seeded `client_secret_basic` clients are rejected with `invalid_client`/`Invalid client_secret` (over 1000 occurrences in the SUT log), although the seed applied 10 clients and the same scenarios pass on the pinned older SUT. This is a Rust SUT fix note, not a conformance-scenario defect; those scenarios remain draft and no Rust deviation is silently recorded as a pass.
+- `dpop.discovery-alg-values` remains draft: neither SUT advertises `dpop_signing_alg_values_supported`, so there is no honest pass to claim. `dpop.jwk-usable-algorithm` remains draft: Python accepts the private-JWK variant and Rust cannot reach its positive control. The remaining drafts need user-bound token flows, multi-instance/restart/mTLS capabilities or step repetition, none of which this slice adds.
+
+Count after regeneration: Stable 8 / Draft 27 (was 7/28). All 212 runner tests pass and `docs/STATUS.md` was regenerated with `pnpm conformance status --root ..`.

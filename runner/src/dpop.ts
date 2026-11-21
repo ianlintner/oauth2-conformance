@@ -37,7 +37,7 @@ function str(context: HelperContext, name: string): string | undefined {
   return interpolate(value, context.scope);
 }
 
-function loadKey(context: HelperContext, name: string): { privateKey: KeyObject; publicJwk: Record<string, string> } {
+function loadKey(context: HelperContext, name: string): { privateKey: KeyObject; privateJwk: JsonWebKey; publicJwk: Record<string, string> } {
   const slot = `__dpop_key:${name}`;
   let stored = context.scope.get(slot);
   if (stored === undefined) {
@@ -47,7 +47,7 @@ function loadKey(context: HelperContext, name: string): { privateKey: KeyObject;
   }
   const privateJwk = JSON.parse(stored) as JsonWebKey;
   const { kty, crv, x, y } = privateJwk;
-  return { privateKey: createPrivateKey({ key: privateJwk, format: 'jwk' }), publicJwk: { kty: kty ?? '', crv: crv ?? '', x: x ?? '', y: y ?? '' } };
+  return { privateKey: createPrivateKey({ key: privateJwk, format: 'jwk' }), privateJwk, publicJwk: { kty: kty ?? '', crv: crv ?? '', x: x ?? '', y: y ?? '' } };
 }
 
 export async function dpopProof(context: HelperContext): Promise<import('./compare.js').ActualResponse> {
@@ -62,8 +62,17 @@ export async function dpopProof(context: HelperContext): Promise<import('./compa
   const offset = context.with.iat_offset ?? 0;
   if (typeof offset !== 'number' || !Number.isFinite(offset)) throw new Error('dpop-proof: with.iat_offset must be a number');
 
-  const { privateKey, publicJwk } = loadKey(context, str(context, 'key') ?? 'default');
-  const header = { typ: str(context, 'typ') ?? 'dpop+jwt', alg: 'ES256', jwk: publicJwk };
+  const { privateKey, privateJwk, publicJwk } = loadKey(context, str(context, 'key') ?? 'default');
+  const alg = str(context, 'alg') ?? 'ES256';
+  const includePrivate = context.with.private_jwk === true;
+  if (context.with.private_jwk !== undefined && typeof context.with.private_jwk !== 'boolean') {
+    throw new Error('dpop-proof: with.private_jwk must be a boolean');
+  }
+  const header: Record<string, unknown> = {
+    typ: str(context, 'typ') ?? 'dpop+jwt',
+    alg,
+    jwk: includePrivate ? { ...publicJwk, d: privateJwk.d } : publicJwk,
+  };
 
   const claims: Record<string, unknown> = {
     jti: str(context, 'jti') ?? randomUUID(),
@@ -80,6 +89,8 @@ export async function dpopProof(context: HelperContext): Promise<import('./compa
 
   const signingInput = `${b64url(JSON.stringify(header))}.${b64url(JSON.stringify(claims))}`;
   const signature = sign('sha256', Buffer.from(signingInput), { key: privateKey, dsaEncoding: 'ieee-p1363' });
+  if (context.with.tamper_signature === true) signature[0] = (signature[0]! ^ 0x01);
+  else if (context.with.tamper_signature !== undefined) throw new Error('dpop-proof: with.tamper_signature must be a boolean');
 
   // RFC 7638 thumbprint: required members in lexicographic order.
   const jkt = createHash('sha256')
