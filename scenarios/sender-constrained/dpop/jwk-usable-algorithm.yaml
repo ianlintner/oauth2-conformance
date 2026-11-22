@@ -3,7 +3,7 @@ title: "A proof using a symmetric alg or a jwk carrying a private key is rejecte
 requirements: ["RFC9449-4-jwk-usable-algorithm"]
 profile: sender-constrained
 status: draft
-note: "Invariant INV-SC-JWK-USABLE-ALGORITHM. Executable: dpop-proof alg/private_jwk overrides with positive control; validated against Python conformance SUT."
+note: "Invariant INV-SC-JWK-USABLE-ALGORITHM. Executable: dpop-proof alg/private_jwk overrides with positive control; validated against Python conformance SUT. Caveat: `alg: HS256` changes only the JOSE header; the proof is still signed with the ES256 key, so a server rejecting that proof on signature verification (without inspecting `alg`) also passes the symmetric-alg step — the draft does not isolate the algorithm check."
 steps:
   - {"id": "proof-ok", "use": "dpop-proof", "with": {"htm": "POST", "htu": "http://localhost:8080/oauth/token"}, "expect": {"status": 200}, "capture": {"proof_token_ok": "body.proof"}}
   - {"id": "proof-symmetric", "use": "dpop-proof", "with": {"htm": "POST", "htu": "http://localhost:8080/oauth/token", "alg": "HS256", "jti": "jwk-alg-hs"}, "expect": {"status": 200}, "capture": {"proof_symmetric_alg": "body.proof"}}

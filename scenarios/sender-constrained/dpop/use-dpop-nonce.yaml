@@ -7,5 +7,5 @@ note: "Invariant INV-SC-USE-DPOP-NONCE. Executable: dpop-nonce-mode helper + dpo
 steps:
   - {"id": "nonce-required", "use": "dpop-nonce-mode", "with": {"required": true}, "expect": {"status": 200}}
   - {"id": "proof-no-nonce", "use": "dpop-proof", "with": {"htm": "POST", "htu": "http://localhost:8080/oauth/token"}, "expect": {"status": 200}, "capture": {"proof_token_ok": "body.proof"}}
-  - {"id": "token", "request": {"method": "POST", "path": "/oauth/token", "headers": {"authorization": "Basic Y2xpZW50LWNjOnRlc3Qtb25seS1jYy1zZWNyZXQ=", "dpop": "{{proof_token_ok}}"}, "form": {"grant_type": "client_credentials"}}, "expect": {"status": 400, "json": {"error": "use_dpop_nonce"}}, "capture": {"nonce": "header.dpop-nonce"}}
+  - {"id": "token", "request": {"method": "POST", "path": "/oauth/token", "headers": {"authorization": "Basic Y2xpZW50LWNjOnRlc3Qtb25seS1jYy1zZWNyZXQ=", "dpop": "{{proof_token_ok}}"}, "form": {"grant_type": "client_credentials"}}, "expect": {"status": 400, "json": {"error": "use_dpop_nonce"}, "headers": {"dpop-nonce": {"$nonempty": true}}}, "capture": {"nonce": "header.dpop-nonce"}}
   - {"id": "nonce-off", "use": "dpop-nonce-mode", "with": {"required": false}, "expect": {"status": 200}}

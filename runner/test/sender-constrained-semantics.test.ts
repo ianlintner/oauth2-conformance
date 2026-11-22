@@ -33,6 +33,19 @@ test('only the Rust-validated dpop-proof scenarios are stable; every other sende
   for (const id of VALIDATED_STABLE) assert.ok(byId.has(id), id);
 });
 
+test('nonce draft scenarios assert a nonempty DPoP-Nonce response header on the use_dpop_nonce step', () => {
+  for (const id of ['dpop.use-dpop-nonce', 'dpop.nonce-response-header']) {
+    const s = get(id);
+    const step = s.steps.find((st) => st.id === 'token');
+    assert.ok(step, `${id} has a token step`);
+    assert.deepEqual(
+      (step.expect as { headers?: Record<string, unknown> } | undefined)?.headers?.['dpop-nonce'],
+      { $nonempty: true },
+      `${id} token step must assert a nonempty dpop-nonce header`,
+    );
+  }
+});
+
 test('stable dpop-proof scenarios sign their proof first and send it, one deliberate difference from the valid control', () => {
   for (const id of VALIDATED_STABLE) {
     const s = byId.get(id)!;

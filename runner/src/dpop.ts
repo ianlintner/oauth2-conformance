@@ -13,6 +13,9 @@
  * - `ath_token`: access token whose base64url SHA-256 becomes `ath`.
  * - `ath`, `nonce`, `jti`: literal claim overrides.
  * - `typ`: header typ override (default `dpop+jwt`).
+ * - `alg`: JOSE header alg override only; signing always uses the generated ES256
+ *   key. A proof with `alg: HS256` therefore has a mismatched signature and its
+ *   rejection does not by itself prove the algorithm allowlist was checked.
  * - `iat_offset`: seconds added to now (negative = stale/backdated proof).
  * - `omit`: claims to drop, from `htm`, `htu`, `iat`, `jti`.
  *
