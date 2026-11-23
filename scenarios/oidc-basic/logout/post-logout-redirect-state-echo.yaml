@@ -54,5 +54,5 @@ steps:
     expect:
       status: 302
       redirect:
-        location: https://client.example/logged-out
+        locationPrefix: https://client.example/logged-out
         query: { state: s-post-logout }

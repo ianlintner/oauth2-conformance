@@ -73,6 +73,34 @@ test('logout receiver rejects posts without a logout_token parameter', async () 
   }
 });
 
+test('logout receiver ignores requests to other paths so idle-client posts cannot be mistaken for session clients', async () => {
+  const receiver = await startLogoutReceiver({ host: '127.0.0.1', port: 0, path: '/backchannel-logout' });
+  try {
+    const base = receiver.url.slice(0, receiver.url.indexOf('/backchannel-logout'));
+    assert.equal(await postForm(`${base}/backchannel-logout-idle`, new URLSearchParams({ logout_token: 'idle.token' }).toString()), 404);
+    await assert.rejects(receiver.waitForLogoutToken(100), /timed out/);
+    assert.equal(await postForm(receiver.url, new URLSearchParams({ logout_token: 'session.token' }).toString()), 200);
+    assert.equal((await receiver.waitForLogoutToken(1000)).logout_token, 'session.token');
+  } finally {
+    await receiver.close();
+  }
+});
+
+test('logout receiver rejects an oversized form body without capturing evidence', async () => {
+  const receiver = await startLogoutReceiver({ host: '127.0.0.1', port: 0 });
+  try {
+    const body = new URLSearchParams({ logout_token: 'x'.repeat(65_536) }).toString();
+    assert.equal(await postForm(receiver.url, body), 413);
+    await assert.rejects(receiver.waitForLogoutToken(100), /timed out/);
+  } finally {
+    await receiver.close();
+  }
+});
+
+test('logout receiver rejects unconfigured IPv6 loopback host explicitly', async () => {
+  await assert.rejects(startLogoutReceiver({ host: '[::1]', port: 0 }), /127\.0\.0\.1 or localhost/);
+});
+
 test('readLogoutToken helper returns a scoped, assertable response with the captured token', async () => {
   const receiver = await startLogoutReceiver({ host: '127.0.0.1', port: 0 });
   try {
@@ -156,6 +184,7 @@ test('parseSutConfig accepts a loopback logoutReceiver and rejects non-loopback,
   assert.deepEqual(ok.logoutReceiver, { origin: 'http://127.0.0.1:8099', path: '/bc' });
   const defaulted = await parseSutConfig('logoutReceiver:\n  origin: http://localhost:8099\n', '/tmp');
   assert.equal(defaulted.logoutReceiver?.path, '/backchannel-logout');
+  await assert.rejects(parseSutConfig('logoutReceiver:\n  origin: http://[::1]:8099\n', '/tmp'), /loopback host/);
   await assert.rejects(parseSutConfig('logoutReceiver:\n  origin: http://203.0.113.5:8099\n', '/tmp'), /loopback/);
   await assert.rejects(parseSutConfig('logoutReceiver:\n  origin: https://127.0.0.1:8099\n', '/tmp'), /http loopback/);
   await assert.rejects(parseSutConfig('logoutReceiver:\n  origin: http://127.0.0.1:8099\n  path: //evil\n', '/tmp'), /single \//);

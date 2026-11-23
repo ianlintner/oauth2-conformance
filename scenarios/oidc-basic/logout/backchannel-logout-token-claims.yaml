@@ -67,7 +67,7 @@ steps:
       jti: jwt.lt.payload.jti
       sid: jwt.lt.payload.sid
       events: jwt.lt.payload.events
-      nonce: jwt.lt.payload.nonce
+    source: jwt.lt.payload
   - id: assert-claims
     assert:
       json:
@@ -75,5 +75,5 @@ steps:
         aud: { "$includes": "client-logout" }
         jti: { "$nonempty": true }
         sid: { "$nonempty": true }
-        events: { "$contains": "http://schemas.openid.net/event/backchannel-logout" }
+        events: { "http://schemas.openid.net/event/backchannel-logout": { "$present": true } }
         nonce: { "$absent": true }

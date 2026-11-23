@@ -53,14 +53,32 @@ export async function startLogoutReceiver(options: { host?: string; port: number
   const waiters: Array<(token: CapturedLogoutToken) => void> = [];
 
   const server: Server = createServer(async (req: IncomingMessage, res) => {
+    // Only the exact configured back-channel URI is evidence. A token POSTed
+    // to a different path on the same listener (e.g. an idle client's URI)
+    // must not be mistaken for a session participant's logout token.
+    const requestPath = new URL(req.url ?? '/', 'http://127.0.0.1').pathname;
+    if (requestPath !== path) {
+      res.writeHead(404, { 'content-type': 'text/plain' }).end('not found');
+      return;
+    }
     const contentType = String(req.headers['content-type'] ?? '').toLowerCase();
     if (req.method !== 'POST' || !contentType.startsWith('application/x-www-form-urlencoded')) {
       res.writeHead(415, { 'content-type': 'text/plain' }).end('unsupported media type');
       return;
     }
+    const MAX_BODY_BYTES = 64 * 1024;
     let raw = '';
+    let bytes = 0;
     try {
-      for await (const chunk of req) raw += String(chunk);
+      for await (const chunk of req) {
+        bytes += Buffer.byteLength(String(chunk));
+        if (bytes > MAX_BODY_BYTES) {
+          res.writeHead(413, { 'content-type': 'text/plain' }).end('body too large');
+          req.destroy();
+          return;
+        }
+        raw += String(chunk);
+      }
       const params = new URLSearchParams(raw);
       const logoutToken = params.get('logout_token');
       if (logoutToken === null || logoutToken === '') {

@@ -168,8 +168,8 @@ export async function parseSutConfig(text: string, baseDir: string): Promise<Sut
     exactKeys(raw, ['origin', 'path'], 'logoutReceiver');
     const configured = origin(raw.origin, 'logoutReceiver.origin', ['http:'], 'an http loopback URL');
     const url = new URL(configured);
-    if (!['127.0.0.1', 'localhost', '[::1]'].includes(url.hostname)) {
-      throw new TypeError('logoutReceiver.origin must be a loopback origin');
+    if (!['127.0.0.1', 'localhost'].includes(url.hostname)) {
+      throw new TypeError('logoutReceiver.origin must use a loopback host supported by the receiver (127.0.0.1 or localhost)');
     }
     const receiverPath = raw.path === undefined ? '/backchannel-logout' : nonEmpty(raw.path, 'logoutReceiver.path');
     if (!receiverPath.startsWith('/') || receiverPath.startsWith('//')) {

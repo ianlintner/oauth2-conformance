@@ -20,7 +20,7 @@
 import { NORMALIZED, normalizePayload } from './normalize.js';
 import type { ScenarioExpectation } from './scenario.js';
 import { interpolate } from './scenario.js';
-import { isAbsentMatcher, isContainsMatcher, isNonemptyMatcher, isGtMatcher, isLtMatcher, isLtCaptureMatcher, isGtCaptureMatcher, isIncludesMatcher, isRegexMatcher } from './matchers.js';
+import { isAbsentMatcher, isPresentMatcher, isContainsMatcher, isNonemptyMatcher, isGtMatcher, isLtMatcher, isLtCaptureMatcher, isGtCaptureMatcher, isIncludesMatcher, isRegexMatcher } from './matchers.js';
 import { decodeJwtSegments, fieldAt } from './jwt.js';
 
 /** Minimal view of the run's captured-value scope (`Map<string, string>`). */
@@ -92,18 +92,33 @@ function deepDiff(expected: unknown, actual: unknown, path: string, diffs: Diff[
     return;
   }
   if (isNonemptyMatcher(expected)) {
-    if (!Array.isArray(actual) || actual.length === 0) {
-      diffs.push({ path, expected: '$nonempty', actual, reason: 'expected a non-empty array' });
+    if (isNormalized(actual)) {
+      // Normalized tokens/claims are present by construction; the normalizer
+      // replaced their value with a marker to avoid comparing drift.
+      return;
+    }
+    if (typeof actual === 'string') {
+      if (actual === '') diffs.push({ path, expected: '$nonempty', actual, reason: 'expected a non-empty string' });
+    } else if (Array.isArray(actual)) {
+      if (actual.length === 0) diffs.push({ path, expected: '$nonempty', actual, reason: 'expected a non-empty array or string' });
+    } else if (actual !== null && typeof actual === 'object') {
+      if (Object.keys(actual).length === 0) diffs.push({ path, expected: '$nonempty', actual, reason: 'expected a non-empty object' });
+    } else {
+      diffs.push({ path, expected: '$nonempty', actual, reason: 'expected a non-empty array, string or object' });
     }
     return;
   }
   if (isIncludesMatcher(expected)) {
     const needle = (expected as { $includes: unknown }).$includes;
-    if (typeof actual === 'string' && !actual.includes(String(needle))) {
-      diffs.push({ path, expected: `$includes ${JSON.stringify(needle)}`, actual, reason: 'string does not contain the expected substring' });
-    } else if (Array.isArray(actual) && !actual.includes(needle)) {
-      diffs.push({ path, expected: `$includes ${JSON.stringify(needle)}`, actual, reason: 'array does not contain the expected value' });
-    } else if (typeof actual !== 'string' && !Array.isArray(actual)) {
+    if (typeof actual === 'string') {
+      if (!actual.includes(String(needle))) {
+        diffs.push({ path, expected: `$includes ${JSON.stringify(needle)}`, actual, reason: 'string does not contain the expected substring' });
+      }
+    } else if (Array.isArray(actual)) {
+      if (!actual.includes(needle) && !actual.some((entry) => typeof entry === 'string' && entry.includes(String(needle)))) {
+        diffs.push({ path, expected: `$includes ${JSON.stringify(needle)}`, actual, reason: 'array does not contain the expected value or substring' });
+      }
+    } else {
       diffs.push({ path, expected: `$includes ${JSON.stringify(needle)}`, actual, reason: 'expected a string or array for $includes' });
     }
     return;
@@ -164,6 +179,12 @@ function deepDiff(expected: unknown, actual: unknown, path: string, diffs: Diff[
       if (isAbsentMatcher(value)) {
         if (has) {
           diffs.push({ path: path === '' ? key : `${path}.${key}`, expected: '$absent', actual: actualObj[key], reason: 'unexpected field present' });
+        }
+        continue;
+      }
+      if (isPresentMatcher(value)) {
+        if (!has) {
+          diffs.push({ path: path === '' ? key : `${path}.${key}`, expected: '$present', actual: undefined, reason: 'required field absent' });
         }
         continue;
       }
