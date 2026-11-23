@@ -44,7 +44,7 @@ export const frontchannelCapture: ScenarioHelper = async (context): Promise<Actu
   const raw = context.with.body;
   if (typeof raw !== 'string' || raw === '') throw new TypeError('frontchannel-capture: with.body is required');
   const html = interpolate(raw, context.scope);
-  if (html.includes('{{')) throw new Error(`frontchannel-capture: unbound variable in with.body: ${html}`);
+  if (html.includes('{{')) throw new Error('frontchannel-capture: unbound variable in with.body');
   return {
     status: 200,
     headers: { 'content-type': 'application/json' },

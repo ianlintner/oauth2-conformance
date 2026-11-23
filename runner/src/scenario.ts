@@ -40,6 +40,8 @@ export type HeaderExpectation = string | { $nonempty?: boolean; $regex?: string 
 
 export interface ScenarioExpectation {
   status?: number;
+  /** Status codes that must NOT be returned (e.g. a forbidden redirect). */
+  statusNot?: number[];
   headers?: Record<string, HeaderExpectation>;
   /** Declared top-level claims must be present and match normalized values. */
   json?: Record<string, unknown>;
@@ -219,6 +221,12 @@ export function parseExpectation(input: unknown, label: string): ScenarioExpecta
   if (hasStatus && (!Number.isInteger(expect.status) || (expect.status as number) < 100 || (expect.status as number) > 599)) {
     throw new TypeError(`${label}: expected status must be an HTTP status code`);
   }
+  if (expect.statusNot !== undefined) {
+    const forbidden = expect.statusNot;
+    if (!Array.isArray(forbidden) || forbidden.length === 0 || forbidden.some((s) => !Number.isInteger(s) || s < 100 || s > 599)) {
+      throw new TypeError(`${label}: forbidden statuses must be a nonempty list of HTTP status codes`);
+    }
+  }
   let redirect: ScenarioExpectation['redirect'];
   if (expect.redirect !== undefined) {
     const raw = record(expect.redirect, `${label}.redirect`);
@@ -232,6 +240,7 @@ export function parseExpectation(input: unknown, label: string): ScenarioExpecta
   }
   return {
     ...(hasStatus ? { status: expect.status as number } : {}),
+    ...(expect.statusNot !== undefined ? { statusNot: expect.statusNot as number[] } : {}),
     ...(expect.headers !== undefined ? { headers: parseHeaderExpectations(expect.headers, `${label}.headers`) } : {}),
     ...(expect.json !== undefined ? { json: record(expect.json, `${label}.json`) } : {}),
     ...(expect.jsonSchema !== undefined ? { jsonSchema: record(expect.jsonSchema, `${label}.jsonSchema`) } : {}),

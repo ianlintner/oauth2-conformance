@@ -279,12 +279,20 @@ function checkFormEncodedQuery(location: string, key: string, expected: string):
 
 export function compareResponse(expect: ScenarioExpectation, actual: ActualResponse, scope?: CaptureScope): Diff[] {
   const diffs: Diff[] = [];
-  if (actual.status !== expect.status) {
+  if (expect.status !== undefined && actual.status !== expect.status) {
     diffs.push({
       path: 'status',
       expected: expect.status,
       actual: actual.status,
       reason: 'HTTP status differs',
+    });
+  }
+  if (expect.statusNot !== undefined && expect.statusNot.includes(actual.status)) {
+    diffs.push({
+      path: 'status',
+      expected: `not one of ${expect.statusNot.join(', ')}`,
+      actual: actual.status,
+      reason: 'status is forbidden',
     });
   }
   for (const [name, value] of Object.entries(expect.headers ?? {})) {

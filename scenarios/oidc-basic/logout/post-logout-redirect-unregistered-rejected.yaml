@@ -54,6 +54,6 @@ steps:
         post_logout_redirect_uri: https://client.example/logged-out/extra
         state: s-bad
     expect:
-      status: 400
-      json:
-        error: invalid_request
+      # RP-Initiated Logout 1.0 §2 forbids the redirect; an HTML error page or
+      # any other non-redirect response is conformant.
+      statusNot: [302, 303, 307, 308]

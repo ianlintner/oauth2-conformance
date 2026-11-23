@@ -139,7 +139,6 @@ export async function parseSutConfig(text: string, baseDir: string): Promise<Sut
   }
 
   if (root.mtls !== undefined) {
-
     const raw = obj(root.mtls, 'mtls');
     exactKeys(raw, ['baseUrl', 'caFile', 'clients'], 'mtls');
     const baseUrl = (() => {
