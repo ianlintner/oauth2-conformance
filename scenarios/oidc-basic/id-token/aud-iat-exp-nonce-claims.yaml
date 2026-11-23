@@ -5,9 +5,11 @@ requirements:
   - OIDC-2-id-token-iat-exp
   - OIDC-3.1.2.1-nonce-echoed
 profile: oidc-basic
-status: draft
+status: stable
 note: |
   Invariants INV-OIDC-AUD-CLIENT, INV-OIDC-IAT-EXP-ORDER, INV-OIDC-NONCE-ECHOED.
+  iat < exp uses $gtCapture on the two NumericDate captures; plain $lt/$gt
+  cannot see normalized JWT time claims.
 steps:
   - id: auth
     use: login-and-authorize
@@ -53,10 +55,10 @@ steps:
       json:
         aud: { "$includes": "client-a" }
   - id: assert-iat-exp
+    source: jwt.idt.payload
     assert:
       json:
-        iat: { "$gt": 0 }
-        exp: { "$lt": 4102444800 }
+        iat: { "$gtCapture": [exp, iat] }
   - id: assert-nonce
     assert:
       json:

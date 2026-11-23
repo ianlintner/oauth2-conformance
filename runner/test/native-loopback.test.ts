@@ -105,6 +105,28 @@ test('an any-port scenario fails when the SUT redirects but drops the wildcard p
   }
 });
 
+test('login-and-authorize follows the SUT-provided post-login redirect instead of replaying the original URL', async () => {
+  const sent: Array<{ method: string; url: string }> = [];
+  const authPath = '/oauth/authorize?response_type=code&max_age=0&state=s';
+  const replayPath = '/oauth/authorize?response_type=code&state=s';
+  const response = await loginAndAuthorize({
+    scope: new Map(),
+    with: { username: 'a', password: 'b', loginPath: '/auth/login', authorizePath: authPath },
+    send: async (request) => {
+      sent.push({ method: request.method, url: request.url });
+      if (request.method === 'GET' && request.url === authPath) {
+        return { status: 302, headers: { location: '/auth/login', 'set-cookie': 'sid=abc' }, body: undefined };
+      }
+      if (request.method === 'POST' && request.url === '/auth/login') {
+        return { status: 303, headers: { location: replayPath, 'set-cookie': 'sid=abc' }, redirect: { location: replayPath, query: {}, fragment: {} }, body: undefined };
+      }
+      return { status: 302, headers: { location: 'https://client.example/cb?code=ok&state=s' }, redirect: { location: 'https://client.example/cb?code=ok&state=s', query: { code: 'ok', state: 's' }, fragment: {} }, body: undefined };
+    },
+  });
+  assert.deepEqual(sent.map((s) => s.url), [authPath, '/auth/login', replayPath]);
+  assert.equal(response.status, 302);
+});
+
 test('login-and-authorize still returns an immediate redirect back to the client (no login required)', async () => {
   const sent: string[] = [];
   const response = await loginAndAuthorize({
@@ -117,6 +139,56 @@ test('login-and-authorize still returns an immediate redirect back to the client
   });
   assert.equal(sent.length, 1);
   assert.equal(response.redirect?.query.code, 'x');
+});
+
+test('login-and-authorize refuses to follow an unsafe post-login redirect', async () => {
+  const unsafeTargets = [
+    'https://attacker.example/oauth/authorize?code=stolen', // cross-origin absolute
+    '//attacker.example/oauth/authorize?code=stolen', // protocol-relative
+    '/other/path?code=stolen', // different local path
+  ];
+  for (const target of unsafeTargets) {
+    const sent: string[] = [];
+    let firstGet = true;
+    const response = await loginAndAuthorize({
+      scope: new Map(),
+      with: { username: 'a', password: 'b', loginPath: '/auth/login', authorizePath: '/oauth/authorize' },
+      send: async (request) => {
+        sent.push(`${request.method} ${request.url}`);
+        if (request.method === 'GET' && firstGet) {
+          firstGet = false;
+          return { status: 302, headers: { location: '/auth/login' }, body: undefined, redirect: { location: '/auth/login', query: {}, fragment: {} } };
+        }
+        if (request.method === 'POST') {
+          return { status: 303, headers: { location: target, 'set-cookie': 'sid=abc' }, body: undefined, redirect: { location: target, query: {}, fragment: {} } };
+        }
+        return { status: 200, headers: {}, body: undefined };
+      },
+    });
+    assert.equal(response.status, 200, target);
+    assert.equal(sent[sent.length - 1], 'GET /oauth/authorize', target);
+  }
+});
+
+test('login-and-authorize follows a same-origin same-path post-login redirect', async () => {
+  const sent: string[] = [];
+  let firstGet = true;
+  await loginAndAuthorize({
+    scope: new Map(),
+    with: { username: 'a', password: 'b', loginPath: '/auth/login', authorizePath: '/oauth/authorize' },
+    send: async (request) => {
+      sent.push(`${request.method} ${request.url}`);
+      if (request.method === 'GET' && firstGet) {
+        firstGet = false;
+        return { status: 302, headers: { location: '/auth/login' }, body: undefined, redirect: { location: '/auth/login', query: {}, fragment: {} } };
+      }
+      if (request.method === 'POST') {
+        return { status: 303, headers: { location: '/oauth/authorize?state=s', 'set-cookie': 'sid=abc' }, body: undefined, redirect: { location: '/oauth/authorize?state=s', query: { state: 's' }, fragment: {} } };
+      }
+      return { status: 200, headers: {}, body: undefined };
+    },
+  });
+  assert.equal(sent[sent.length - 1], 'GET /oauth/authorize?state=s');
 });
 
 test('login-and-authorize logs in once per user per run and reuses the session (SUT login rate limits)', async () => {
@@ -158,6 +230,18 @@ test('login-and-authorize does not reuse a session across different passwords fo
   await loginAndAuthorize({ scope: new Map(), with: helperWith('good'), send, sessions });
   await loginAndAuthorize({ scope: new Map(), with: helperWith('other'), send, sessions });
   assert.equal(log.filter((entry) => entry.startsWith('POST')).length, 2, log.join(' | '));
+});
+
+test('login-and-authorize with session=reuse fails loudly and never logs in when no session was saved', async () => {
+  const log: string[] = [];
+  const send = scriptedSend(new Set(['sid=alice']), log);
+  const withReuse = { ...helperWith('good'), session: 'reuse' };
+  await assert.rejects(
+    loginAndAuthorize({ scope: new Map(), with: withReuse, send, sessions: new Map() }),
+    /session=reuse but no saved session/,
+  );
+  assert.equal(log.filter((entry) => entry.startsWith('POST')).length, 0, 'reuse must not silently log in: ' + log.join(' | '));
+  assert.equal(log.filter((entry) => entry.startsWith('GET')).length, 0, 'reuse must not send an unauthenticated authorize: ' + log.join(' | '));
 });
 
 test('login-and-authorize logs in again when the cached session is stale', async () => {

@@ -2,7 +2,7 @@ id: oidc-basic.id-token.scope-claims
 title: id_token includes only claims authorized by the granted scopes
 requirements: [OIDC-5.4-id-token-scope-claims]
 profile: oidc-basic
-status: draft
+status: stable
 note: |
   Invariant INV-OIDC-ID-TOKEN-SCOPE-CLAIMS. OIDC Core 5.4 requires that claims
   about the end-user be authorized by the granted scopes before being placed in

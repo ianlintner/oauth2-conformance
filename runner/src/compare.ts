@@ -20,7 +20,7 @@
 import { NORMALIZED, normalizePayload } from './normalize.js';
 import type { ScenarioExpectation } from './scenario.js';
 import { interpolate } from './scenario.js';
-import { isAbsentMatcher, isContainsMatcher, isNonemptyMatcher, isGtMatcher, isLtMatcher, isIncludesMatcher, isRegexMatcher } from './matchers.js';
+import { isAbsentMatcher, isContainsMatcher, isNonemptyMatcher, isGtMatcher, isLtMatcher, isLtCaptureMatcher, isGtCaptureMatcher, isIncludesMatcher, isRegexMatcher } from './matchers.js';
 import { decodeJwtSegments, fieldAt } from './jwt.js';
 
 /** Minimal view of the run's captured-value scope (`Map<string, string>`). */
@@ -75,7 +75,7 @@ function interpolateLeaves(value: unknown, scope?: CaptureScope): unknown {
 }
 
 /** Structural comparison where an expected `NORMALIZED` matches anything present. */
-function deepDiff(expected: unknown, actual: unknown, path: string, diffs: Diff[]): void {
+function deepDiff(expected: unknown, actual: unknown, path: string, diffs: Diff[], scope?: CaptureScope): void {
   if (isNormalized(expected)) {
     if (actual === undefined) {
       diffs.push({ path, expected: '<nondeterministic value>', actual, reason: 'missing required field' });
@@ -126,6 +126,22 @@ function deepDiff(expected: unknown, actual: unknown, path: string, diffs: Diff[
     }
     return;
   }
+  // Cross-capture numeric comparison. Reads both operands from the capture
+  // scope, so it works for JWT NumericDate claims that normalizePayload hides.
+  const captureCompareKey = isLtCaptureMatcher(expected) ? '$ltCapture' : isGtCaptureMatcher(expected) ? '$gtCapture' : undefined;
+  if (captureCompareKey !== undefined) {
+    const refs = (expected as Record<string, unknown>)[captureCompareKey] as string[];
+    const rawA = scope?.get(refs[0]!);
+    const rawB = scope?.get(refs[1]!);
+    const a = rawA !== undefined && /^-?\d+$/.test(rawA.trim()) ? Number(rawA) : undefined;
+    const b = rawB !== undefined && /^-?\d+$/.test(rawB.trim()) ? Number(rawB) : undefined;
+    if (a === undefined || b === undefined) {
+      diffs.push({ path, expected: `${captureCompareKey} ${refs.join(captureCompareKey === '$ltCapture' ? ' < ' : ' > ')}`, actual: { [refs[0]!]: rawA, [refs[1]!]: rawB }, reason: 'capture comparison requires two integer-valued captures' });
+    } else if (captureCompareKey === '$ltCapture' ? a >= b : a <= b) {
+      diffs.push({ path, expected: `${captureCompareKey} ${refs.join(captureCompareKey === '$ltCapture' ? ' < ' : ' > ')}`, actual: { [refs[0]!]: a, [refs[1]!]: b }, reason: captureCompareKey === '$ltCapture' ? `${a} is not < ${b}` : `${a} is not > ${b}` });
+    }
+    return;
+  }
   if (Array.isArray(expected)) {
     if (!Array.isArray(actual)) {
       diffs.push({ path, expected, actual, reason: 'expected an array' });
@@ -134,7 +150,7 @@ function deepDiff(expected: unknown, actual: unknown, path: string, diffs: Diff[
     if (expected.length !== actual.length) {
       diffs.push({ path, expected: expected.length, actual: actual.length, reason: 'array length differs' });
     }
-    expected.forEach((entry, index) => deepDiff(entry, actual[index], `${path}[${index}]`, diffs));
+    expected.forEach((entry, index) => deepDiff(entry, actual[index], `${path}[${index}]`, diffs, scope));
     return;
   }
   if (expected !== null && typeof expected === 'object') {
@@ -155,7 +171,7 @@ function deepDiff(expected: unknown, actual: unknown, path: string, diffs: Diff[
         diffs.push({ path: path === '' ? key : `${path}.${key}`, expected: value, actual: undefined, reason: 'missing field' });
         continue;
       }
-      deepDiff(value, actualObj[key], path === '' ? key : `${path}.${key}`, diffs);
+      deepDiff(value, actualObj[key], path === '' ? key : `${path}.${key}`, diffs, scope);
     }
     return;
   }
@@ -286,7 +302,7 @@ export function compareResponse(expect: ScenarioExpectation, actual: ActualRespo
     if (actual.body === undefined) {
       diffs.push({ path: 'body', expected: expect.json, actual: undefined, reason: 'expected a JSON body' });
     } else {
-      deepDiff(normalizePayload(interpolateLeaves(expect.json, scope)), normalizePayload(actual.body), '', diffs);
+      deepDiff(normalizePayload(interpolateLeaves(expect.json, scope)), normalizePayload(actual.body), '', diffs, scope);
     }
   }
 
