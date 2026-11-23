@@ -23,7 +23,7 @@
  * helper call signs with a fresh `jti` unless `jti` is given.
  */
 
-import { createHash, generateKeyPairSync, randomUUID, sign, type KeyObject, createPrivateKey, webcrypto } from 'node:crypto';
+import { createHash, generateKeyPairSync, randomUUID, sign, type KeyObject, type JsonWebKey, createPrivateKey } from 'node:crypto';
 import { interpolate } from './scenario.js';
 import type { HelperContext } from './runner.js';
 
@@ -48,7 +48,7 @@ function loadKey(context: HelperContext, name: string): { privateKey: KeyObject;
     stored = JSON.stringify(privateKey.export({ format: 'jwk' }));
     context.scope.set(slot, stored);
   }
-  const privateJwk = JSON.parse(stored) as webcrypto.JsonWebKey;
+  const privateJwk = JSON.parse(stored) as JsonWebKey;
   const { kty, crv, x, y } = privateJwk;
   return { privateKey: createPrivateKey({ key: privateJwk, format: 'jwk' }), privateJwk, publicJwk: { kty: kty ?? '', crv: crv ?? '', x: x ?? '', y: y ?? '' } };
 }
