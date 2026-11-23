@@ -63,6 +63,27 @@ test('jwt capture returns undefined for a missing source variable or malformed t
   assert.equal(captureValue('jwt.at.payload.iss', response(200, {})), undefined);
 });
 
+test('$ltCapture compares two captured numeric claims (iat < exp) and fails closed', () => {
+  const scope = new Map<string, string>([['iat', '1700000000'], ['exp', '1700003600']]);
+  const expect = { status: 200, json: { ordering: { $ltCapture: ['iat', 'exp'] } } } as never;
+  assert.deepEqual(compareResponse(expect, response(200, { ordering: true }), scope), []);
+  // Equal and later values fail; a missing capture fails closed rather than passing.
+  const equal = new Map<string, string>([['iat', '1700000000'], ['exp', '1700000000']]);
+  assert.equal(compareResponse(expect, response(200, { ordering: true }), equal).length, 1);
+  const missing = new Map<string, string>([['iat', '1700000000']]);
+  assert.equal(compareResponse(expect, response(200, { ordering: true }), missing).length, 1);
+  // A non-numeric capture fails closed too.
+  const bad = new Map<string, string>([['iat', '1700000000'], ['exp', 'not-a-number']]);
+  assert.equal(compareResponse(expect, response(200, { ordering: true }), bad).length, 1);
+  // Reversed comparison ($gtCapture) is covered by its own test below.
+});
+
+test('assert-only steps fail closed on a mismatched capture', () => {
+  const scope = new Map<string, string>([['iat', '1700000000'], ['exp', '1700000000']]);
+  const expect = { status: 200, json: { check: { $ltCapture: ['iat', 'exp'] } } } as never;
+  assert.equal(compareResponse(expect, response(200, { check: true }), scope).length, 1);
+});
+
 test('$contains matcher passes when the array contains the value, fails otherwise', () => {
   const expect = { status: 200, json: { response_types_supported: { $contains: 'code' } } } as never;
   assert.deepEqual(compareResponse(expect, response(200, { response_types_supported: ['code', 'token'] })), []);
@@ -109,6 +130,65 @@ test('expect.headers interpolates {{var}} values against the capture scope', () 
   const scope = new Map<string, string>([['ct', 'application/json']]);
   const expect = { status: 200, headers: { 'content-type': '{{ct}}' } } as never;
   assert.deepEqual(compareResponse(expect, response(200, {}), scope), []);
+});
+
+test('$ltCapture works end-to-end in an assert step with a JWT payload source', async () => {
+  const token = jwt({ alg: 'RS256' }, { iat: 1700000000, exp: 1700003600, aud: 'client-a' });
+  const server: Server = createServer((_req, res) => {
+    res.writeHead(200, { 'content-type': 'application/json' });
+    res.end(JSON.stringify({ access_token: token }));
+  });
+  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+  const url = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+  const dir = await mkdtemp(path.join(tmpdir(), 'ltcapture-'));
+  await mkdir(path.join(dir, 'scenarios'), { recursive: true });
+  await writeFile(
+    path.join(dir, 'scenarios', 'a.yaml'),
+    [
+      'id: matchers.capture-order',
+      'requirements: [OIDC-3.1.3.7-iat-exp]',
+      'profile: oidc-basic',
+      'status: stable',
+      'steps:',
+      '  - id: token',
+      '    request: { method: POST, path: /oauth/token, form: { grant_type: authorization_code } }',
+      '    expect: { status: 200 }',
+      '    capture:',
+      '      idt: body.access_token',
+      '      iat: jwt.idt.payload.iat',
+      '      exp: jwt.idt.payload.exp',
+      '  - id: ordering',
+      '    source: jwt.idt.payload',
+      '    assert:',
+      '      json:',
+      '        exp: { $gtCapture: [exp, iat] }',
+      '',
+    ].join('\n'),
+  );
+  try {
+    const result = await cli(['run', '--base-url', url, '--scenarios', path.join(dir, 'scenarios')]);
+    assert.equal(result.code, 0, result.stdout + result.stderr);
+    assert.match(result.stdout, /PASS matchers\.capture-order/);
+  } finally {
+    server.close();
+  }
+});
+
+test('$gtCapture failure diff states the > operator, not <', () => {
+  const scope = new Map<string, string>([['exp', '100'], ['iat', '200']]);
+  const expect = { status: 200, json: { ordering: { $gtCapture: ['exp', 'iat'] } } } as never;
+  const diffs = compareResponse(expect, response(200, { ordering: true }), scope);
+  assert.equal(diffs.length, 1);
+  assert.equal(diffs[0]?.expected, '$gtCapture exp > iat');
+  assert.match(diffs[0]?.reason ?? '', /100 is not > 200/);
+});
+
+test('$ltCapture failure diff states the < operator', () => {
+  const scope = new Map<string, string>([['iat', '200'], ['exp', '100']]);
+  const expect = { status: 200, json: { ordering: { $ltCapture: ['iat', 'exp'] } } } as never;
+  const diffs = compareResponse(expect, response(200, { ordering: true }), scope);
+  assert.equal(diffs.length, 1);
+  assert.equal(diffs[0]?.expected, '$ltCapture iat < exp');
 });
 
 test('matchers work end-to-end through the CLI against a mock SUT', async () => {

@@ -2,7 +2,7 @@ id: oidc-basic.prompt.prompt-none-requires-login
 title: prompt=none with no active session errors with login_required
 requirements: [OIDC-3.1.2.1-prompt-none-login-required]
 profile: oidc-basic
-status: draft
+status: stable
 note: |
   Invariant INV-OIDC-PROMPT-NONE-LOGIN-REQUIRED. prompt=none forbids any
   interactive login, so a request with no active session must redirect back
@@ -23,8 +23,15 @@ steps:
         scope: openid
         state: s-none
         prompt: none
+        code_challenge: E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM
+        code_challenge_method: S256
     expect:
       status: 302
+      redirect:
+        locationPrefix: https://client.example/callback?
+        query:
+          error: login_required
+          state: s-none
     capture:
       state: redirect.query.state
       error: redirect.query.error

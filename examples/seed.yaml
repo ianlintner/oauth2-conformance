@@ -10,6 +10,8 @@ clients:
     token_endpoint_auth_method: client_secret_basic
     redirect_uris: ["https://client.example/callback"]
     grant_types: [authorization_code, refresh_token]
+    # email/profile are needed by oidc-basic.userinfo.email-profile-scope-claims.
+    scopes: [openid, read, email, profile]
   # Fixture client for token-endpoint scenarios that need a 200 without a live
   # authorization code. client_credentials is outside the core profile; this
   # client only supplies a successful token response.
@@ -82,6 +84,9 @@ clients:
 users:
   - username: alice
     password: test-only-password
+    # Deterministic OIDC claims; both reference SUTs seed this user record and
+    # scope-gate email/profile claims in id_token and UserInfo from it.
+    email: alice@conformance.invalid
     auto_approve_clients:
       - client-a
       - client-enc

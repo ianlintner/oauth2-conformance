@@ -2,15 +2,19 @@ id: oidc-basic.prompt.prompt-login-reauthenticates
 title: prompt=login forces re-authentication even with an active session
 requirements: [OIDC-3.1.2.1-prompt-login-reauthenticates]
 profile: oidc-basic
-status: draft
+status: stable
 note: |
   Invariant INV-OIDC-PROMPT-LOGIN-REAUTHENTICATES. prompt=login must force a
-  fresh authentication even when a session is already active; proving this
-  needs a run that first establishes a session, then re-issues authorize with
-  prompt=login and observes a bound auth_time change or a fresh login redirect.
+  fresh authentication even when a session is already active. Step 1 establishes
+  a real session through the SUT's login form. Step 2 reuses that cookie with
+  prompt=login and requires the SUT to redirect back to its login endpoint
+  instead of issuing a code — a SUT that ignores prompt=login would reuse the
+  session and redirect to the client, which fails this scenario. The runner's
+  `login-and-authorize` helper with `session: reuse` sends the cached cookie
+  without posting credentials, so the observed redirect is the SUT's decision.
   Level SHOULD in OIDC Core; oidc-basic tracks it as profile strictness.
 steps:
-  - id: auth
+  - id: establish-session
     use: login-and-authorize
     with:
       username: alice
@@ -23,11 +27,35 @@ steps:
         client_id: client-a
         redirect_uri: https://client.example/callback
         scope: openid
-        state: s-prompt-login
+        state: s-prompt-login-session
+        code_challenge: E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM
+        code_challenge_method: S256
+    expect:
+      status: 302
+      redirect:
+        locationPrefix: https://client.example/callback?
+        query:
+          state: s-prompt-login-session
+    capture:
+      code: redirect.query.code
+  - id: reauthenticate
+    use: login-and-authorize
+    with:
+      username: alice
+      password: test-only-password
+      loginPath: /auth/login
+      authorizePath: /oauth/authorize
+      session: reuse
+      query:
+        response_type: code
+        client_id: client-a
+        redirect_uri: https://client.example/callback
+        scope: openid
+        state: s-prompt-login-reauth
         prompt: login
         code_challenge: E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM
         code_challenge_method: S256
     expect:
       status: 302
-    capture:
-      code: redirect.query.code
+      redirect:
+        locationPrefix: /auth/login
