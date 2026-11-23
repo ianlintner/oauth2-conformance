@@ -12,7 +12,7 @@
  * still getting a fresh `jti` each time.
  */
 
-import { createPrivateKey, generateKeyPairSync, sign, type KeyObject, type JsonWebKey } from 'node:crypto';
+import { createPrivateKey, generateKeyPairSync, sign, type KeyObject, webcrypto } from 'node:crypto';
 
 export interface SigningKey {
   /** ES256 private key (never returned in helper output). */
@@ -29,7 +29,7 @@ export function loadSigningKey(scope: Map<string, string>, kid: string): Signing
     stored = JSON.stringify(privateKey.export({ format: 'jwk' }));
     scope.set(slot, stored);
   }
-  const privateJwk = JSON.parse(stored) as JsonWebKey;
+  const privateJwk = JSON.parse(stored) as webcrypto.JsonWebKey;
   const { kty, crv, x, y } = privateJwk;
   return {
     privateKey: createPrivateKey({ key: privateJwk, format: 'jwk' }),
