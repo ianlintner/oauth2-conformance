@@ -232,6 +232,18 @@ test('login-and-authorize does not reuse a session across different passwords fo
   assert.equal(log.filter((entry) => entry.startsWith('POST')).length, 2, log.join(' | '));
 });
 
+test('login-and-authorize with session=reuse fails loudly and never logs in when no session was saved', async () => {
+  const log: string[] = [];
+  const send = scriptedSend(new Set(['sid=alice']), log);
+  const withReuse = { ...helperWith('good'), session: 'reuse' };
+  await assert.rejects(
+    loginAndAuthorize({ scope: new Map(), with: withReuse, send, sessions: new Map() }),
+    /session=reuse but no saved session/,
+  );
+  assert.equal(log.filter((entry) => entry.startsWith('POST')).length, 0, 'reuse must not silently log in: ' + log.join(' | '));
+  assert.equal(log.filter((entry) => entry.startsWith('GET')).length, 0, 'reuse must not send an unauthenticated authorize: ' + log.join(' | '));
+});
+
 test('login-and-authorize logs in again when the cached session is stale', async () => {
   const log: string[] = [];
   const sessions = new Map<string, string>();

@@ -61,13 +61,19 @@ requirements have no scenario at all).
 
 ### Cross-SUT note
 
-`prompt-login-reauthenticates` passes on Python but fails on the local Rust
-build: Rust's test login redirects to `/profile` and its `/oauth/authorize`
-keeps re-triggering `prompt=login`, so the helper cannot replay the authorize
-step. The scenario is promoted because the behavior is correct on one reference
-port and the Rust issue is a SUT-side one-shot-parameter bug, not a contract
-gap. A follow-up SUT card is needed if Rust parity for this scenario is
-required.
+`prompt-login-reauthenticates` is a two-step reauthentication proof: step 1
+establishes a session with a plain authorize, step 2 reuses that cookie with
+`prompt=login` and requires a fresh login redirect. A runner test loads the
+published scenario against an honest SUT (pass) and a fake SUT that ignores
+`prompt=login` (fail), so the scenario can catch the behavior it claims to
+check.
+
+Both reference SUTs pass this scenario at candidate head `1efb8ee` (seeded,
+fresh process): Python SUT `main@f69d079` and Rust SUT `main@e75b4cb` each
+report oidc-basic 15 executed / 13 pass / 0 fail / 2 deferred. The earlier
+Rust failure came from putting `prompt=login` in step 1; removing it lets step
+1 establish a clean session and step 2 prove reauthentication. No SUT-side
+follow-up is needed for this scenario.
 
 ## Invariants
 
