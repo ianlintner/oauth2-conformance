@@ -142,6 +142,11 @@ export async function runScenarios(scenarios: Scenario[], options: RunOptions): 
             baseUrl: options.baseUrl,
             ...(options.sut !== undefined ? { sut: options.sut } : {}),
           });
+        } else if (step.assert !== undefined) {
+          // Assert-only step: no HTTP request. Build a synthetic response so
+          // the shared compareResponse path can score the assertion against
+          // the capture scope (see the `step.assert` block below).
+          actual = { status: 200, headers: {}, body: {} };
         } else {
           const request = buildRequest(step, scope);
           const headers = { ...request.headers };
@@ -233,6 +238,9 @@ export async function runScenarios(scenarios: Scenario[], options: RunOptions): 
           }
           const expectWithResolved = {
             ...assertExpect,
+            // An assert-only step has no live HTTP response; its synthetic
+            // status satisfies the comparison default (200).
+            status: assertExpect.status ?? 200,
             json: resolvedExpect,
           };
           const fakeResponse: import('./compare.js').ActualResponse = {

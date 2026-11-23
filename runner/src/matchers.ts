@@ -18,6 +18,10 @@
  *                                 greater than `value`.
  *   - `{ "$lt": value }`          the actual numeric value must be strictly
  *                                 less than `value`.
+ *   - `{ "$ltCapture": [a, b] }`  the numeric capture `a` must be strictly less
+ *                                 than numeric capture `b` (cross-claim order).
+ *   - `{ "$gtCapture": [a, b] }`  the numeric capture `a` must be strictly
+ *                                 greater than numeric capture `b`.
  *
  * Only these forms are recognized. Any other object is treated as a
  * literal object, so a real JSON member named `$contains` is unreachable in
@@ -66,6 +70,22 @@ export function isLtMatcher(value: unknown): boolean {
   const key = matcherKey(value);
   if (key !== '$lt') return false;
   return typeof (value as Record<string, unknown>).$lt === 'number';
+}
+
+/** True when `value` is a `{ "$ltCapture": [a, b] }` matcher of two capture names. */
+export function isLtCaptureMatcher(value: unknown): boolean {
+  const key = matcherKey(value);
+  if (key !== '$ltCapture') return false;
+  const refs = (value as Record<string, unknown>).$ltCapture;
+  return Array.isArray(refs) && refs.length === 2 && refs.every((ref) => typeof ref === 'string' && ref.length > 0);
+}
+
+/** True when `value` is a `{ "$gtCapture": [a, b] }` matcher of two capture names. */
+export function isGtCaptureMatcher(value: unknown): boolean {
+  const key = matcherKey(value);
+  if (key !== '$gtCapture') return false;
+  const refs = (value as Record<string, unknown>).$gtCapture;
+  return Array.isArray(refs) && refs.length === 2 && refs.every((ref) => typeof ref === 'string' && ref.length > 0);
 }
 
 /** True when `value` is a `{ "$regex": "<pattern>" }` matcher with a string pattern. */

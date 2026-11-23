@@ -124,9 +124,22 @@ export async function loginAndAuthorize(context: HelperContext): Promise<import(
 
   const loginCookie = cookieFrom(login, cookie);
   if (loginCookie !== undefined) context.sessions?.set(sessionKey, loginCookie);
+  // Reference SUTs save a post-login replay URL (e.g. after stripping the
+  // one-shot `max_age`/prompt=login params). Follow the SUT's redirect rather
+  // than replaying the original authorize URL, which would re-trigger the
+  // very re-authentication the SUT just completed. Fall back to the original
+  // URL when the login response has no usable same-origin redirect.
+  const replayLocation = loginLocation;
+  const originalPath = authorizeUrl.split('?', 1)[0] ?? '';
+  const replayPath = replayLocation?.split('?', 1)[0] ?? '';
+  const followSutRedirect = replayLocation !== undefined
+    && replayLocation.startsWith('/')
+    && !replayLocation.startsWith('//')
+    && replayPath === originalPath;
+  const replayUrl = followSutRedirect ? replayLocation : authorizeUrl;
   return context.send({
     method: 'GET',
-    url: authorizeUrl,
+    url: replayUrl,
     headers: {
       ...(loginCookie !== undefined ? { cookie: loginCookie } : {}),
     },

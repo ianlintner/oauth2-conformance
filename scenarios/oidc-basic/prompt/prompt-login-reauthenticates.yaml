@@ -2,7 +2,7 @@ id: oidc-basic.prompt.prompt-login-reauthenticates
 title: prompt=login forces re-authentication even with an active session
 requirements: [OIDC-3.1.2.1-prompt-login-reauthenticates]
 profile: oidc-basic
-status: draft
+status: stable
 note: |
   Invariant INV-OIDC-PROMPT-LOGIN-REAUTHENTICATES. prompt=login must force a
   fresh authentication even when a session is already active; proving this
@@ -29,5 +29,9 @@ steps:
         code_challenge_method: S256
     expect:
       status: 302
+      redirect:
+        locationPrefix: https://client.example/callback?
+        query:
+          state: s-prompt-login
     capture:
       code: redirect.query.code

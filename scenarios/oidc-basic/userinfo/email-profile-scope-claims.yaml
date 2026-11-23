@@ -4,16 +4,14 @@ requirements:
   - OIDC-5.4-userinfo-email-scope
   - OIDC-5.4-userinfo-profile-scope
 profile: oidc-basic
-status: draft
+status: stable
 note: |
   Invariants INV-OIDC-USERINFO-EMAIL-SCOPE, INV-OIDC-USERINFO-PROFILE-SCOPE.
-  email and preferred_username (and the standard profile claims) are scope-gated
-  in the reference SUT and appear only when a real user record exists in
-  storage. The conformance seed does not promise storage-backed user claim data,
-  so asserting claim presence is not deterministic against the contract; the
-  reference wellknown::userinfo also gates output on storage.get_user_by_id
-  succeeding. Level SHOULD in OIDC Core 5.4; oidc-basic tracks it as profile
-  strictness once the seed exposes deterministic user claims (part 3/3).
+  email and preferred_username are scope-gated in the reference SUTs and
+  appear only when a real user record exists in storage. The conformance seed
+  now pins alice's email and grants client-a the email/profile scopes, so both
+  reference SUTs return deterministic values. OIDC Core 5.4 rates these
+  claims as SHOULD; oidc-basic tracks the scope gate as profile strictness.
 steps:
   - id: auth
     use: login-and-authorize
@@ -32,6 +30,10 @@ steps:
         code_challenge_method: S256
     expect:
       status: 302
+      redirect:
+        locationPrefix: https://client.example/callback?
+        query:
+          state: s-scope
     capture:
       code: redirect.query.code
   - id: token
@@ -48,6 +50,8 @@ steps:
       status: 200
       json: { id_token: "x", access_token: "x" }
     capture:
+      idt: body.id_token
+      sub: jwt.idt.payload.sub
       at: body.access_token
   - id: userinfo
     request:
@@ -57,4 +61,6 @@ steps:
     expect:
       status: 200
       json:
-        sub: "x"
+        sub: "{{sub}}"
+        email: alice@conformance.invalid
+        preferred_username: alice

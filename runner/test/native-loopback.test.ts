@@ -105,6 +105,28 @@ test('an any-port scenario fails when the SUT redirects but drops the wildcard p
   }
 });
 
+test('login-and-authorize follows the SUT-provided post-login redirect instead of replaying the original URL', async () => {
+  const sent: Array<{ method: string; url: string }> = [];
+  const authPath = '/oauth/authorize?response_type=code&max_age=0&state=s';
+  const replayPath = '/oauth/authorize?response_type=code&state=s';
+  const response = await loginAndAuthorize({
+    scope: new Map(),
+    with: { username: 'a', password: 'b', loginPath: '/auth/login', authorizePath: authPath },
+    send: async (request) => {
+      sent.push({ method: request.method, url: request.url });
+      if (request.method === 'GET' && request.url === authPath) {
+        return { status: 302, headers: { location: '/auth/login', 'set-cookie': 'sid=abc' }, body: undefined };
+      }
+      if (request.method === 'POST' && request.url === '/auth/login') {
+        return { status: 303, headers: { location: replayPath, 'set-cookie': 'sid=abc' }, redirect: { location: replayPath, query: {}, fragment: {} }, body: undefined };
+      }
+      return { status: 302, headers: { location: 'https://client.example/cb?code=ok&state=s' }, redirect: { location: 'https://client.example/cb?code=ok&state=s', query: { code: 'ok', state: 's' }, fragment: {} }, body: undefined };
+    },
+  });
+  assert.deepEqual(sent.map((s) => s.url), [authPath, '/auth/login', replayPath]);
+  assert.equal(response.status, 302);
+});
+
 test('login-and-authorize still returns an immediate redirect back to the client (no login required)', async () => {
   const sent: string[] = [];
   const response = await loginAndAuthorize({
