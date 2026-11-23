@@ -127,6 +127,13 @@ function deepDiff(expected: unknown, actual: unknown, path: string, diffs: Diff[
   }
   if (isRegexMatcher(expected)) {
     const pattern = (expected as { $regex: string }).$regex;
+    // nosemgrep: javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
+    // Pattern is authored in a trusted scenario YAML and applied to SUT responses;
+    // it is never derived from SUT input. Bounded to 512 chars at parse time.
+    if (pattern.length > 512) {
+      diffs.push({ path, expected: '$regex pattern', actual: `${pattern.length} chars`, reason: 'regex pattern exceeds 512 characters' });
+      return;
+    }
     const regex = new RegExp(pattern);
     const matches = (value: unknown): boolean => typeof value === 'string' && regex.test(value);
     if (Array.isArray(actual)) {
