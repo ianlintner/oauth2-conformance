@@ -116,6 +116,26 @@
             "minItems": 1,
             "items": { "type": "string", "minLength": 1 }
           },
+          "post_logout_redirect_uris": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^https?://[^#\\s]+$",
+              "description": "OIDC RP-Initiated Logout 1.0 section 2: exact registered post-logout redirect URIs. http(s) only, no fragment."
+            }
+          },
+          "backchannel_logout_uri": {
+            "type": "string",
+            "pattern": "^https?://[^#\\s]+$",
+            "description": "OIDC Back-Channel Logout 1.0 section 2.1: URI receiving the logout_token form POST. Must be a loopback URL in a conformance seed so the runner can observe it."
+          },
+          "backchannel_logout_session_required": { "type": "boolean" },
+          "frontchannel_logout_uri": {
+            "type": "string",
+            "pattern": "^https?://[^#\\s]+$",
+            "description": "OIDC Front-Channel Logout 1.0 section 2.1: URI rendered as an iframe src on the OP logout page. Must be a loopback URL in a conformance seed."
+          },
+          "frontchannel_logout_session_required": { "type": "boolean" },
           "scopes": {
             "type": "array",
             "items": { "type": "string", "minLength": 1 }

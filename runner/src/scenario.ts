@@ -243,8 +243,8 @@ function parseCapture(input: unknown, label: string): Record<string, string> {
   const capture = strings(input, label);
   for (const [name, expression] of Object.entries(capture)) {
     if (!ID_PATTERN.test(name)) throw new TypeError(`${label} requires valid variable names, got ${name}`);
-    if (!/^(?:redirect\.(?:query|fragment)|body|header|jwt\.[A-Za-z_][A-Za-z0-9_]*\.(?:header|payload))\.[^\s]+$/.test(expression)) {
-      throw new TypeError(`${label}.${name} must select redirect.query.*, redirect.fragment.*, body.*, header.* or jwt.<var>.<header|payload>.*`);
+    if (!/^(?:text\.body|(?:redirect\.(?:query|fragment)|body|header|jwt\.[A-Za-z_][A-Za-z0-9_]*\.(?:header|payload))\.[^\s]+)$/.test(expression)) {
+      throw new TypeError(`${label}.${name} must select text.body, redirect.query.*, redirect.fragment.*, body.*, header.* or jwt.<var>.<header|payload>.*`);
     }
   }
   return capture;

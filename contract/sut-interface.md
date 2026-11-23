@@ -128,4 +128,13 @@ mtls:
 
 Unknown keys are rejected. Relative paths resolve against the config file's directory. A helper whose capability is not configured in `--sut-config` (`sut-restart`, `request-on-instance`, `mtls-request`) throws, so the scenario fails (stable) or defers (draft) instead of passing vacuously. `advance-clock` itself requires a `2xx` from the SUT and throws otherwise.
 
+### 7.8 OIDC logout registration and the runner's receiver (oidc-basic)
+
+Additive and optional. Seed clients may carry (public values only; see [`schemas/seed.schema.json`](../schemas/seed.schema.json)): `post_logout_redirect_uris` (array), `backchannel_logout_uri`, `backchannel_logout_session_required`, `frontchannel_logout_uri`, `frontchannel_logout_session_required`. Every URI is `http`/`https` with no fragment. A SUT that applies the seed must either honour these fields or refuse to start; it must not silently drop them. The fixture is [`examples/seed-logout.yaml`](../examples/seed-logout.yaml), kept separate from `examples/seed.yaml` so ports that do not yet accept the fields keep loading the core seed.
+
+- The logout endpoint is `GET /oauth/logout` (`id_token_hint`, `post_logout_redirect_uri`, `state`).
+- Back-channel: the SUT POSTs `application/x-www-form-urlencoded` `logout_token=<JWT>` to the client's `backchannel_logout_uri`. The **runner** owns the receiver: `--sut-config` `logoutReceiver: { origin: http://127.0.0.1:8099, path: /backchannel-logout }` (loopback `http` origin only, unknown keys rejected). The runner binds that fixed origin for the run; the seed must register the same URI. `use: read-logout-token` (`with.waitMs`, default 5000, max 60000) returns `{ "logout_token": ... }` for the next captured POST, or throws on timeout. Non-form posts get `415`, posts without `logout_token` get `400`, and neither is ever exposed as evidence. Unconfigured, the helper throws.
+- Front-channel: capture the logout page with `capture: { page: text.body }` (new capture source: raw non-JSON response text), then `use: frontchannel-capture` with `with.body: "{{page}}"` returns `{ "iframe_srcs": [...] }` (http(s) iframe `src` values, entities decoded).
+- Seed material is synthetic and valid only in conformance mode; the seed never carries private keys.
+
 No scenario is promoted by this contract: the SUT-side implementations are separate port work, and a scenario becomes `stable` only after it passes on a SUT that advertises the capability it uses.

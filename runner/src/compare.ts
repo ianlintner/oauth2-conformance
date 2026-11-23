@@ -378,6 +378,7 @@ export function captureValue(expression: string, actual: ActualResponse, scope?:
       return undefined;
     }
   }
+  if (scope_ === 'text') return rest === 'body' ? actual.text : undefined;
   if (scope_ === 'header') return headerValue(actual.headers, rest);
   if (scope_ === 'redirect') {
     const redirect = actual.redirect ?? (headerValue(actual.headers, 'location') !== undefined ? parseRedirect(headerValue(actual.headers, 'location') as string) : undefined);

@@ -100,7 +100,7 @@
         "id": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_-]*$" },
         "use": {
           "type": "string",
-          "enum": ["login-and-authorize", "logout", "device-verify", "dpop-proof", "client-assertion", "request-object", "mtls-request", "sut-restart", "request-on-instance"],
+          "enum": ["login-and-authorize", "logout", "device-verify", "dpop-proof", "client-assertion", "request-object", "mtls-request", "sut-restart", "request-on-instance", "read-logout-token", "frontchannel-capture"],
           "description": "Runner helper invoked instead of a raw request. mtls-request, sut-restart and request-on-instance are declared for draft scenarios only; the runner does not implement them yet, so a scenario using one defers (unknown step helper) and must stay draft."
         },
         "with": { "type": "object", "additionalProperties": true },
@@ -120,7 +120,7 @@
           "propertyNames": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$" },
           "additionalProperties": {
             "type": "string",
-            "pattern": "^(?:redirect\\.(?:query|fragment)|body|header|jwt\\.[A-Za-z_][A-Za-z0-9_]*\\.(?:header|payload))\\.[^\\s]+$"
+            "pattern": "^(?:text\\.body|(?:redirect\\.(?:query|fragment)|body|header|jwt\\.[A-Za-z_][A-Za-z0-9_]*\\.(?:header|payload))\\.[^\\s]+)$"
           }
         },
         "assert": {

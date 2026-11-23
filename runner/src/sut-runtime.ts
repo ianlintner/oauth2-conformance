@@ -12,6 +12,14 @@ import { createHash, X509Certificate } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { parse as parseYaml } from 'yaml';
+import type { LogoutReceiver } from './logout-receiver.js';
+
+export interface LogoutReceiverConfig {
+  /** Loopback origin the SUT is seeded with, e.g. `http://127.0.0.1:8099`. */
+  origin: string;
+  /** Path of the back-channel logout URI. Default `/backchannel-logout`. */
+  path?: string;
+}
 
 export interface SutRestartConfig {
   /** Executable run directly (no shell) with `OAUTH2_CONFORMANCE_BASE_URL` in its env. */
@@ -43,6 +51,10 @@ export interface SutRuntime {
   instances?: Record<string, string>;
   restart?: SutRestartConfig;
   mtls?: MtlsConfig;
+  /** Harness-supplied loopback receiver config (contract section 7.8). */
+  logoutReceiver?: LogoutReceiverConfig;
+  /** Live listener started by the CLI for that config; not parsed from YAML. */
+  logoutReceiverInstance?: LogoutReceiver;
 }
 
 /** RFC 8705 `x5t#S256`: base64url SHA-256 of the DER certificate, no padding. */
@@ -56,7 +68,7 @@ export function x5tS256(pem: string): string {
   return createHash('sha256').update(der).digest('base64url');
 }
 
-const TOP_KEYS = ['instances', 'restart', 'mtls'];
+const TOP_KEYS = ['instances', 'restart', 'mtls', 'logoutReceiver'];
 
 function obj(value: unknown, label: string): Record<string, unknown> {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) throw new TypeError(`${label} must be an object`);
@@ -127,6 +139,7 @@ export async function parseSutConfig(text: string, baseDir: string): Promise<Sut
   }
 
   if (root.mtls !== undefined) {
+
     const raw = obj(root.mtls, 'mtls');
     exactKeys(raw, ['baseUrl', 'caFile', 'clients'], 'mtls');
     const baseUrl = (() => {
@@ -148,6 +161,21 @@ export async function parseSutConfig(text: string, baseDir: string): Promise<Sut
       ...(raw.caFile !== undefined ? { ca: await readFile(path.resolve(baseDir, nonEmpty(raw.caFile, 'mtls.caFile')), 'utf8') } : {}),
       clients,
     };
+  }
+
+  if (root.logoutReceiver !== undefined) {
+    const raw = obj(root.logoutReceiver, 'logoutReceiver');
+    exactKeys(raw, ['origin', 'path'], 'logoutReceiver');
+    const configured = origin(raw.origin, 'logoutReceiver.origin', ['http:'], 'an http loopback URL');
+    const url = new URL(configured);
+    if (!['127.0.0.1', 'localhost', '[::1]'].includes(url.hostname)) {
+      throw new TypeError('logoutReceiver.origin must be a loopback origin');
+    }
+    const receiverPath = raw.path === undefined ? '/backchannel-logout' : nonEmpty(raw.path, 'logoutReceiver.path');
+    if (!receiverPath.startsWith('/') || receiverPath.startsWith('//')) {
+      throw new TypeError('logoutReceiver.path must start with a single /');
+    }
+    out.logoutReceiver = { origin: configured, path: receiverPath };
   }
   return out;
 }
