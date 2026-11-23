@@ -3,8 +3,11 @@ title: "A proof using a symmetric alg or a jwk carrying a private key is rejecte
 requirements: ["RFC9449-4-jwk-usable-algorithm"]
 profile: sender-constrained
 status: draft
-note: "Invariant INV-SC-JWK-USABLE-ALGORITHM. Draft: needs a DPoP proof signing helper (ES256 key with selectable typ/jwk/htm/htu/iat/jti/ath/nonce claims); needs a proof variant with a jwk that includes private members (d). Variants: HS256 symmetric alg and private-key jwk, each with a valid-proof positive control."
+note: "Invariant INV-SC-JWK-USABLE-ALGORITHM. Executable: dpop-proof alg/private_jwk overrides with positive control; validated against Python conformance SUT. Caveat: `alg: HS256` changes only the JOSE header; the proof is still signed with the ES256 key, so a server rejecting that proof on signature verification (without inspecting `alg`) also passes the symmetric-alg step — the draft does not isolate the algorithm check."
 steps:
+  - {"id": "proof-ok", "use": "dpop-proof", "with": {"htm": "POST", "htu": "http://localhost:8080/oauth/token"}, "expect": {"status": 200}, "capture": {"proof_token_ok": "body.proof"}}
+  - {"id": "proof-symmetric", "use": "dpop-proof", "with": {"htm": "POST", "htu": "http://localhost:8080/oauth/token", "alg": "HS256", "jti": "jwk-alg-hs"}, "expect": {"status": 200}, "capture": {"proof_symmetric_alg": "body.proof"}}
+  - {"id": "proof-private", "use": "dpop-proof", "with": {"htm": "POST", "htu": "http://localhost:8080/oauth/token", "private_jwk": true, "jti": "jwk-alg-pv"}, "expect": {"status": 200}, "capture": {"proof_jwk_private_key": "body.proof"}}
   - {"id": "control", "request": {"method": "POST", "path": "/oauth/token", "headers": {"authorization": "Basic Y2xpZW50LWNjOnRlc3Qtb25seS1jYy1zZWNyZXQ=", "dpop": "{{proof_token_ok}}"}, "form": {"grant_type": "client_credentials"}}, "expect": {"status": 200, "json": {"access_token": "x", "token_type": "DPoP"}}}
   - {"id": "symmetric-alg", "request": {"method": "POST", "path": "/oauth/token", "headers": {"authorization": "Basic Y2xpZW50LWNjOnRlc3Qtb25seS1jYy1zZWNyZXQ=", "dpop": "{{proof_symmetric_alg}}"}, "form": {"grant_type": "client_credentials"}}, "expect": {"status": 400, "json": {"error": "invalid_dpop_proof"}}}
   - {"id": "private-key-jwk", "request": {"method": "POST", "path": "/oauth/token", "headers": {"authorization": "Basic Y2xpZW50LWNjOnRlc3Qtb25seS1jYy1zZWNyZXQ=", "dpop": "{{proof_jwk_private_key}}"}, "form": {"grant_type": "client_credentials"}}, "expect": {"status": 400, "json": {"error": "invalid_dpop_proof"}}}

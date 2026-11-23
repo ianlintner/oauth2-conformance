@@ -3,6 +3,6 @@ title: "Metadata may advertise dpop_signing_alg_values_supported"
 requirements: ["RFC9449-5.1-as-discovery-alg-values"]
 profile: sender-constrained
 status: draft
-note: "Invariant INV-SC-DISCOVERY-ALG-VALUES. Draft: no new runner feature needed, but the SUT must claim the sender-constrained profile and has not been run against it."
+note: "Invariant INV-SC-DISCOVERY-ALG-VALUES. Executable: metadata advertise check; validated against Rust and Python conformance SUTs (see docs/sender-constrained-coverage.md)."
 steps:
   - {"id": "metadata", "request": {"method": "GET", "path": "/.well-known/oauth-authorization-server"}, "expect": {"status": 200, "json": {"dpop_signing_alg_values_supported": "$nonempty"}}}
