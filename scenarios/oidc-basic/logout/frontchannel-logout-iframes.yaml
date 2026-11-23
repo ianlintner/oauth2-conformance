@@ -61,4 +61,4 @@ steps:
     expect:
       status: 200
       json:
-        iframe_srcs: { "$includes": "http://127.0.0.1:8099/frontchannel-logout" }
+        iframe_srcs: { "$regex": "^http://127\\.0\\.0\\.1:8099/frontchannel-logout" }

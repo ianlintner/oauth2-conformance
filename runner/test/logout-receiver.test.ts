@@ -4,23 +4,10 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createServer, request as httpRequest, type Server } from 'node:http';
-import type { AddressInfo } from 'node:net';
+import { request as httpRequest } from 'node:http';
 import { startLogoutReceiver, parseFrontchannelIframes } from '../src/logout-receiver.js';
 import { frontchannelCapture, readLogoutToken } from '../src/logout-helpers.js';
 import type { HelperContext } from '../src/runner.js';
-
-function listen(server: Server): Promise<string> {
-  return new Promise((resolve) => server.listen(0, '127.0.0.1', () => {
-    const address = server.address() as AddressInfo;
-    resolve(`http://127.0.0.1:${address.port}`);
-  }));
-}
-
-async function close(server: Server): Promise<void> {
-  await new Promise<void>((resolve) => server.close(() => resolve()));
-  server.closeAllConnections();
-}
 
 function postForm(url: string, form: string, contentType = 'application/x-www-form-urlencoded'): Promise<number> {
   return new Promise((resolve, reject) => {
@@ -164,17 +151,6 @@ test('runScenarios wires readLogoutToken into a stable scenario with real captur
     assert.equal(report.verdict, 'pass');
   } finally {
     await receiver.close();
-  }
-});
-
-// Keep the local HTTP server helper referenced so lint does not flag unused imports.
-test('reference listen helper binds a loopback port', async () => {
-  const server = createServer((_req, res) => res.end('ok'));
-  try {
-    const url = await listen(server);
-    assert.match(url, /^http:\/\/127\.0\.0\.1:\d+$/);
-  } finally {
-    await close(server);
   }
 });
 

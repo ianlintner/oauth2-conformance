@@ -115,11 +115,26 @@ function deepDiff(expected: unknown, actual: unknown, path: string, diffs: Diff[
         diffs.push({ path, expected: `$includes ${JSON.stringify(needle)}`, actual, reason: 'string does not contain the expected substring' });
       }
     } else if (Array.isArray(actual)) {
-      if (!actual.includes(needle) && !actual.some((entry) => typeof entry === 'string' && entry.includes(String(needle)))) {
-        diffs.push({ path, expected: `$includes ${JSON.stringify(needle)}`, actual, reason: 'array does not contain the expected value or substring' });
+      // Exact membership only: a `$includes` audience assertion must not pass
+      // on `["client-a-evil"]` when the expected audience is `client-a`.
+      if (!actual.includes(needle)) {
+        diffs.push({ path, expected: `$includes ${JSON.stringify(needle)}`, actual, reason: 'array does not contain the expected value' });
       }
     } else {
       diffs.push({ path, expected: `$includes ${JSON.stringify(needle)}`, actual, reason: 'expected a string or array for $includes' });
+    }
+    return;
+  }
+  if (isRegexMatcher(expected)) {
+    const pattern = (expected as { $regex: string }).$regex;
+    const regex = new RegExp(pattern);
+    const matches = (value: unknown): boolean => typeof value === 'string' && regex.test(value);
+    if (Array.isArray(actual)) {
+      if (!actual.some(matches)) {
+        diffs.push({ path, expected: `$regex ${pattern}`, actual, reason: 'no array member matches the expected regex' });
+      }
+    } else if (!matches(actual)) {
+      diffs.push({ path, expected: `$regex ${pattern}`, actual, reason: 'value does not match the expected regex' });
     }
     return;
   }
@@ -294,6 +309,17 @@ export function compareResponse(expect: ScenarioExpectation, actual: ActualRespo
       actual: actual.status,
       reason: 'status is forbidden',
     });
+  }
+  if (expect.redirectNot !== undefined && expect.redirectNot.location !== undefined) {
+    const location = actual.redirect?.location ?? headerValue(actual.headers, 'location');
+    if (location !== undefined && location === expect.redirectNot.location) {
+      diffs.push({
+        path: 'redirect.location',
+        expected: `not ${expect.redirectNot.location}`,
+        actual: location,
+        reason: 'redirected to a forbidden Location',
+      });
+    }
   }
   for (const [name, value] of Object.entries(expect.headers ?? {})) {
     const found = headerValue(actual.headers, name);

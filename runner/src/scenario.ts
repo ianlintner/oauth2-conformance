@@ -42,6 +42,8 @@ export interface ScenarioExpectation {
   status?: number;
   /** Status codes that must NOT be returned (e.g. a forbidden redirect). */
   statusNot?: number[];
+  /** Forbidden redirect targets: must not appear as the response Location. */
+  redirectNot?: { location?: string };
   headers?: Record<string, HeaderExpectation>;
   /** Declared top-level claims must be present and match normalized values. */
   json?: Record<string, unknown>;
@@ -241,6 +243,11 @@ export function parseExpectation(input: unknown, label: string): ScenarioExpecta
   return {
     ...(hasStatus ? { status: expect.status as number } : {}),
     ...(expect.statusNot !== undefined ? { statusNot: expect.statusNot as number[] } : {}),
+    ...(expect.redirectNot !== undefined
+      ? { redirectNot: { ...(record(expect.redirectNot, `${label}.redirectNot`).location !== undefined
+          ? { location: stringAt(record(expect.redirectNot, `${label}.redirectNot`).location, `${label}.redirectNot.location`) }
+          : {}) } }
+      : {}),
     ...(expect.headers !== undefined ? { headers: parseHeaderExpectations(expect.headers, `${label}.headers`) } : {}),
     ...(expect.json !== undefined ? { json: record(expect.json, `${label}.json`) } : {}),
     ...(expect.jsonSchema !== undefined ? { jsonSchema: record(expect.jsonSchema, `${label}.jsonSchema`) } : {}),

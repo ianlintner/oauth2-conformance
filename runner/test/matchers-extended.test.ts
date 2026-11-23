@@ -29,14 +29,26 @@ test('$present asserts key presence regardless of value', () => {
   assert.deepEqual(diffs.map((d) => d.reason), ['required field absent']);
 });
 
-test('$includes matches a substring of a string array member', () => {
+test('$includes on an array requires exact membership', () => {
   assert.deepEqual(compareResponse(
-    { status: 200, json: { iframe_srcs: { $includes: 'http://127.0.0.1:8099/frontchannel-logout' } } },
+    { status: 200, json: { aud: { $includes: 'http://127.0.0.1:8099/frontchannel-logout' } } },
+    { status: 200, headers: {}, body: { aud: ['http://127.0.0.1:8099/frontchannel-logout'] } },
+  ), []);
+  const diffs = compareResponse(
+    { status: 200, json: { aud: { $includes: 'client-a' } } },
+    { status: 200, headers: {}, body: { aud: ['client-a-evil'] } },
+  );
+  assert.deepEqual(diffs.map((d) => d.reason), ['array does not contain the expected value']);
+});
+
+test('$regex in expect.json prefix-matches an iframe src array member', () => {
+  assert.deepEqual(compareResponse(
+    { status: 200, json: { iframe_srcs: { $regex: '^http://127\\.0\\.0\\.1:8099/frontchannel-logout' } } },
     { status: 200, headers: {}, body: { iframe_srcs: ['http://127.0.0.1:8099/frontchannel-logout?sid=s1'] } },
   ), []);
   const diffs = compareResponse(
-    { status: 200, json: { iframe_srcs: { $includes: 'evil.example' } } },
-    { status: 200, headers: {}, body: { iframe_srcs: ['http://127.0.0.1:8099/frontchannel-logout'] } },
+    { status: 200, json: { iframe_srcs: { $regex: '^http://127\\.0\\.0\\.1:8099/frontchannel-logout' } } },
+    { status: 200, headers: {}, body: { iframe_srcs: ['http://evil.example/frontchannel-logout'] } },
   );
-  assert.deepEqual(diffs.map((d) => d.reason), ['array does not contain the expected value or substring']);
+  assert.deepEqual(diffs.map((d) => d.reason), ['no array member matches the expected regex']);
 });

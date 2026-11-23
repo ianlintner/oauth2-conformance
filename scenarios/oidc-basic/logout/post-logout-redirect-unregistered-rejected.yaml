@@ -56,4 +56,6 @@ steps:
     expect:
       # RP-Initiated Logout 1.0 §2 forbids the redirect; an HTML error page or
       # any other non-redirect response is conformant.
-      statusNot: [302, 303, 307, 308]
+      statusNot: [301, 302, 303, 307, 308]
+      redirectNot:
+        location: https://client.example/logged-out/extra
