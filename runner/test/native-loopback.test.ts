@@ -141,6 +141,56 @@ test('login-and-authorize still returns an immediate redirect back to the client
   assert.equal(response.redirect?.query.code, 'x');
 });
 
+test('login-and-authorize refuses to follow an unsafe post-login redirect', async () => {
+  const unsafeTargets = [
+    'https://attacker.example/oauth/authorize?code=stolen', // cross-origin absolute
+    '//attacker.example/oauth/authorize?code=stolen', // protocol-relative
+    '/other/path?code=stolen', // different local path
+  ];
+  for (const target of unsafeTargets) {
+    const sent: string[] = [];
+    let firstGet = true;
+    const response = await loginAndAuthorize({
+      scope: new Map(),
+      with: { username: 'a', password: 'b', loginPath: '/auth/login', authorizePath: '/oauth/authorize' },
+      send: async (request) => {
+        sent.push(`${request.method} ${request.url}`);
+        if (request.method === 'GET' && firstGet) {
+          firstGet = false;
+          return { status: 302, headers: { location: '/auth/login' }, body: undefined, redirect: { location: '/auth/login', query: {}, fragment: {} } };
+        }
+        if (request.method === 'POST') {
+          return { status: 303, headers: { location: target, 'set-cookie': 'sid=abc' }, body: undefined, redirect: { location: target, query: {}, fragment: {} } };
+        }
+        return { status: 200, headers: {}, body: undefined };
+      },
+    });
+    assert.equal(response.status, 200, target);
+    assert.equal(sent[sent.length - 1], 'GET /oauth/authorize', target);
+  }
+});
+
+test('login-and-authorize follows a same-origin same-path post-login redirect', async () => {
+  const sent: string[] = [];
+  let firstGet = true;
+  await loginAndAuthorize({
+    scope: new Map(),
+    with: { username: 'a', password: 'b', loginPath: '/auth/login', authorizePath: '/oauth/authorize' },
+    send: async (request) => {
+      sent.push(`${request.method} ${request.url}`);
+      if (request.method === 'GET' && firstGet) {
+        firstGet = false;
+        return { status: 302, headers: { location: '/auth/login' }, body: undefined, redirect: { location: '/auth/login', query: {}, fragment: {} } };
+      }
+      if (request.method === 'POST') {
+        return { status: 303, headers: { location: '/oauth/authorize?state=s', 'set-cookie': 'sid=abc' }, body: undefined, redirect: { location: '/oauth/authorize?state=s', query: { state: 's' }, fragment: {} } };
+      }
+      return { status: 200, headers: {}, body: undefined };
+    },
+  });
+  assert.equal(sent[sent.length - 1], 'GET /oauth/authorize?state=s');
+});
+
 test('login-and-authorize logs in once per user per run and reuses the session (SUT login rate limits)', async () => {
   const logins = { count: 0 };
   const { server, url } = await fakeSut({ maxLogins: 2, logins });

@@ -174,6 +174,23 @@ test('$ltCapture works end-to-end in an assert step with a JWT payload source', 
   }
 });
 
+test('$gtCapture failure diff states the > operator, not <', () => {
+  const scope = new Map<string, string>([['exp', '100'], ['iat', '200']]);
+  const expect = { status: 200, json: { ordering: { $gtCapture: ['exp', 'iat'] } } } as never;
+  const diffs = compareResponse(expect, response(200, { ordering: true }), scope);
+  assert.equal(diffs.length, 1);
+  assert.equal(diffs[0]?.expected, '$gtCapture exp > iat');
+  assert.match(diffs[0]?.reason ?? '', /100 is not > 200/);
+});
+
+test('$ltCapture failure diff states the < operator', () => {
+  const scope = new Map<string, string>([['iat', '200'], ['exp', '100']]);
+  const expect = { status: 200, json: { ordering: { $ltCapture: ['iat', 'exp'] } } } as never;
+  const diffs = compareResponse(expect, response(200, { ordering: true }), scope);
+  assert.equal(diffs.length, 1);
+  assert.equal(diffs[0]?.expected, '$ltCapture iat < exp');
+});
+
 test('matchers work end-to-end through the CLI against a mock SUT', async () => {
   const token = jwt({ alg: 'RS256', typ: 'at+JWT' }, { iss: 'https://sut.example' });
   const server: Server = createServer((_req, res) => {

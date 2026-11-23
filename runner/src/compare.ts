@@ -136,9 +136,9 @@ function deepDiff(expected: unknown, actual: unknown, path: string, diffs: Diff[
     const a = rawA !== undefined && /^-?\d+$/.test(rawA.trim()) ? Number(rawA) : undefined;
     const b = rawB !== undefined && /^-?\d+$/.test(rawB.trim()) ? Number(rawB) : undefined;
     if (a === undefined || b === undefined) {
-      diffs.push({ path, expected: `${captureCompareKey} ${refs.join(' < ')}`, actual: { [refs[0]!]: rawA, [refs[1]!]: rawB }, reason: 'capture comparison requires two integer-valued captures' });
+      diffs.push({ path, expected: `${captureCompareKey} ${refs.join(captureCompareKey === '$ltCapture' ? ' < ' : ' > ')}`, actual: { [refs[0]!]: rawA, [refs[1]!]: rawB }, reason: 'capture comparison requires two integer-valued captures' });
     } else if (captureCompareKey === '$ltCapture' ? a >= b : a <= b) {
-      diffs.push({ path, expected: `${captureCompareKey} ${refs.join(' ')}`, actual: { [refs[0]!]: a, [refs[1]!]: b }, reason: captureCompareKey === '$ltCapture' ? `${a} is not < ${b}` : `${a} is not > ${b}` });
+      diffs.push({ path, expected: `${captureCompareKey} ${refs.join(captureCompareKey === '$ltCapture' ? ' < ' : ' > ')}`, actual: { [refs[0]!]: a, [refs[1]!]: b }, reason: captureCompareKey === '$ltCapture' ? `${a} is not < ${b}` : `${a} is not > ${b}` });
     }
     return;
   }
