@@ -15,7 +15,7 @@ import { mkdtemp, readFile, writeFile, chmod } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { x5tS256, parseSutConfig, type SutRuntime } from '../src/sut-runtime.js';
-import { advanceClock, mtlsRequest, requestOnInstance, sutRestart, x5tThumbprint } from '../src/sut-helpers.js';
+import { advanceClock, dpopNonceMode, mtlsRequest, requestOnInstance, sutRestart, x5tThumbprint } from '../src/sut-helpers.js';
 import type { HelperContext } from '../src/runner.js';
 import type { ActualResponse } from '../src/compare.js';
 
@@ -140,6 +140,40 @@ test('advance-clock still accepts legal decimal integers, zero and the upper bou
 
 test('advance-clock fails closed when the SUT does not offer the capability (non-2xx)', async () => {
   await assert.rejects(advanceClock(ctx({ seconds: 5 }, { send: async () => ({ status: 404, headers: {}, body: undefined }) })), /advance-clock: SUT answered 404/);
+});
+
+// ---- dpop-nonce-mode ------------------------------------------------------
+
+test('dpop-nonce-mode POSTs required to /conformance/dpop-nonce and returns the response', async () => {
+  const sent: Array<{ method: string; url: string; headers: Record<string, string>; body?: string }> = [];
+  const response: ActualResponse = { status: 200, headers: {}, body: { required: true } };
+  const result = await dpopNonceMode(ctx({ required: true }, { send: async (req) => (sent.push(req), response) }));
+  assert.equal(result, response);
+  assert.deepEqual(sent.map((r) => [r.method, r.url, r.headers['content-type'], r.body]), [
+    ['POST', '/conformance/dpop-nonce', 'application/json', '{"required":true}'],
+  ]);
+});
+
+test('dpop-nonce-mode honors a path override and interpolates a variable boolean', async () => {
+  const sent: Array<{ url: string; body?: string }> = [];
+  await dpopNonceMode(ctx({ required: '{{flag}}', path: '/conformance/v2/dpop-nonce' }, {
+    scope: new Map([['flag', 'false']]),
+    send: async (req) => (sent.push(req), { status: 200, headers: {}, body: undefined }),
+  }));
+  assert.deepEqual(sent.map((r) => [r.url, r.body]), [['/conformance/v2/dpop-nonce', '{"required":false}']]);
+});
+
+test('dpop-nonce-mode rejects missing or non-boolean required before any request', async () => {
+  const send = async (): Promise<ActualResponse> => assert.fail('must not send');
+  for (const required of [undefined, 'yes', 1, 0, {}, [], ' TRUE ', '0']) {
+    await assert.rejects(dpopNonceMode(ctx(required === undefined ? {} : { required }, {
+      scope: new Map([['flag', 'true']]), send,
+    })), /dpop-nonce-mode: with\.required/);
+  }
+});
+
+test('dpop-nonce-mode fails closed on a non-2xx answer', async () => {
+  await assert.rejects(dpopNonceMode(ctx({ required: true }, { send: async () => ({ status: 404, headers: {}, body: undefined }) })), /dpop-nonce-mode: SUT answered 404/);
 });
 
 // ---- request-on-instance --------------------------------------------------

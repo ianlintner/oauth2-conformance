@@ -20,7 +20,7 @@ import { dpopProof } from './dpop.js';
 import { clientAssertion } from './client-assertion.js';
 import { requestObject } from './request-object.js';
 import { deviceVerify, loginAndAuthorize, logout } from './helpers.js';
-import { advanceClock, mtlsRequest, requestOnInstance, sutRestart, x5tThumbprint } from './sut-helpers.js';
+import { advanceClock, dpopNonceMode, mtlsRequest, requestOnInstance, sutRestart, x5tThumbprint } from './sut-helpers.js';
 import { parseSutConfig } from './sut-runtime.js';
 import { startLogoutReceiver } from './logout-receiver.js';
 import { readLogoutToken, frontchannelCapture } from './logout-helpers.js';
@@ -222,6 +222,7 @@ export async function commandRun(flags: Record<string, string | boolean>): Promi
         'client-assertion': clientAssertion,
         'request-object': requestObject,
         'advance-clock': advanceClock,
+        'dpop-nonce-mode': dpopNonceMode,
         'sut-restart': sutRestart,
         'request-on-instance': requestOnInstance,
         'mtls-request': mtlsRequest,

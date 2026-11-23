@@ -74,6 +74,26 @@ test('omit jti drops the claim', async () => {
   assert.equal(p.payload.jti, undefined);
 });
 
+test('tampered signature produces a syntactically valid proof that does not verify', async () => {
+  const p = await proofOf({ htm: 'GET', htu: 'u', tamper_signature: true });
+  const [h, pl, sig] = p.proof.split('.');
+  const key = createPublicKey({ key: p.header.jwk as never, format: 'jwk' });
+  assert.equal(verify('sha256', Buffer.from(`${h}.${pl}`), { key, dsaEncoding: 'ieee-p1363' }, Buffer.from(sig!, 'base64url')), false);
+});
+
+test('symmetric alg override changes only the header: proof still verifies with the ES256 key', async () => {
+  const a = await proofOf({ htm: 'GET', htu: 'u', alg: 'HS256' });
+  assert.equal(a.header.alg, 'HS256');
+  const [h, pl, sig] = a.proof.split('.');
+  const key = createPublicKey({ key: a.header.jwk as never, format: 'jwk' });
+  assert.ok(
+    verify('sha256', Buffer.from(`${h}.${pl}`), { key, dsaEncoding: 'ieee-p1363' }, Buffer.from(sig!, 'base64url')),
+    'the ES256 key still signs the proof when only alg is overridden',
+  );
+  const b = await proofOf({ htm: 'GET', htu: 'u', private_jwk: true });
+  assert.ok((b.header.jwk as Record<string, string>).d, 'private member d present');
+});
+
 test('rejects missing htm/htu and unknown omit entries', async () => {
   await assert.rejects(dpopProof(ctx({ htu: 'u' })), /with\.htm/);
   await assert.rejects(dpopProof(ctx({ htm: 'GET' })), /with\.htu/);
