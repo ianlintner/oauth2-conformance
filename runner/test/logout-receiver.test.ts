@@ -99,6 +99,11 @@ test('parseFrontchannelIframes extracts only iframe srcs, decodes entities and i
   ]);
 });
 
+test('parseFrontchannelIframes decodes entities only once', () => {
+  const html = '<iframe src="https://rp.example/fc?x=1&amp;lt;script&amp;gt;"></iframe>';
+  assert.deepEqual(parseFrontchannelIframes(html), ['https://rp.example/fc?x=1&lt;script&gt;']);
+});
+
 test('frontchannelCapture helper parses iframe srcs from a captured HTML body variable', async () => {
   const scope = new Map([['logoutPage', '<iframe src="https://rp.example/fc?iss=op&amp;sid=s1"></iframe>']]);
   const response = await frontchannelCapture(ctx({ body: '{{logoutPage}}' }, { scope }));

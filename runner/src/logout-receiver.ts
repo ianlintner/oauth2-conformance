@@ -27,14 +27,15 @@ export interface LogoutReceiver {
   close(): Promise<void>;
 }
 
-/** Decode HTML entities that can legally appear in a logout token form value. */
+/**
+ * Decode HTML entities in one pass. A single regex match means an entity
+ * produced by a replacement (e.g. `&amp;lt;`) is never decoded again.
+ */
 function decodeEntities(text: string): string {
-  return text
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'");
+  const entities: Record<string, string> = {
+    '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&#39;': "'",
+  };
+  return text.replace(/&(?:amp|lt|gt|quot|#39);/g, (entity) => entities[entity] ?? entity);
 }
 
 /**
@@ -67,7 +68,9 @@ export async function startLogoutReceiver(options: { host?: string; port: number
         return;
       }
       const captured: CapturedLogoutToken = {
-        logout_token: decodeEntities(logoutToken),
+        // URLSearchParams already performed form decoding; a JWT must be
+        // captured verbatim, without interpreting HTML entities.
+        logout_token: logoutToken,
         content_type: contentType,
         received_at: new Date().toISOString(),
       };
