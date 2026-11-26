@@ -22,6 +22,8 @@ import { requestObject } from './request-object.js';
 import { deviceVerify, loginAndAuthorize, logout } from './helpers.js';
 import { advanceClock, dpopNonceMode, mtlsRequest, requestOnInstance, sutRestart, x5tThumbprint } from './sut-helpers.js';
 import { parseSutConfig } from './sut-runtime.js';
+import { startLogoutReceiver } from './logout-receiver.js';
+import { readLogoutToken, frontchannelCapture } from './logout-helpers.js';
 import { validateRepository } from './schema-validate.js';
 import { parseContractRef } from './manifest.js';
 import { computeContractStatus, computePortStatus, parsePortManifest, renderStatus, type PortManifest, type PortReport } from './status-report.js';
@@ -193,28 +195,46 @@ export async function commandRun(flags: Record<string, string | boolean>): Promi
   const scenarios = await loadScenarios(rootFlag(flags, 'scenarios'));
   const contractRef = parseContractRef(stringFlag(flags, 'contract', '0.1.0'));
   const sutConfigFile = flags['sut-config'] !== undefined ? path.resolve(stringFlag(flags, 'sut-config')) : undefined;
-  const report: RunReport = await runScenarios(scenarios, {
-    baseUrl,
-    implementation: stringFlag(flags, 'implementation', 'system-under-test'),
-    contract: contractRef.value,
-    ...(flags.profile !== undefined ? { profile: stringFlag(flags, 'profile') } : {}),
-    helpers: {
-      'login-and-authorize': loginAndAuthorize,
-      'logout': logout,
-      'device-verify': deviceVerify,
-      'dpop-proof': dpopProof,
-      'client-assertion': clientAssertion,
-      'request-object': requestObject,
-      'advance-clock': advanceClock,
-      'dpop-nonce-mode': dpopNonceMode,
-      'sut-restart': sutRestart,
-      'request-on-instance': requestOnInstance,
-      'mtls-request': mtlsRequest,
-      'x5t-s256': x5tThumbprint,
-    },
-    ...(sutConfigFile !== undefined ? { sut: await parseSutConfig(await readFile(sutConfigFile, 'utf8'), path.dirname(sutConfigFile)) } : {}),
-  });
   const reportFile = flags.report !== undefined ? path.resolve(stringFlag(flags, 'report')) : undefined;
+  const sut = sutConfigFile !== undefined
+    ? await parseSutConfig(await readFile(sutConfigFile, 'utf8'), path.dirname(sutConfigFile))
+    : undefined;
+  const receiver = sut?.logoutReceiver !== undefined
+    ? await startLogoutReceiver({
+      host: new URL(sut.logoutReceiver.origin).hostname,
+      port: Number(new URL(sut.logoutReceiver.origin).port || 80),
+      ...(sut.logoutReceiver.path !== undefined ? { path: sut.logoutReceiver.path } : {}),
+    })
+    : undefined;
+  if (receiver !== undefined && sut !== undefined) sut.logoutReceiverInstance = receiver;
+  let report: RunReport;
+  try {
+    report = await runScenarios(scenarios, {
+      baseUrl,
+      implementation: stringFlag(flags, 'implementation', 'system-under-test'),
+      contract: contractRef.value,
+      ...(flags.profile !== undefined ? { profile: stringFlag(flags, 'profile') } : {}),
+      helpers: {
+        'login-and-authorize': loginAndAuthorize,
+        'logout': logout,
+        'device-verify': deviceVerify,
+        'dpop-proof': dpopProof,
+        'client-assertion': clientAssertion,
+        'request-object': requestObject,
+        'advance-clock': advanceClock,
+        'dpop-nonce-mode': dpopNonceMode,
+        'sut-restart': sutRestart,
+        'request-on-instance': requestOnInstance,
+        'mtls-request': mtlsRequest,
+        'x5t-s256': x5tThumbprint,
+        'read-logout-token': readLogoutToken,
+        'frontchannel-capture': frontchannelCapture,
+      },
+      ...(sut !== undefined ? { sut } : {}),
+    });
+  } finally {
+    await receiver?.close();
+  }
   if (reportFile !== undefined) {
     await mkdir(path.dirname(reportFile), { recursive: true });
     await writeFile(reportFile, `${JSON.stringify(report, null, 2)}\n`, 'utf8');

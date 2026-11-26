@@ -46,6 +46,28 @@ test('seed schema accepts a tls_client_auth client and a seeded client CA', asyn
   assert.equal(valid(seed), true);
 });
 
+test('seed schema accepts OIDC logout registration fields and rejects fragments', async () => {
+  const valid = await validator('seed.schema.json');
+  const seed = await baseSeed();
+  const client = (seed.clients as Record<string, unknown>[])[0] as Record<string, unknown>;
+  Object.assign(client, {
+    post_logout_redirect_uris: ['https://client.example/logout'],
+    backchannel_logout_uri: 'http://127.0.0.1:8099/backchannel-logout',
+    backchannel_logout_session_required: true,
+    frontchannel_logout_uri: 'http://127.0.0.1:8099/frontchannel',
+    frontchannel_logout_session_required: true,
+  });
+  assert.equal(valid(seed), true);
+  for (const field of ['post_logout_redirect_uris', 'backchannel_logout_uri', 'frontchannel_logout_uri'] as const) {
+    const bad = structuredClone(seed) as Record<string, unknown>;
+    const badClient = (bad.clients as Record<string, unknown>[])[0] as Record<string, unknown>;
+    badClient[field] = field === 'post_logout_redirect_uris'
+      ? ['https://client.example/logout#fragment']
+      : 'javascript:alert(1)';
+    assert.equal(valid(bad), false, `${field} must reject a fragment or non-http(s) scheme`);
+  }
+});
+
 test('seed schema rejects tls_client_auth without a subject DN or with a secret, and a private key in mtls.client_ca', async () => {
   const valid = await validator('seed.schema.json');
   const withClient = async (client: Record<string, unknown>): Promise<Record<string, unknown>> => {

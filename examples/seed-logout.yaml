@@ -1,0 +1,35 @@
+# Seed fixture for the oidc-basic logout scenarios (RP-Initiated, Front- and
+# Back-Channel Logout). Separate from examples/seed.yaml so ports that do not
+# yet accept the logout registration fields keep loading the core seed.
+# Run the runner with a --sut-config whose logoutReceiver origin is
+# http://127.0.0.1:8099 (contract/sut-interface.md section 7.8).
+# All credentials are test-only and valid only in conformance mode; no private
+# key material appears here.
+issuer: http://localhost:8080
+clients:
+  # Basic header: base64("client-logout:test-only-logout-secret").
+  - client_id: client-logout
+    client_secret: test-only-logout-secret
+    token_endpoint_auth_method: client_secret_basic
+    redirect_uris: ["https://client.example/callback"]
+    grant_types: [authorization_code]
+    scopes: [openid]
+    post_logout_redirect_uris: ["https://client.example/logged-out"]
+    backchannel_logout_uri: http://127.0.0.1:8099/backchannel-logout
+    backchannel_logout_session_required: true
+    frontchannel_logout_uri: http://127.0.0.1:8099/frontchannel-logout
+    frontchannel_logout_session_required: true
+  # Registered logout client that never logs in: must not be notified
+  # (BCL-2.6, FCL-2-iframe-with-iss-sid).
+  - client_id: client-logout-idle
+    client_secret: test-only-idle-secret
+    token_endpoint_auth_method: client_secret_basic
+    redirect_uris: ["https://idle.example/callback"]
+    grant_types: [authorization_code]
+    scopes: [openid]
+    backchannel_logout_uri: http://127.0.0.1:8099/backchannel-logout-idle
+    frontchannel_logout_uri: http://127.0.0.1:8099/frontchannel-logout-idle
+users:
+  - username: alice
+    password: test-only-password
+    auto_approve_clients: [client-logout, client-logout-idle]

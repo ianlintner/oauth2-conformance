@@ -38,6 +38,11 @@ export function matcherKey(value: unknown): string | undefined {
   return key.startsWith('$') ? key : undefined;
 }
 
+/** True when `value` is exactly `{ "$present": true }`. */
+export function isPresentMatcher(value: unknown): boolean {
+  return matcherKey(value) === '$present' && (value as Record<string, unknown>).$present === true;
+}
+
 /** True when `value` is exactly `{ "$absent": true }`. */
 export function isAbsentMatcher(value: unknown): boolean {
   return matcherKey(value) === '$absent' && (value as Record<string, unknown>).$absent === true;

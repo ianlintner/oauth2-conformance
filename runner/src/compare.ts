@@ -20,7 +20,7 @@
 import { NORMALIZED, normalizePayload } from './normalize.js';
 import type { ScenarioExpectation } from './scenario.js';
 import { interpolate } from './scenario.js';
-import { isAbsentMatcher, isContainsMatcher, isNonemptyMatcher, isGtMatcher, isLtMatcher, isLtCaptureMatcher, isGtCaptureMatcher, isIncludesMatcher, isRegexMatcher } from './matchers.js';
+import { isAbsentMatcher, isPresentMatcher, isContainsMatcher, isNonemptyMatcher, isGtMatcher, isLtMatcher, isLtCaptureMatcher, isGtCaptureMatcher, isIncludesMatcher, isRegexMatcher } from './matchers.js';
 import { decodeJwtSegments, fieldAt } from './jwt.js';
 
 /** Minimal view of the run's captured-value scope (`Map<string, string>`). */
@@ -92,19 +92,56 @@ function deepDiff(expected: unknown, actual: unknown, path: string, diffs: Diff[
     return;
   }
   if (isNonemptyMatcher(expected)) {
-    if (!Array.isArray(actual) || actual.length === 0) {
-      diffs.push({ path, expected: '$nonempty', actual, reason: 'expected a non-empty array' });
+    if (isNormalized(actual)) {
+      // Normalized tokens/claims are present by construction; the normalizer
+      // replaced their value with a marker to avoid comparing drift.
+      return;
+    }
+    if (typeof actual === 'string') {
+      if (actual === '') diffs.push({ path, expected: '$nonempty', actual, reason: 'expected a non-empty string' });
+    } else if (Array.isArray(actual)) {
+      if (actual.length === 0) diffs.push({ path, expected: '$nonempty', actual, reason: 'expected a non-empty array or string' });
+    } else if (actual !== null && typeof actual === 'object') {
+      if (Object.keys(actual).length === 0) diffs.push({ path, expected: '$nonempty', actual, reason: 'expected a non-empty object' });
+    } else {
+      diffs.push({ path, expected: '$nonempty', actual, reason: 'expected a non-empty array, string or object' });
     }
     return;
   }
   if (isIncludesMatcher(expected)) {
     const needle = (expected as { $includes: unknown }).$includes;
-    if (typeof actual === 'string' && !actual.includes(String(needle))) {
-      diffs.push({ path, expected: `$includes ${JSON.stringify(needle)}`, actual, reason: 'string does not contain the expected substring' });
-    } else if (Array.isArray(actual) && !actual.includes(needle)) {
-      diffs.push({ path, expected: `$includes ${JSON.stringify(needle)}`, actual, reason: 'array does not contain the expected value' });
-    } else if (typeof actual !== 'string' && !Array.isArray(actual)) {
+    if (typeof actual === 'string') {
+      if (!actual.includes(String(needle))) {
+        diffs.push({ path, expected: `$includes ${JSON.stringify(needle)}`, actual, reason: 'string does not contain the expected substring' });
+      }
+    } else if (Array.isArray(actual)) {
+      // Exact membership only: a `$includes` audience assertion must not pass
+      // on `["client-a-evil"]` when the expected audience is `client-a`.
+      if (!actual.includes(needle)) {
+        diffs.push({ path, expected: `$includes ${JSON.stringify(needle)}`, actual, reason: 'array does not contain the expected value' });
+      }
+    } else {
       diffs.push({ path, expected: `$includes ${JSON.stringify(needle)}`, actual, reason: 'expected a string or array for $includes' });
+    }
+    return;
+  }
+  if (isRegexMatcher(expected)) {
+    const pattern = (expected as { $regex: string }).$regex;
+    // nosemgrep: javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
+    // Pattern is authored in a trusted scenario YAML and applied to SUT responses;
+    // it is never derived from SUT input. Bounded to 512 chars at parse time.
+    if (pattern.length > 512) {
+      diffs.push({ path, expected: '$regex pattern', actual: `${pattern.length} chars`, reason: 'regex pattern exceeds 512 characters' });
+      return;
+    }
+    const regex = new RegExp(pattern);
+    const matches = (value: unknown): boolean => typeof value === 'string' && regex.test(value);
+    if (Array.isArray(actual)) {
+      if (!actual.some(matches)) {
+        diffs.push({ path, expected: `$regex ${pattern}`, actual, reason: 'no array member matches the expected regex' });
+      }
+    } else if (!matches(actual)) {
+      diffs.push({ path, expected: `$regex ${pattern}`, actual, reason: 'value does not match the expected regex' });
     }
     return;
   }
@@ -164,6 +201,12 @@ function deepDiff(expected: unknown, actual: unknown, path: string, diffs: Diff[
       if (isAbsentMatcher(value)) {
         if (has) {
           diffs.push({ path: path === '' ? key : `${path}.${key}`, expected: '$absent', actual: actualObj[key], reason: 'unexpected field present' });
+        }
+        continue;
+      }
+      if (isPresentMatcher(value)) {
+        if (!has) {
+          diffs.push({ path: path === '' ? key : `${path}.${key}`, expected: '$present', actual: undefined, reason: 'required field absent' });
         }
         continue;
       }
@@ -258,13 +301,32 @@ function checkFormEncodedQuery(location: string, key: string, expected: string):
 
 export function compareResponse(expect: ScenarioExpectation, actual: ActualResponse, scope?: CaptureScope): Diff[] {
   const diffs: Diff[] = [];
-  if (actual.status !== expect.status) {
+  if (expect.status !== undefined && actual.status !== expect.status) {
     diffs.push({
       path: 'status',
       expected: expect.status,
       actual: actual.status,
       reason: 'HTTP status differs',
     });
+  }
+  if (expect.statusNot !== undefined && expect.statusNot.includes(actual.status)) {
+    diffs.push({
+      path: 'status',
+      expected: `not one of ${expect.statusNot.join(', ')}`,
+      actual: actual.status,
+      reason: 'status is forbidden',
+    });
+  }
+  if (expect.redirectNot !== undefined && expect.redirectNot.location !== undefined) {
+    const location = actual.redirect?.location ?? headerValue(actual.headers, 'location');
+    if (location !== undefined && location === expect.redirectNot.location) {
+      diffs.push({
+        path: 'redirect.location',
+        expected: `not ${expect.redirectNot.location}`,
+        actual: location,
+        reason: 'redirected to a forbidden Location',
+      });
+    }
   }
   for (const [name, value] of Object.entries(expect.headers ?? {})) {
     const found = headerValue(actual.headers, name);
@@ -378,6 +440,7 @@ export function captureValue(expression: string, actual: ActualResponse, scope?:
       return undefined;
     }
   }
+  if (scope_ === 'text') return rest === 'body' ? actual.text : undefined;
   if (scope_ === 'header') return headerValue(actual.headers, rest);
   if (scope_ === 'redirect') {
     const redirect = actual.redirect ?? (headerValue(actual.headers, 'location') !== undefined ? parseRedirect(headerValue(actual.headers, 'location') as string) : undefined);

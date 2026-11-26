@@ -100,7 +100,7 @@
         "id": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_-]*$" },
         "use": {
           "type": "string",
-          "enum": ["login-and-authorize", "logout", "device-verify", "dpop-proof", "dpop-nonce-mode", "client-assertion", "request-object", "mtls-request", "sut-restart", "request-on-instance"],
+          "enum": ["login-and-authorize", "logout", "device-verify", "dpop-proof", "dpop-nonce-mode", "client-assertion", "request-object", "mtls-request", "sut-restart", "request-on-instance", "read-logout-token", "frontchannel-capture"],
           "description": "Runner helper invoked instead of a raw request. dpop-nonce-mode is implemented as a fail-closed control endpoint helper. mtls-request, sut-restart and request-on-instance are declared for draft scenarios only; the runner does not implement them yet, so a scenario using one defers (unknown step helper) and must stay draft."
         },
         "with": { "type": "object", "additionalProperties": true },
@@ -120,7 +120,7 @@
           "propertyNames": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$" },
           "additionalProperties": {
             "type": "string",
-            "pattern": "^(?:redirect\\.(?:query|fragment)|body|header|jwt\\.[A-Za-z_][A-Za-z0-9_]*\\.(?:header|payload))\\.[^\\s]+$"
+            "pattern": "^(?:text\\.body|(?:redirect\\.(?:query|fragment)|body|header|jwt\\.[A-Za-z_][A-Za-z0-9_]*\\.(?:header|payload))\\.[^\\s]+)$"
           }
         },
         "assert": {
@@ -177,9 +177,22 @@
     "expect": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["status"],
+      "anyOf": [
+        { "required": ["status"] },
+        { "required": ["statusNot"] },
+        { "required": ["redirectNot"] }
+      ],
       "properties": {
         "status": { "type": "integer", "minimum": 100, "maximum": 599 },
+        "statusNot": { "type": "array", "minItems": 1, "items": { "type": "integer", "minimum": 100, "maximum": 599 }, "description": "Status codes that must not be returned, e.g. forbidden redirects." },
+        "redirectNot": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "location": { "type": "string", "minLength": 1, "description": "Location header that must not be returned (forbidden redirect target)." }
+          },
+          "description": "Forbidden redirect target assertions; a matching Location fails the scenario regardless of status code."
+        },
         "headers": { "$ref": "#/$defs/headerExpectationRecord" },
         "json": { "type": "object", "additionalProperties": true },
         "jsonSchema": { "type": "object", "description": "Inline JSON Schema the normalized body must satisfy." },

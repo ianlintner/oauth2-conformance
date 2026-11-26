@@ -99,11 +99,15 @@ test('$contains matcher fails when the member is not an array', () => {
   assert.equal(diffs[0]!.reason, 'array does not contain the expected value');
 });
 
-test('$nonempty matcher passes for a non-empty array, fails for empty or non-array', () => {
+test('$nonempty matcher passes for non-empty arrays, strings and objects; fails for empty or scalar values', () => {
   const expect = { status: 200, json: { keys: { $nonempty: true } } } as never;
   assert.deepEqual(compareResponse(expect, response(200, { keys: [{ kid: '1' }] })), []);
+  assert.deepEqual(compareResponse(expect, response(200, { keys: 'x' })), []);
+  assert.deepEqual(compareResponse(expect, response(200, { keys: { kid: '1' } })), []);
   assert.equal(compareResponse(expect, response(200, { keys: [] })).length, 1);
-  assert.equal(compareResponse(expect, response(200, { keys: 'x' })).length, 1);
+  assert.equal(compareResponse(expect, response(200, { keys: '' })).length, 1);
+  assert.equal(compareResponse(expect, response(200, { keys: {} })).length, 1);
+  assert.equal(compareResponse(expect, response(200, { keys: 42 })).length, 1);
 });
 
 test('$absent matcher passes when the member is absent, fails when present', () => {

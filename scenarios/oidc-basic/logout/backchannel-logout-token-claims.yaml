@@ -1,0 +1,79 @@
+id: oidc-basic.logout.backchannel-logout-token-claims
+title: The back-channel logout token carries the required claims and no nonce
+requirements: [BCL-2.4-logout-token-claims, BCL-2.4-logout-token-no-nonce, BCL-2.5-post-form-logout-token, BCL-2.2-sid-when-session-required]
+profile: oidc-basic
+status: draft
+note: |
+  Needs examples/seed-logout.yaml and --sut-config logoutReceiver
+  (origin http://127.0.0.1:8099, path /backchannel-logout). The runner's
+  receiver proves the SUT sent an application/x-www-form-urlencoded
+  logout_token POST. Signature verification and typ (SHOULD logout+jwt, so
+  not asserted here as MUST) are residual work: the runner does not yet
+  verify JWS signatures against the SUT JWKS.
+steps:
+  - id: auth
+    use: login-and-authorize
+    with:
+      username: alice
+      password: test-only-password
+      loginPath: /auth/login
+      authorizePath: /oauth/authorize
+      query:
+        response_type: code
+        client_id: client-logout
+        redirect_uri: https://client.example/callback
+        scope: openid
+        state: s-logout
+        code_challenge: E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM
+        code_challenge_method: S256
+    expect:
+      status: 302
+    capture:
+      code: redirect.query.code
+  - id: token
+    request:
+      method: POST
+      path: /oauth/token
+      headers: { authorization: "Basic Y2xpZW50LWxvZ291dDp0ZXN0LW9ubHktbG9nb3V0LXNlY3JldA==" }
+      form:
+        grant_type: authorization_code
+        code: "{{code}}"
+        redirect_uri: https://client.example/callback
+        code_verifier: dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk
+    expect:
+      status: 200
+      json: { id_token: "x" }
+    capture:
+      idt: body.id_token
+  - id: logout
+    request:
+      method: GET
+      path: /oauth/logout
+      query:
+        id_token_hint: "{{idt}}"
+    expect:
+      status: 200
+  - id: receive
+    use: read-logout-token
+    with: { waitMs: 5000 }
+    expect:
+      status: 200
+      json: { logout_token: { "$nonempty": true } }
+    capture:
+      lt: body.logout_token
+      iss: jwt.lt.payload.iss
+      aud: jwt.lt.payload.aud
+      iat: jwt.lt.payload.iat
+      jti: jwt.lt.payload.jti
+      sid: jwt.lt.payload.sid
+      events: jwt.lt.payload.events
+    source: jwt.lt.payload
+  - id: assert-claims
+    assert:
+      json:
+        iss: http://localhost:8080
+        aud: { "$includes": "client-logout" }
+        jti: { "$nonempty": true }
+        sid: { "$nonempty": true }
+        events: { "http://schemas.openid.net/event/backchannel-logout": { "$present": true } }
+        nonce: { "$absent": true }

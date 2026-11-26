@@ -71,6 +71,8 @@ export interface HelperContext {
   baseUrl?: string;
   /** SUT interface v2 runtime supplied by the harness; absent capabilities fail closed. */
   sut?: import('./sut-runtime.js').SutRuntime;
+  /** Live local back-channel receiver started by the CLI when configured. */
+  logoutReceiver?: import('./logout-receiver.js').LogoutReceiver;
 }
 
 export type ScenarioHelper = (context: HelperContext) => Promise<import('./compare.js').ActualResponse>;
@@ -141,6 +143,7 @@ export async function runScenarios(scenarios: Scenario[], options: RunOptions): 
             sessions,
             baseUrl: options.baseUrl,
             ...(options.sut !== undefined ? { sut: options.sut } : {}),
+            ...(options.sut?.logoutReceiverInstance !== undefined ? { logoutReceiver: options.sut.logoutReceiverInstance } : {}),
           });
         } else if (step.assert !== undefined) {
           // Assert-only step: no HTTP request. Build a synthetic response so

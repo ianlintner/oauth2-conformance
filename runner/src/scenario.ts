@@ -40,6 +40,10 @@ export type HeaderExpectation = string | { $nonempty?: boolean; $regex?: string 
 
 export interface ScenarioExpectation {
   status?: number;
+  /** Status codes that must NOT be returned (e.g. a forbidden redirect). */
+  statusNot?: number[];
+  /** Forbidden redirect targets: must not appear as the response Location. */
+  redirectNot?: { location?: string };
   headers?: Record<string, HeaderExpectation>;
   /** Declared top-level claims must be present and match normalized values. */
   json?: Record<string, unknown>;
@@ -219,6 +223,12 @@ export function parseExpectation(input: unknown, label: string): ScenarioExpecta
   if (hasStatus && (!Number.isInteger(expect.status) || (expect.status as number) < 100 || (expect.status as number) > 599)) {
     throw new TypeError(`${label}: expected status must be an HTTP status code`);
   }
+  if (expect.statusNot !== undefined) {
+    const forbidden = expect.statusNot;
+    if (!Array.isArray(forbidden) || forbidden.length === 0 || forbidden.some((s) => !Number.isInteger(s) || s < 100 || s > 599)) {
+      throw new TypeError(`${label}: forbidden statuses must be a nonempty list of HTTP status codes`);
+    }
+  }
   let redirect: ScenarioExpectation['redirect'];
   if (expect.redirect !== undefined) {
     const raw = record(expect.redirect, `${label}.redirect`);
@@ -232,6 +242,12 @@ export function parseExpectation(input: unknown, label: string): ScenarioExpecta
   }
   return {
     ...(hasStatus ? { status: expect.status as number } : {}),
+    ...(expect.statusNot !== undefined ? { statusNot: expect.statusNot as number[] } : {}),
+    ...(expect.redirectNot !== undefined
+      ? { redirectNot: { ...(record(expect.redirectNot, `${label}.redirectNot`).location !== undefined
+          ? { location: stringAt(record(expect.redirectNot, `${label}.redirectNot`).location, `${label}.redirectNot.location`) }
+          : {}) } }
+      : {}),
     ...(expect.headers !== undefined ? { headers: parseHeaderExpectations(expect.headers, `${label}.headers`) } : {}),
     ...(expect.json !== undefined ? { json: record(expect.json, `${label}.json`) } : {}),
     ...(expect.jsonSchema !== undefined ? { jsonSchema: record(expect.jsonSchema, `${label}.jsonSchema`) } : {}),
@@ -243,8 +259,8 @@ function parseCapture(input: unknown, label: string): Record<string, string> {
   const capture = strings(input, label);
   for (const [name, expression] of Object.entries(capture)) {
     if (!ID_PATTERN.test(name)) throw new TypeError(`${label} requires valid variable names, got ${name}`);
-    if (!/^(?:redirect\.(?:query|fragment)|body|header|jwt\.[A-Za-z_][A-Za-z0-9_]*\.(?:header|payload))\.[^\s]+$/.test(expression)) {
-      throw new TypeError(`${label}.${name} must select redirect.query.*, redirect.fragment.*, body.*, header.* or jwt.<var>.<header|payload>.*`);
+    if (!/^(?:text\.body|(?:redirect\.(?:query|fragment)|body|header|jwt\.[A-Za-z_][A-Za-z0-9_]*\.(?:header|payload))\.[^\s]+)$/.test(expression)) {
+      throw new TypeError(`${label}.${name} must select text.body, redirect.query.*, redirect.fragment.*, body.*, header.* or jwt.<var>.<header|payload>.*`);
     }
   }
   return capture;
