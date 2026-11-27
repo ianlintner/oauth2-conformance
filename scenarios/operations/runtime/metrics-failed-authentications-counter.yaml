@@ -1,0 +1,45 @@
+id: operations.runtime.metrics-failed-authentications-counter
+title: A rejected client authentication increments the dedicated failure counter
+requirements: [OPS-3.3-metrics-failed-authentications-counter]
+profile: operations
+status: stable
+note: |
+  Invariant INV-OPS-METRICS-FAILED-AUTH-COUNTER. An unknown client at the
+  token endpoint is an invalid_client authentication failure; §3.3 requires
+  such failures to increment a dedicated counter. Seed-independent: no
+  configured client secret is needed for the negative request.
+steps:
+  - id: scrape-before
+    request: { method: GET, path: /metrics }
+    expect: { status: 200 }
+    capture: { before_text: text.body }
+  - id: read-before
+    use: prometheus-sample
+    with:
+      body: '{{before_text}}'
+      metric: oauth2_server_oauth_failed_authentications
+    capture: { before: body.value }
+  - id: bad-client
+    request:
+      method: POST
+      path: /oauth/token
+      form:
+        grant_type: client_credentials
+        client_id: no-such-conformance-client
+        client_secret: test-only-wrong-secret
+        scope: read
+    expect:
+      statusNot: [200]
+  - id: scrape-after
+    request: { method: GET, path: /metrics }
+    expect: { status: 200 }
+    capture: { after_text: text.body }
+  - id: read-after
+    use: prometheus-sample
+    with:
+      body: '{{after_text}}'
+      metric: oauth2_server_oauth_failed_authentications
+    capture: { after: body.value }
+  - id: grew
+    assert:
+      json: { after: { "$gtCapture": [after, before] } }

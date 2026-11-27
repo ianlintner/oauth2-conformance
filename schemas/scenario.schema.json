@@ -100,8 +100,8 @@
         "id": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_-]*$" },
         "use": {
           "type": "string",
-          "enum": ["login-and-authorize", "logout", "device-verify", "dpop-proof", "dpop-nonce-mode", "client-assertion", "request-object", "mtls-request", "sut-restart", "request-on-instance", "read-logout-token", "frontchannel-capture"],
-          "description": "Runner helper invoked instead of a raw request. dpop-nonce-mode is implemented as a fail-closed control endpoint helper. mtls-request, sut-restart and request-on-instance are declared for draft scenarios only; the runner does not implement them yet, so a scenario using one defers (unknown step helper) and must stay draft."
+          "enum": ["login-and-authorize", "logout", "device-verify", "dpop-proof", "dpop-nonce-mode", "client-assertion", "request-object", "mtls-request", "sut-restart", "request-on-instance", "read-logout-token", "frontchannel-capture", "prometheus-sample"],
+          "description": "Runner helper invoked instead of a raw request. dpop-nonce-mode is implemented as a fail-closed control endpoint helper. mtls-request, sut-restart and request-on-instance are declared for draft scenarios only; the runner does not implement them yet, so a scenario using one defers (unknown step helper) and must stay draft. prometheus-sample extracts a numeric sample from captured Prometheus exposition text (runner-only; no SUT interface change)."
         },
         "with": { "type": "object", "additionalProperties": true },
         "request": { "$ref": "#/$defs/request" },

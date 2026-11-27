@@ -1,0 +1,20 @@
+id: operations.runtime.health-200-no-auth
+title: Liveness answers 200 with a service status and requires no credentials
+requirements: [OPS-3.1-health-200-no-auth]
+profile: operations
+status: stable
+note: |
+  Invariant INV-OPS-HEALTH-UNAUTHENTICATED. No Authorization header is sent;
+  §3.1 requires a service status body without authentication.
+steps:
+  - id: health
+    request:
+      method: GET
+      path: /health
+      headers: { accept: application/json }
+    expect:
+      status: 200
+      json:
+        status: healthy
+        service: oauth2_server
+        timestamp: { "$regex": '^\d{4}-\d{2}-\d{2}T' }

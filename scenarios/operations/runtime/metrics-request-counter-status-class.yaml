@@ -1,0 +1,38 @@
+id: operations.runtime.metrics-request-counter-status-class
+title: The status-class request counter increases when a request completes
+requirements: [OPS-3.3-metrics-request-counter-status-class]
+profile: operations
+status: stable
+note: |
+  Invariant INV-OPS-METRICS-STATUS-CLASS-COUNTER. Read the 2xx series before
+  and after a liveness request; the raw text is captured from /metrics and the
+  prometheus-sample helper selects the status_class="2xx" sample.
+steps:
+  - id: scrape-before
+    request: { method: GET, path: /metrics }
+    expect: { status: 200 }
+    capture: { before_text: text.body }
+  - id: read-before
+    use: prometheus-sample
+    with:
+      body: '{{before_text}}'
+      metric: oauth2_server_http_requests_by_class_total
+      labels: { status_class: '2xx' }
+    capture: { before: body.value }
+  - id: probe
+    request: { method: GET, path: /health }
+    expect: { status: 200 }
+  - id: scrape-after
+    request: { method: GET, path: /metrics }
+    expect: { status: 200 }
+    capture: { after_text: text.body }
+  - id: read-after
+    use: prometheus-sample
+    with:
+      body: '{{after_text}}'
+      metric: oauth2_server_http_requests_by_class_total
+      labels: { status_class: '2xx' }
+    capture: { after: body.value }
+  - id: grew
+    assert:
+      json: { after: { "$gtCapture": [after, before] } }

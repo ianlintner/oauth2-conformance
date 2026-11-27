@@ -1,0 +1,24 @@
+id: operations.runtime.ready-conformance-detail
+title: Conformance-mode readiness reports seed state and signing key identifiers
+requirements: [OPS-3.2-ready-conformance-detail]
+profile: operations
+status: stable
+note: |
+  Invariant INV-OPS-CONFORMANCE-READY-DETAIL. MAY-level clause: asserted when
+  the SUT runs in conformance mode (contract/sut-interface.md §1), where the
+  Rust reference adds the conformance object to /ready.
+steps:
+  - id: ready
+    request:
+      method: GET
+      path: /ready
+      headers: { accept: application/json }
+    expect:
+      status: 200
+      json:
+        status: ready
+        conformance:
+          seed_applied: true
+          clients: { "$gt": 0 }
+          users: { "$gt": 0 }
+          signing_key_ids: { "$nonempty": true }

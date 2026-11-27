@@ -1,0 +1,23 @@
+id: operations.runtime.events-health-endpoint
+title: Event ingest health reports whether the ingest path is available
+requirements: [OPS-3.4-event-ingest-health-endpoint]
+profile: operations
+status: stable
+note: |
+  Invariant INV-OPS-EVENTS-HEALTH-REPORTS-AVAILABILITY. MAY-level clause: the
+  endpoint must report enabled/disabled and plugin state, not necessarily an
+  enabled ingest path. Both shapes are accepted by the inline schema.
+steps:
+  - id: events-health
+    request:
+      method: GET
+      path: /events/health
+      headers: { accept: application/json }
+    expect:
+      status: 200
+      jsonSchema:
+        type: object
+        required: [enabled, plugins]
+        properties:
+          enabled: { type: boolean }
+          plugins: { type: array }
