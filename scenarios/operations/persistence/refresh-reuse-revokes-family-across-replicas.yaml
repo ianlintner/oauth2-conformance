@@ -1,0 +1,84 @@
+id: operations.persistence.refresh-reuse-revokes-family-across-replicas
+title: "Reuse of a rotated refresh token on one instance revokes the family on another"
+requirements: [OPS-5.2-refresh-reuse-revokes-family-across-replicas]
+profile: operations
+status: draft
+note: |
+  Invariant INV-OPS-PERSIST-REFRESH-FAMILY (OPS-5.2 SHOULD; RFC 9700 4.14.2).
+  Draft: contract section 7.5 requires one shared durable store; the Rust
+  reference at origin/main fail-closes conformance mode unless
+  OAUTH2_DATABASE_URL=sqlite::memory:. Not promoted: isolated in-memory stores
+  cannot demonstrate that a reuse detected on instance a revokes the family
+  on instance b. Harness: examples/sut-config.multi-instance.yaml; see
+  reference/persistence-harness.md.
+steps:
+  - id: auth
+    use: login-and-authorize
+    with:
+      username: alice
+      password: test-only-password
+      loginPath: /auth/login
+      authorizePath: /oauth/authorize
+      query:
+        response_type: code
+        client_id: client-a
+        redirect_uri: https://client.example/callback
+        state: s-persist-family
+        scope: read
+        code_challenge: E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM
+        code_challenge_method: S256
+    expect: { status: 302 }
+    capture: { code: redirect.query.code }
+  - id: exchange-on-a
+    use: request-on-instance
+    with:
+      instance: a
+      method: POST
+      path: /oauth/token
+      headers: { authorization: "Basic Y2xpZW50LWE6dGVzdC1vbmx5LXNlY3JldA==" }
+      form:
+        grant_type: authorization_code
+        code: "{{code}}"
+        redirect_uri: https://client.example/callback
+        code_verifier: dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk
+    expect: { status: 200, json: { token_type: Bearer, refresh_token: x } }
+    capture:
+      at: body.access_token
+      rt: body.refresh_token
+  - id: rotate-on-a
+    use: request-on-instance
+    with:
+      instance: a
+      method: POST
+      path: /oauth/token
+      headers: { authorization: "Basic Y2xpZW50LWE6dGVzdC1vbmx5LXNlY3JldA==" }
+      form: { grant_type: refresh_token, refresh_token: "{{rt}}" }
+    expect: { status: 200, json: { refresh_token: x } }
+    capture: { rt2: body.refresh_token }
+  - id: shared-store-control-on-b
+    use: request-on-instance
+    with:
+      instance: b
+      method: POST
+      path: /oauth/introspect
+      headers: { authorization: "Basic Y2xpZW50LWE6dGVzdC1vbmx5LXNlY3JldA==" }
+      form: { token: "{{at}}" }
+    expect: { status: 200, json: { active: true } }
+  - id: reuse-old-on-b
+    use: request-on-instance
+    with:
+      instance: b
+      method: POST
+      path: /oauth/token
+      headers: { authorization: "Basic Y2xpZW50LWE6dGVzdC1vbmx5LXNlY3JldA==" }
+      form: { grant_type: refresh_token, refresh_token: "{{rt}}" }
+    expect: { status: 400, json: { error: invalid_grant } }
+  - id: family-dead-on-b
+    use: request-on-instance
+    with:
+      instance: b
+      method: POST
+      path: /oauth/token
+      headers: { authorization: "Basic Y2xpZW50LWE6dGVzdC1vbmx5LXNlY3JldA==" }
+      form: { grant_type: refresh_token, refresh_token: "{{rt2}}" }
+    expect: { status: 400, json: { error: invalid_grant } }

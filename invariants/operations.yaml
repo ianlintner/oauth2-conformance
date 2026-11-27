@@ -95,3 +95,58 @@
   summary: After a successful callback an unsafe post-login target is replaced by a default destination, never followed.
   requirement: OPS-4.4-post-login-redirect-validated
   note: Needs the C-06 ticket 4 mock identity provider; scenario stays draft until then.
+
+# §5 persistence. All nine scenarios need contract section 7.4 (restart) or
+# section 7.5 (instances sharing one durable store). The Rust reference at
+# origin/main fail-closes conformance mode unless the store is process-local
+# in-memory SQLite, so none can be promoted without a reference fix (R-06).
+# Each draft includes a positive control (a token/proof accepted on the second
+# instance, or state still introspectable after restart) so isolated stores
+# cannot pass by returning "unknown token" to a negative-only assertion.
+# Harness: examples/sut-config.multi-instance.yaml and
+# reference/persistence-harness.md.
+
+- id: INV-OPS-PERSIST-CODE-REPLICAS
+  profile: operations
+  summary: A consumed authorization code cannot be redeemed on another instance sharing the store.
+  requirement: OPS-5.1-code-single-use-across-replicas
+
+- id: INV-OPS-PERSIST-CODE-RESTART
+  profile: operations
+  summary: A consumed authorization code is still rejected after the SUT restarts on the same base URL.
+  requirement: OPS-5.1-code-used-survives-restart
+
+- id: INV-OPS-PERSIST-REFRESH-ROTATION
+  profile: operations
+  summary: A refresh token rotated on one instance is accepted on another while its predecessor is rejected.
+  requirement: OPS-5.2-refresh-rotation-across-replicas
+
+- id: INV-OPS-PERSIST-REFRESH-FAMILY
+  profile: operations
+  summary: Reusing a rotated refresh token on one instance revokes the whole family on another.
+  requirement: OPS-5.2-refresh-reuse-revokes-family-across-replicas
+
+- id: INV-OPS-PERSIST-REVOCATION
+  profile: operations
+  summary: Revocation on one instance is visible to introspection, resource and refresh flows on another.
+  requirement: OPS-5.3-revocation-across-replicas
+
+- id: INV-OPS-PERSIST-DPOP-REPLAY-REPLICAS
+  profile: operations
+  summary: A DPoP proof consumed on one instance is rejected on another with the same key and jti.
+  requirement: OPS-5.4-dpop-replay-across-replicas
+
+- id: INV-OPS-PERSIST-DPOP-REPLAY-RESTART
+  profile: operations
+  summary: A consumed DPoP proof is still rejected after the SUT restarts on the same base URL.
+  requirement: OPS-5.4-dpop-replay-survives-restart
+
+- id: INV-OPS-PERSIST-PAR-REPLICAS
+  profile: operations
+  summary: A PAR request_uri consumed on one instance is rejected on another.
+  requirement: OPS-5.5-par-request-uri-single-use-across-replicas
+
+- id: INV-OPS-PERSIST-DEVICE-REPLICAS
+  profile: operations
+  summary: An approved device code redeemed on one instance cannot be redeemed on another.
+  requirement: OPS-5.5-device-code-single-use-across-replicas

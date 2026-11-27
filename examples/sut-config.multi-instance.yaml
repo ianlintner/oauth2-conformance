@@ -1,0 +1,20 @@
+# Example --sut-config for the operations §5 persistence drafts.
+#
+# Contract sections 7.4-7.5: instance "a" is the base URL the runner uses for
+# ordinary requests; "b" is reached by the `request-on-instance` helper. Both
+# MUST point at processes backed by ONE durable store. The restart command
+# kills and relaunches instance "a" on the same base URL and returns only
+# after the old process has exited; the runner then polls readiness.
+#
+# No credentials live here: OAUTH2_JWT_SECRET and OAUTH2_DATABASE_URL come
+# from the operator's environment. See reference/persistence-harness.md.
+
+# The primary base URL comes from `run --base-url`; it must match instance "a".
+instances:
+  a: http://127.0.0.1:18083
+  b: http://127.0.0.1:18085
+restart:
+  command: restart-rust.sh
+  readyPath: /health
+  readyTimeoutMs: 30000
+  pollIntervalMs: 100

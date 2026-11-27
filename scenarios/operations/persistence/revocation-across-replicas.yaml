@@ -1,0 +1,100 @@
+id: operations.persistence.revocation-across-replicas
+title: "Revocation on one instance is visible to introspection and resource requests on another"
+requirements: [OPS-5.3-revocation-across-replicas]
+profile: operations
+status: draft
+note: |
+  Invariant INV-OPS-PERSIST-REVOCATION (OPS-5.3 MUST; RFC 7009 2.1, RFC 7662).
+  Draft: contract section 7.5 requires one shared durable store; the Rust
+  reference at origin/main fail-closes conformance mode unless
+  OAUTH2_DATABASE_URL=sqlite::memory:. Not promoted: an inactive token on an
+  isolated instance would only prove the token is unknown, not revoked.
+  Harness: examples/sut-config.multi-instance.yaml; see
+  reference/persistence-harness.md.
+steps:
+  - id: auth
+    use: login-and-authorize
+    with:
+      username: alice
+      password: test-only-password
+      loginPath: /auth/login
+      authorizePath: /oauth/authorize
+      query:
+        response_type: code
+        client_id: client-a
+        redirect_uri: https://client.example/callback
+        state: s-persist-revoke
+        scope: openid
+        code_challenge: E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM
+        code_challenge_method: S256
+    expect: { status: 302 }
+    capture: { code: redirect.query.code }
+  - id: exchange-on-a
+    use: request-on-instance
+    with:
+      instance: a
+      method: POST
+      path: /oauth/token
+      headers: { authorization: "Basic Y2xpZW50LWE6dGVzdC1vbmx5LXNlY3JldA==" }
+      form:
+        grant_type: authorization_code
+        code: "{{code}}"
+        redirect_uri: https://client.example/callback
+        code_verifier: dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk
+    expect: { status: 200, json: { token_type: Bearer, access_token: x, refresh_token: x } }
+    capture:
+      at: body.access_token
+      rt: body.refresh_token
+  - id: shared-store-control-on-b
+    use: request-on-instance
+    with:
+      instance: b
+      method: POST
+      path: /oauth/introspect
+      headers: { authorization: "Basic Y2xpZW50LWE6dGVzdC1vbmx5LXNlY3JldA==" }
+      form: { token: "{{at}}" }
+    expect: { status: 200, json: { active: true } }
+  - id: revoke-access-on-a
+    use: request-on-instance
+    with:
+      instance: a
+      method: POST
+      path: /oauth/revoke
+      headers: { authorization: "Basic Y2xpZW50LWE6dGVzdC1vbmx5LXNlY3JldA==" }
+      form: { token: "{{at}}", token_type_hint: access_token }
+    expect: { status: 200 }
+  - id: introspect-on-b
+    use: request-on-instance
+    with:
+      instance: b
+      method: POST
+      path: /oauth/introspect
+      headers: { authorization: "Basic Y2xpZW50LWE6dGVzdC1vbmx5LXNlY3JldA==" }
+      form: { token: "{{at}}" }
+    expect: { status: 200, json: { active: false } }
+  - id: resource-on-b
+    use: request-on-instance
+    with:
+      instance: b
+      method: GET
+      path: /oauth/userinfo
+      headers: { authorization: "Bearer {{at}}" }
+    expect: { status: 401 }
+  - id: revoke-refresh-on-a
+    use: request-on-instance
+    with:
+      instance: a
+      method: POST
+      path: /oauth/revoke
+      headers: { authorization: "Basic Y2xpZW50LWE6dGVzdC1vbmx5LXNlY3JldA==" }
+      form: { token: "{{rt}}", token_type_hint: refresh_token }
+    expect: { status: 200 }
+  - id: refresh-on-b
+    use: request-on-instance
+    with:
+      instance: b
+      method: POST
+      path: /oauth/token
+      headers: { authorization: "Basic Y2xpZW50LWE6dGVzdC1vbmx5LXNlY3JldA==" }
+      form: { grant_type: refresh_token, refresh_token: "{{rt}}" }
+    expect: { status: 400, json: { error: invalid_grant } }

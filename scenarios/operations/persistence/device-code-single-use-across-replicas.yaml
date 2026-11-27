@@ -1,0 +1,69 @@
+id: operations.persistence.device-code-single-use-across-replicas
+title: "An approved device code redeemed on one instance is rejected on another"
+requirements: [OPS-5.5-device-code-single-use-across-replicas]
+profile: operations
+status: draft
+note: |
+  Invariant INV-OPS-PERSIST-DEVICE-REPLICAS (OPS-5.5 MAY; RFC 8628 3.4/3.5).
+  Draft: contract section 7.5 requires one shared durable store; the Rust
+  reference at origin/main fail-closes conformance mode unless
+  OAUTH2_DATABASE_URL=sqlite::memory:. Not promoted: a 400 from an instance
+  with an isolated store would only prove the device code is unknown there,
+  not that it was already redeemed. Harness:
+  examples/sut-config.multi-instance.yaml; see reference/persistence-harness.md.
+steps:
+  - id: device-on-a
+    use: request-on-instance
+    with:
+      instance: a
+      method: POST
+      path: /oauth/device_authorization
+      headers: { authorization: "Basic Y2xpZW50LWRldjp0ZXN0LW9ubHktZGV2LXNlY3JldA==" }
+      form: { client_id: client-dev, scope: read }
+    expect: { status: 200 }
+    capture:
+      dc: body.device_code
+      uc: body.user_code
+  - id: verify-on-primary
+    use: device-verify
+    with:
+      username: alice
+      password: test-only-password
+      loginPath: /auth/login
+      user_code: "{{uc}}"
+      action: approve
+    expect: { status: 200 }
+  - id: poll-on-a
+    use: request-on-instance
+    with:
+      instance: a
+      method: POST
+      path: /oauth/token
+      headers: { authorization: "Basic Y2xpZW50LWRldjp0ZXN0LW9ubHktZGV2LXNlY3JldA==" }
+      form:
+        grant_type: urn:ietf:params:oauth:grant-type:device_code
+        device_code: "{{dc}}"
+        client_id: client-dev
+    expect: { status: 200, jsonSchema: { type: object, required: [access_token, token_type] } }
+    capture: { at: body.access_token }
+  - id: shared-store-control-on-b
+    use: request-on-instance
+    with:
+      instance: b
+      method: POST
+      path: /oauth/introspect
+      headers: { authorization: "Basic Y2xpZW50LWRldjp0ZXN0LW9ubHktZGV2LXNlY3JldA==" }
+      form: { token: "{{at}}" }
+    expect: { status: 200, json: { active: true } }
+  - id: poll-on-b
+    use: request-on-instance
+    with:
+      instance: b
+      method: POST
+      path: /oauth/token
+      headers: { authorization: "Basic Y2xpZW50LWRldjp0ZXN0LW9ubHktZGV2LXNlY3JldA==" }
+      form:
+        grant_type: urn:ietf:params:oauth:grant-type:device_code
+        device_code: "{{dc}}"
+        client_id: client-dev
+    expect: { status: 400, json: { error: invalid_grant } }
