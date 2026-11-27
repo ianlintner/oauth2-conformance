@@ -46,6 +46,25 @@ export interface MtlsConfig {
   clients: Record<string, MtlsClientCert>;
 }
 
+/**
+ * Exposition-family names for the operations §3 metric scenarios.
+ *
+ * The contract defines metric *behaviour* (a status-class counter, a duration
+ * histogram, a failed-authentication counter) but not the family names a port
+ * chooses. The harness supplies them here; scenarios reference the semantic
+ * keys as `{{metrics.<key>}}`, so a spec-correct port is not failed for using
+ * different names. Missing keys fail closed as unbound variables.
+ */
+export interface SutMetricsConfig {
+  requestsTotal?: string;
+  requestsByStatusClass?: string;
+  statusClassLabel?: string;
+  successStatusClass?: string;
+  durationBucket?: string;
+  durationCount?: string;
+  failedAuthentications?: string;
+}
+
 export interface SutRuntime {
   /** name -> origin of each SUT process sharing one store (`request-on-instance`). */
   instances?: Record<string, string>;
@@ -55,6 +74,8 @@ export interface SutRuntime {
   logoutReceiver?: LogoutReceiverConfig;
   /** Live listener started by the CLI for that config; not parsed from YAML. */
   logoutReceiverInstance?: LogoutReceiver;
+  /** Harness-supplied exposition family names (contract section 7.7). */
+  metrics?: SutMetricsConfig;
 }
 
 /** RFC 8705 `x5t#S256`: base64url SHA-256 of the DER certificate, no padding. */
@@ -68,7 +89,37 @@ export function x5tS256(pem: string): string {
   return createHash('sha256').update(der).digest('base64url');
 }
 
-const TOP_KEYS = ['instances', 'restart', 'mtls', 'logoutReceiver'];
+const TOP_KEYS = ['instances', 'restart', 'mtls', 'logoutReceiver', 'metrics'];
+
+/** Prometheus exposition identifier grammars (metric family vs label name). */
+const METRIC_NAME = /^[a-zA-Z_:][a-zA-Z0-9_:]*$/;
+const LABEL_NAME = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
+
+const METRICS_KEYS = [
+  'requestsTotal',
+  'requestsByStatusClass',
+  'statusClassLabel',
+  'successStatusClass',
+  'durationBucket',
+  'durationCount',
+  'failedAuthentications',
+] as const;
+
+function parseMetrics(value: unknown): SutMetricsConfig {
+  const raw = obj(value, 'metrics');
+  exactKeys(raw, [...METRICS_KEYS], 'metrics');
+  const out: SutMetricsConfig = {};
+  for (const key of METRICS_KEYS) {
+    if (raw[key] === undefined) continue;
+    const text = nonEmpty(raw[key], `metrics.${key}`);
+    const pattern = key === 'statusClassLabel' ? LABEL_NAME : key === 'successStatusClass' ? undefined : METRIC_NAME;
+    if (pattern !== undefined && !pattern.test(text)) {
+      throw new TypeError(`metrics.${key} must be a valid Prometheus ${key === 'statusClassLabel' ? 'label' : 'metric'} name`);
+    }
+    Object.assign(out, { [key]: text });
+  }
+  return out;
+}
 
 function obj(value: unknown, label: string): Record<string, unknown> {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) throw new TypeError(`${label} must be an object`);
@@ -176,5 +227,6 @@ export async function parseSutConfig(text: string, baseDir: string): Promise<Sut
     }
     out.logoutReceiver = { origin: configured, path: receiverPath };
   }
+  if (root.metrics !== undefined) out.metrics = parseMetrics(root.metrics);
   return out;
 }

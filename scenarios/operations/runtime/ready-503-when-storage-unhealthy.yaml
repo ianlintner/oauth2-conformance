@@ -1,0 +1,19 @@
+id: operations.runtime.ready-503-when-storage-unhealthy
+title: Readiness answers 503 when the storage health check fails
+requirements: [OPS-3.2-ready-503-when-storage-unhealthy]
+profile: operations
+status: draft
+note: |
+  Invariant INV-OPS-READY-503-ON-STORAGE-FAILURE. Draft: no SUT capability
+  exists to make storage unhealthy, and inventing a control endpoint here
+  would exceed this ticket. C-06 ticket 4 will add the runner-driven
+  `storage-fault` capability; the step below is the observation to make once
+  it exists. Do not promote this scenario before that capability lands.
+steps:
+  - id: ready-after-storage-fault
+    request:
+      method: GET
+      path: /ready
+      headers: { accept: application/json }
+    expect:
+      status: 503

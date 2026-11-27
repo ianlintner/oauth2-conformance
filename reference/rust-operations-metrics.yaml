@@ -1,0 +1,12 @@
+# Harness config for the Rust reference server's Prometheus exposition family
+# names. docs/operations-profile.md §3.3 defines metric *behaviour*, not the
+# exported names, so this map keeps the operations scenarios portable: a port
+# claiming `operations` supplies its own values via `--sut-config`.
+metrics:
+  requestsTotal: oauth2_server_http_requests_total
+  requestsByStatusClass: oauth2_server_http_requests_by_class_total
+  statusClassLabel: status_class
+  successStatusClass: '2xx'
+  durationBucket: oauth2_server_http_request_duration_seconds_bucket
+  durationCount: oauth2_server_http_request_duration_seconds_count
+  failedAuthentications: oauth2_server_oauth_failed_authentications

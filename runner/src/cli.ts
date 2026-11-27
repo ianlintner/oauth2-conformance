@@ -19,6 +19,7 @@ import { runScenarios, type RunReport } from './runner.js';
 import { dpopProof } from './dpop.js';
 import { clientAssertion } from './client-assertion.js';
 import { requestObject } from './request-object.js';
+import { prometheusSample } from './prometheus.js';
 import { deviceVerify, loginAndAuthorize, logout } from './helpers.js';
 import { advanceClock, dpopNonceMode, mtlsRequest, requestOnInstance, sutRestart, x5tThumbprint } from './sut-helpers.js';
 import { parseSutConfig } from './sut-runtime.js';
@@ -229,6 +230,7 @@ export async function commandRun(flags: Record<string, string | boolean>): Promi
         'x5t-s256': x5tThumbprint,
         'read-logout-token': readLogoutToken,
         'frontchannel-capture': frontchannelCapture,
+        'prometheus-sample': prometheusSample,
       },
       ...(sut !== undefined ? { sut } : {}),
     });

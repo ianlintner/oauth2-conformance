@@ -1,0 +1,19 @@
+id: operations.runtime.ready-200-database-ok
+title: Readiness answers 200 with status ready and a passing database check
+requirements: [OPS-3.2-ready-200-database-ok]
+profile: operations
+status: stable
+note: |
+  Invariant INV-OPS-READY-DB-CHECK. §3.2 requires the exact
+  {"status":"ready","checks":{"database":"ok"}} shape when storage is healthy.
+steps:
+  - id: ready
+    request:
+      method: GET
+      path: /ready
+      headers: { accept: application/json }
+    expect:
+      status: 200
+      json:
+        status: ready
+        checks: { database: ok }

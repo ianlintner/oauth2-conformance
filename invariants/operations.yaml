@@ -1,0 +1,56 @@
+# Cross-scenario invariants for the operations profile (§3 runtime endpoints).
+#
+# Same conventions as invariants/oidc-basic.yaml: one requirement per
+# invariant, ids cited from scenario notes. Machine wiring into cross-run and
+# trace checks arrives with the runner extensions in part 3/3.
+
+- id: INV-OPS-HEALTH-UNAUTHENTICATED
+  profile: operations
+  summary: /health answers 200 with a service status body and needs no credentials.
+  requirement: OPS-3.1-health-200-no-auth
+
+- id: INV-OPS-READY-DB-CHECK
+  profile: operations
+  summary: /ready reports status ready and checks.database ok when storage is healthy.
+  requirement: OPS-3.2-ready-200-database-ok
+
+- id: INV-OPS-READY-503-ON-STORAGE-FAILURE
+  profile: operations
+  summary: /ready answers 503 when the storage health check fails.
+  requirement: OPS-3.2-ready-503-when-storage-unhealthy
+  note: Needs the C-06 ticket 4 storage-fault capability; scenario stays draft until then.
+
+- id: INV-OPS-CONFORMANCE-READY-DETAIL
+  profile: operations
+  summary: Conformance-mode /ready reports seed state and signing key identifiers.
+  requirement: OPS-3.2-ready-conformance-detail
+
+- id: INV-OPS-CONFORMANCE-DETAIL-NO-SECRETS
+  profile: operations
+  summary: The /ready conformance object carries counts and identifiers only, never credentials or key material.
+  requirement: OPS-3.2-ready-conformance-detail-no-secrets
+
+- id: INV-OPS-METRICS-PROMETHEUS-TEXT
+  profile: operations
+  summary: /metrics emits Prometheus text exposition with HELP/TYPE annotations and parseable samples.
+  requirement: OPS-3.3-metrics-prometheus-text-format
+
+- id: INV-OPS-METRICS-STATUS-CLASS-COUNTER
+  profile: operations
+  summary: A status-class-labelled request counter increases when a request completes.
+  requirement: OPS-3.3-metrics-request-counter-status-class
+
+- id: INV-OPS-METRICS-DURATION-HISTOGRAM
+  profile: operations
+  summary: A request duration histogram observes every request, including an +Inf bucket and a growing sample count.
+  requirement: OPS-3.3-metrics-duration-histogram
+
+- id: INV-OPS-METRICS-FAILED-AUTH-COUNTER
+  profile: operations
+  summary: A rejected client authentication increases the dedicated failed-authentication counter.
+  requirement: OPS-3.3-metrics-failed-authentications-counter
+
+- id: INV-OPS-EVENTS-HEALTH-REPORTS-AVAILABILITY
+  profile: operations
+  summary: /events/health reports whether event ingest is enabled and which plugins are healthy.
+  requirement: OPS-3.4-event-ingest-health-endpoint

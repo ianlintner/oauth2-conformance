@@ -120,6 +120,11 @@ export async function runScenarios(scenarios: Scenario[], options: RunOptions): 
 
   for (const scenario of selected) {
     const scope = new Map<string, string>();
+    // Harness-supplied exposition family names are scenario variables, not
+    // SUT claims: the contract defines metric behaviour, not family names.
+    for (const [key, value] of Object.entries(options.sut?.metrics ?? {})) {
+      if (typeof value === 'string') scope.set(`metrics.${key}`, value);
+    }
     const diffs: Diff[] = [];
     let steps = 0;
     let error: string | undefined;

@@ -170,10 +170,13 @@ function deepDiff(expected: unknown, actual: unknown, path: string, diffs: Diff[
     const refs = (expected as Record<string, unknown>)[captureCompareKey] as string[];
     const rawA = scope?.get(refs[0]!);
     const rawB = scope?.get(refs[1]!);
-    const a = rawA !== undefined && /^-?\d+$/.test(rawA.trim()) ? Number(rawA) : undefined;
-    const b = rawB !== undefined && /^-?\d+$/.test(rawB.trim()) ? Number(rawB) : undefined;
+    // Prometheus exposition allows decimal and exponent notation (1.5, 1e+06),
+    // so accept any finite JS number rather than integer-only digits.
+    const numeric = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/;
+    const a = rawA !== undefined && numeric.test(rawA.trim()) && Number.isFinite(Number(rawA)) ? Number(rawA) : undefined;
+    const b = rawB !== undefined && numeric.test(rawB.trim()) && Number.isFinite(Number(rawB)) ? Number(rawB) : undefined;
     if (a === undefined || b === undefined) {
-      diffs.push({ path, expected: `${captureCompareKey} ${refs.join(captureCompareKey === '$ltCapture' ? ' < ' : ' > ')}`, actual: { [refs[0]!]: rawA, [refs[1]!]: rawB }, reason: 'capture comparison requires two integer-valued captures' });
+      diffs.push({ path, expected: `${captureCompareKey} ${refs.join(captureCompareKey === '$ltCapture' ? ' < ' : ' > ')}`, actual: { [refs[0]!]: rawA, [refs[1]!]: rawB }, reason: 'capture comparison requires two finite numeric captures' });
     } else if (captureCompareKey === '$ltCapture' ? a >= b : a <= b) {
       diffs.push({ path, expected: `${captureCompareKey} ${refs.join(captureCompareKey === '$ltCapture' ? ' < ' : ' > ')}`, actual: { [refs[0]!]: a, [refs[1]!]: b }, reason: captureCompareKey === '$ltCapture' ? `${a} is not < ${b}` : `${a} is not > ${b}` });
     }

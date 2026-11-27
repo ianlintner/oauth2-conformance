@@ -1,0 +1,36 @@
+id: operations.runtime.metrics-prometheus-text-format
+title: Metrics expose Prometheus text exposition with annotated, parseable samples
+requirements: [OPS-3.3-metrics-prometheus-text-format]
+profile: operations
+status: stable
+note: |
+  Invariant INV-OPS-METRICS-PROMETHEUS-TEXT. §3.3 requires text/plain;
+  version=0.0.4. The captured body is parsed by the runner-only
+  prometheus-sample helper; no SUT interface change is involved. Family names
+  are supplied by the harness `--sut-config metrics` map: §3.3 defines the
+  behaviour, not the exported names, so scenario variables keep this check
+  portable across ports.
+steps:
+  - id: scrape
+    request:
+      method: GET
+      path: /metrics
+      headers: { accept: 'text/plain; version=0.0.4' }
+    expect:
+      status: 200
+      headers:
+        content-type: { "$regex": '^text/plain; version=0\.0\.4' }
+    capture:
+      exposition: text.body
+  - id: annotated
+    assert:
+      json:
+        exposition: { "$regex": '[\s\S]*# HELP {{metrics.requestsTotal}}[\s\S]*' }
+  - id: parse-counter
+    use: prometheus-sample
+    with:
+      body: '{{exposition}}'
+      metric: '{{metrics.requestsTotal}}'
+    expect:
+      status: 200
+      json: { value: { "$gt": 0 } }

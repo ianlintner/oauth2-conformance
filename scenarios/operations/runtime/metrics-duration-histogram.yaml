@@ -1,0 +1,49 @@
+id: operations.runtime.metrics-duration-histogram
+title: A request duration histogram observes requests with a finite and an +Inf bucket
+requirements: [OPS-3.3-metrics-duration-histogram]
+profile: operations
+status: stable
+note: |
+  Invariant INV-OPS-METRICS-DURATION-HISTOGRAM. The histogram sample count
+  grows across a liveness request and the +Inf bucket is present, proving the
+  observation was recorded rather than merely declared by a HELP line. §3.3
+  does not fix family names, so the harness `--sut-config metrics` map supplies
+  them. `le="+Inf"` is a Prometheus exposition convention, not a port-specific
+  name. Growth is evidence that requests were observed, not attribution to the
+  probe alone: the /metrics scrapes are themselves requests.
+steps:
+  - id: scrape-before
+    request: { method: GET, path: /metrics }
+    expect: { status: 200 }
+    capture: { before_text: text.body }
+  - id: read-before
+    use: prometheus-sample
+    with:
+      body: '{{before_text}}'
+      metric: '{{metrics.durationCount}}'
+    capture: { before: body.value }
+  - id: probe
+    request: { method: GET, path: /health }
+    expect: { status: 200 }
+  - id: scrape-after
+    request: { method: GET, path: /metrics }
+    expect: { status: 200 }
+    capture: { after_text: text.body }
+  - id: read-after
+    use: prometheus-sample
+    with:
+      body: '{{after_text}}'
+      metric: '{{metrics.durationCount}}'
+    capture: { after: body.value }
+  - id: grew
+    assert:
+      json: { after: { "$gtCapture": [after, before] } }
+  - id: inf-bucket
+    use: prometheus-sample
+    with:
+      body: '{{after_text}}'
+      metric: '{{metrics.durationBucket}}'
+      labels: { le: '+Inf' }
+    expect:
+      status: 200
+      json: { value: { "$gt": 0 } }
