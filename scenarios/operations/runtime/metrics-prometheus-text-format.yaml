@@ -6,7 +6,10 @@ status: stable
 note: |
   Invariant INV-OPS-METRICS-PROMETHEUS-TEXT. §3.3 requires text/plain;
   version=0.0.4. The captured body is parsed by the runner-only
-  prometheus-sample helper; no SUT interface change is involved.
+  prometheus-sample helper; no SUT interface change is involved. Family names
+  are supplied by the harness `--sut-config metrics` map: §3.3 defines the
+  behaviour, not the exported names, so scenario variables keep this check
+  portable across ports.
 steps:
   - id: scrape
     request:
@@ -22,12 +25,12 @@ steps:
   - id: annotated
     assert:
       json:
-        exposition: { "$regex": '[\s\S]*# HELP oauth2_server_http_requests_total[\s\S]*' }
+        exposition: { "$regex": '[\s\S]*# HELP {{metrics.requestsTotal}}[\s\S]*' }
   - id: parse-counter
     use: prometheus-sample
     with:
       body: '{{exposition}}'
-      metric: oauth2_server_http_requests_total
+      metric: '{{metrics.requestsTotal}}'
     expect:
       status: 200
       json: { value: { "$gt": 0 } }

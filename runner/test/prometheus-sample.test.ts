@@ -111,3 +111,79 @@ test('runner wires the helper into capture and $gtCapture assertions', async () 
   });
   assert.equal(failed.verdict, 'fail');
 });
+
+test('helper interpolates label names as well as label values', async () => {
+  const scope = new Map([['klassLabel', 'status_class'], ['klass', '2xx']]);
+  const result = await prometheusSample(
+    context({ body: exposition, metric: 'oauth2_server_http_requests_by_class_total', labels: { '{{klassLabel}}': '{{klass}}' } }, scope),
+  );
+  assert.deepEqual(result.body, { value: 42 });
+});
+
+test('parseSutConfig accepts and validates the harness metrics family map', async () => {
+  const { parseSutConfig } = await import('../src/sut-runtime.js');
+  const cfg = await parseSutConfig('metrics:\n  requestsTotal: my_http_total\n  statusClassLabel: status_class\n  successStatusClass: "2xx"\n', '/tmp');
+  assert.equal(cfg.metrics?.requestsTotal, 'my_http_total');
+  assert.equal(cfg.metrics?.statusClassLabel, 'status_class');
+  await assert.rejects(parseSutConfig('metrics:\n  requestsTotal: "not a metric"\n', '/tmp'), /valid Prometheus metric name/);
+  await assert.rejects(parseSutConfig('metrics:\n  statusClassLabel: "bad-label"\n', '/tmp'), /valid Prometheus label name/);
+  await assert.rejects(parseSutConfig('metrics:\n  surprise: x\n', '/tmp'), /unknown key "surprise"/);
+});
+
+const portableBefore = '# TYPE my_by_class counter\nmy_by_class{my_class="2xx"} 4\n';
+const portableAfter = '# TYPE my_by_class counter\nmy_by_class{my_class="2xx"} 6\n';
+
+const portableScenario: Scenario = {
+  id: 'operations.runtime.prometheus-configured-families',
+  title: 'Family and label names come from harness config',
+  requirements: ['OPS-3.3-metrics-request-counter-status-class'],
+  profile: 'operations',
+  status: 'stable',
+  steps: [
+    { id: 'read-before', use: 'prometheus-sample', with: { body: portableBefore, metric: '{{metrics.requestsByStatusClass}}', labels: { '{{metrics.statusClassLabel}}': '{{metrics.successStatusClass}}' } }, capture: { before: 'body.value' } },
+    { id: 'read-after', use: 'prometheus-sample', with: { body: portableAfter, metric: '{{metrics.requestsByStatusClass}}', labels: { '{{metrics.statusClassLabel}}': '{{metrics.successStatusClass}}' } }, capture: { after: 'body.value' } },
+    { id: 'grew', assert: { json: { after: { $gtCapture: ['after', 'before'] } } } },
+  ],
+};
+
+const baseOpts: Parameters<typeof runScenarios>[1] = {
+  baseUrl: 'http://127.0.0.1:9',
+  implementation: 'test',
+  contract: '0.1.0',
+  helpers: { 'prometheus-sample': prometheusSample },
+};
+
+test('runner seeds metric variables from --sut-config and fails closed without them', async () => {
+  const configured = await runScenarios([portableScenario], {
+    ...baseOpts,
+    sut: { metrics: { requestsByStatusClass: 'my_by_class', statusClassLabel: 'my_class', successStatusClass: '2xx' } },
+  });
+  assert.equal(configured.verdict, 'pass', JSON.stringify(configured.results));
+
+  const unconfigured = await runScenarios([portableScenario], baseOpts);
+  assert.equal(unconfigured.verdict, 'fail');
+});
+
+test('$gtCapture accepts decimal and exponent captures from exposition text', async () => {
+  const literal: Scenario = {
+    id: 'operations.runtime.gt-exponent-capture',
+    title: 'Numeric capture comparison accepts exponent notation',
+    requirements: ['OPS-3.3-metrics-duration-histogram'],
+    profile: 'operations',
+    status: 'stable',
+    steps: [
+      { id: 'before', use: 'literal', with: { value: '1.5' }, capture: { before: 'body.value' } },
+      { id: 'after', use: 'literal', with: { value: '1e+06' }, capture: { after: 'body.value' } },
+      { id: 'grew', assert: { json: { after: { $gtCapture: ['after', 'before'] } } } },
+    ],
+  };
+  const report = await runScenarios([literal], {
+    baseUrl: 'http://127.0.0.1:9',
+    implementation: 'test',
+    contract: '0.1.0',
+    helpers: {
+      literal: async (ctx) => ({ status: 200, headers: {}, body: { value: ctx.with.value } }),
+    },
+  });
+  assert.equal(report.verdict, 'pass', JSON.stringify(report.results));
+});

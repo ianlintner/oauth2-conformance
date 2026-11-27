@@ -1,13 +1,19 @@
 id: operations.runtime.metrics-failed-authentications-counter
-title: A rejected client authentication increments the dedicated failure counter
+title: Rejected client authentication increments the dedicated failure counter
 requirements: [OPS-3.3-metrics-failed-authentications-counter]
 profile: operations
 status: stable
 note: |
-  Invariant INV-OPS-METRICS-FAILED-AUTH-COUNTER. An unknown client at the
-  token endpoint is an invalid_client authentication failure; §3.3 requires
-  such failures to increment a dedicated counter. Seed-independent: no
-  configured client secret is needed for the negative request.
+  Invariant INV-OPS-METRICS-FAILED-AUTH-COUNTER. §3.3 requires failed
+  authentications to increment a dedicated counter. This scenario exercises
+  three of the failure kinds named in the requirement: unknown client and bad
+  client secret (invalid_client) plus bad refresh token (invalid_grant). The
+  password-grant kinds (bad password, unknown user) are not asserted here: the
+  seed has no resource-owner password credential and the profile does not
+  require that grant. Error codes, not just a non-200 status, pin the failure
+  semantics; the scenario schema accepts either one status or a deny-list.
+  The counter family name comes from the harness `--sut-config metrics` map,
+  not from the contract; no SUT interface change is involved.
 steps:
   - id: scrape-before
     request: { method: GET, path: /metrics }
@@ -17,9 +23,9 @@ steps:
     use: prometheus-sample
     with:
       body: '{{before_text}}'
-      metric: oauth2_server_oauth_failed_authentications
+      metric: '{{metrics.failedAuthentications}}'
     capture: { before: body.value }
-  - id: bad-client
+  - id: unknown-client
     request:
       method: POST
       path: /oauth/token
@@ -29,7 +35,26 @@ steps:
         client_secret: test-only-wrong-secret
         scope: read
     expect:
-      statusNot: [200]
+      statusNot: [200, 404, 500, 502, 503, 504]
+      json: { error: invalid_client }
+  - id: bad-client-secret
+    request:
+      method: POST
+      path: /oauth/token
+      headers: { authorization: 'Basic Y2xpZW50LWNjOnRlc3Qtb25seS13cm9uZy1zZWNyZXQ=' }
+      form: { grant_type: client_credentials, scope: read }
+    expect:
+      statusNot: [200, 404, 500, 502, 503, 504]
+      json: { error: invalid_client }
+  - id: bad-refresh-token
+    request:
+      method: POST
+      path: /oauth/token
+      headers: { authorization: 'Basic Y2xpZW50LWE6dGVzdC1vbmx5LXNlY3JldA==' }
+      form: { grant_type: refresh_token, refresh_token: no-such-refresh-token }
+    expect:
+      statusNot: [200, 401, 404, 500, 502, 503, 504]
+      json: { error: invalid_grant }
   - id: scrape-after
     request: { method: GET, path: /metrics }
     expect: { status: 200 }
@@ -38,7 +63,7 @@ steps:
     use: prometheus-sample
     with:
       body: '{{after_text}}'
-      metric: oauth2_server_oauth_failed_authentications
+      metric: '{{metrics.failedAuthentications}}'
     capture: { after: body.value }
   - id: grew
     assert:

@@ -6,7 +6,12 @@ status: stable
 note: |
   Invariant INV-OPS-METRICS-STATUS-CLASS-COUNTER. Read the 2xx series before
   and after a liveness request; the raw text is captured from /metrics and the
-  prometheus-sample helper selects the status_class="2xx" sample.
+  prometheus-sample helper selects the configured status-class sample. §3.3
+  defines the counter behaviour but not the family or label names, so those
+  come from the harness `--sut-config metrics` map: this check stays portable
+  across ports. Growth is evidence that at least one 2xx request occurred in
+  the interval; it cannot attribute the increment to the probe alone because
+  the two /metrics scrapes are themselves 2xx requests.
 steps:
   - id: scrape-before
     request: { method: GET, path: /metrics }
@@ -16,8 +21,8 @@ steps:
     use: prometheus-sample
     with:
       body: '{{before_text}}'
-      metric: oauth2_server_http_requests_by_class_total
-      labels: { status_class: '2xx' }
+      metric: '{{metrics.requestsByStatusClass}}'
+      labels: { '{{metrics.statusClassLabel}}': '{{metrics.successStatusClass}}' }
     capture: { before: body.value }
   - id: probe
     request: { method: GET, path: /health }
@@ -30,8 +35,8 @@ steps:
     use: prometheus-sample
     with:
       body: '{{after_text}}'
-      metric: oauth2_server_http_requests_by_class_total
-      labels: { status_class: '2xx' }
+      metric: '{{metrics.requestsByStatusClass}}'
+      labels: { '{{metrics.statusClassLabel}}': '{{metrics.successStatusClass}}' }
     capture: { after: body.value }
   - id: grew
     assert:

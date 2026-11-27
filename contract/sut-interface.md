@@ -124,9 +124,19 @@ mtls:
   baseUrl: https://127.0.0.1:8443
   caFile: server-ca.pem
   clients: { client-mtls: { certFile: client.pem, keyFile: client.key } }
+metrics:
+  requestsTotal: oauth2_server_http_requests_total
+  requestsByStatusClass: oauth2_server_http_requests_by_class_total
+  statusClassLabel: status_class
+  successStatusClass: '2xx'
+  durationBucket: oauth2_server_http_request_duration_seconds_bucket
+  durationCount: oauth2_server_http_request_duration_seconds_count
+  failedAuthentications: oauth2_server_oauth_failed_authentications
 ```
 
 Unknown keys are rejected. Relative paths resolve against the config file's directory. A helper whose capability is not configured in `--sut-config` (`sut-restart`, `request-on-instance`, `mtls-request`) throws, so the scenario fails (stable) or defers (draft) instead of passing vacuously. `advance-clock` itself requires a `2xx` from the SUT and throws otherwise.
+
+The optional `metrics` map supplies Prometheus exposition family names to the operations §3.3 scenarios. The contract defines metric *behaviour* (a status-class counter, a duration histogram, a failed-authentication counter) but not the exported names, so scenarios reference semantic keys as `{{metrics.<key>}}` and each port supplies its own values. Unconfigured keys fail closed as unbound variables; family and label names are validated against Prometheus identifier grammars. See `reference/rust-operations-metrics.yaml` for the Rust reference mapping.
 
 ### 7.8 OIDC logout registration and the runner's receiver (oidc-basic)
 

@@ -4,8 +4,10 @@ requirements: [OPS-3.1-health-200-no-auth]
 profile: operations
 status: stable
 note: |
-  Invariant INV-OPS-HEALTH-UNAUTHENTICATED. No Authorization header is sent;
-  §3.1 requires a service status body without authentication.
+  Invariant INV-OPS-HEALTH-UNAUTHENTICATED. No Authorization header is sent.
+  §3.1 requires only a status body identifying the service, so `status` and
+  `service` are checked as nonempty strings; their exact values are an
+  implementation choice and are deliberately not asserted here.
 steps:
   - id: health
     request:
@@ -15,6 +17,6 @@ steps:
     expect:
       status: 200
       json:
-        status: healthy
-        service: oauth2_server
+        status: { "$regex": '.+' }
+        service: { "$regex": '.+' }
         timestamp: { "$regex": '^\d{4}-\d{2}-\d{2}T' }

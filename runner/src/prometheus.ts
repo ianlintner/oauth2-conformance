@@ -130,7 +130,7 @@ export async function prometheusSample(context: HelperContext): Promise<ActualRe
       throw new Error('prometheus-sample: with.labels must be an object of label name to value');
     }
     labels = Object.fromEntries(
-      Object.entries(withLabels).map(([key, value]) => [key, interpolate(String(value), context.scope)]),
+      Object.entries(withLabels).map(([key, value]) => [interpolate(key, context.scope), interpolate(String(value), context.scope)]),
     );
   }
   const value = parsePrometheusSample(text, metric, labels);
