@@ -9,6 +9,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { captureValue, firstCookiePair, type ActualResponse } from '../src/compare.js';
+import { sendRequest } from '../src/http.js';
 import { parseScenario, type Scenario } from '../src/scenario.js';
 
 const runnerDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -34,10 +35,27 @@ test('cookie.first keeps "=" inside the value (base64 session payloads)', () => 
   assert.equal(firstCookiePair({ 'set-cookie': 'id=YWJj+ZA==; Path=/' }), 'id=YWJj+ZA==');
 });
 
-test('cookie.first selects only the first cookie when fetch joins several set-cookie headers', () => {
-  // undici joins repeated set-cookie headers with ", " in Headers#forEach.
-  const actual = withHeaders({ 'set-cookie': 'id=first; Path=/; HttpOnly, other=second; Path=/' });
-  assert.equal(captureValue('cookie.first', actual), 'id=first');
+test('cookie.first selects the first cookie from a real multi-Set-Cookie response', async () => {
+  // Transport-level: Headers#forEach emits each Set-Cookie separately in
+  // undici; http.ts must preserve all of them in a comma-joined header.
+  const cases: [string, string][] = [
+    ['id=first; Path=/; HttpOnly', 'id=first; Path=/; HttpOnly, other=second; Path=/'],
+    ['id=first', 'id=first, other=second; Path=/'],
+  ];
+  for (const [first, expectedHeader] of cases) {
+    const fetchImpl = (async () => {
+      const h = new Headers({ location: 'https://idp.invalid/authorize?state=s1' });
+      h.append('set-cookie', first);
+      h.append('set-cookie', 'other=second; Path=/');
+      return new Response(null, { status: 302, headers: h });
+    }) as unknown as typeof fetch;
+    const actual = await sendRequest(
+      { method: 'GET', url: 'http://sut.invalid/login', headers: {} },
+      { fetchImpl },
+    );
+    assert.equal(actual.headers['set-cookie'], expectedHeader);
+    assert.equal(captureValue('cookie.first', actual), 'id=first');
+  }
 });
 
 test('cookie.first is undefined when there is no set-cookie header', () => {

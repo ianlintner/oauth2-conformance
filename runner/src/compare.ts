@@ -418,7 +418,9 @@ export function compareResponse(expect: ScenarioExpectation, actual: ActualRespo
 export function firstCookiePair(headers: Record<string, string>): string | undefined {
   const setCookie = headerValue(headers, 'set-cookie');
   if (setCookie === undefined) return undefined;
-  const pair = (setCookie.split(';')[0] ?? '').trim();
+  // Multiple Set-Cookie values arrive comma-joined (see http.ts). Take the
+  // first cookie entry before stripping that entry's attributes.
+  const pair = ((setCookie.split(',')[0] ?? '').split(';')[0] ?? '').trim();
   return pair.includes('=') && !pair.startsWith('=') ? pair : undefined;
 }
 

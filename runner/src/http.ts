@@ -47,6 +47,11 @@ export async function sendRequest(request: HttpRequest, options: TransportOption
   response.headers.forEach((value, key) => {
     headers[key] = value;
   });
+  // Headers#forEach in undici emits each Set-Cookie separately, so the plain
+  // loop keeps only the last one. Preserve them all as the comma-joined value
+  // used by HTTP/1.1; firstCookiePair takes the first name=value pair from it.
+  const cookies = response.headers.getSetCookie?.();
+  if (cookies && cookies.length > 0) headers['set-cookie'] = cookies.join(', ');
 
   return toActualResponse(response.status, headers, await response.text());
 }

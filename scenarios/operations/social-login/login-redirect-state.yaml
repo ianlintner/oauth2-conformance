@@ -10,8 +10,10 @@ note: |
   asserted: provider base URLs are a SHOULD (OPS-4.1-provider-base-url-configurable)
   that the Rust reference does not yet implement. The step asserts that the
   Location carries a nonempty `state` and that the response sets the session
-  cookie in which the server records the expected state; the callback
-  scenarios in this directory prove the binding by replaying that cookie.
+  cookie in which the server records the expected state. The callback
+  scenarios in this directory constrain that binding by replaying that cookie;
+  none shows a successful code exchange, so the binding is implied rather than
+  positively proven (see `post-login-redirect-validated`, a draft).
 steps:
   - id: login-google
     request:
