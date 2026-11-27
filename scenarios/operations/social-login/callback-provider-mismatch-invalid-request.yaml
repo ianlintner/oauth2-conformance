@@ -1,0 +1,30 @@
+id: operations.social-login.callback-provider-mismatch-invalid-request
+title: A callback for a different provider than the session's is rejected with invalid_request
+requirements: [OPS-4.3-callback-provider-mismatch-invalid-request]
+profile: operations
+status: stable
+note: |
+  Invariant INV-OPS-SOCIAL-CALLBACK-PROVIDER-BOUND. Harness precondition
+  (`reference/social-login-harness.md`): `google` is configured. Login starts with google;
+  the callback replays the session cookie and the issued state (so the state
+  check passes) but names `github`, another supported provider, in the path.
+  The dummy `code` is never exchanged: the provider check precedes it.
+steps:
+  - id: login-google
+    request:
+      method: GET
+      path: /auth/login/google
+    expect:
+      status: 302
+    capture:
+      state: redirect.query.state
+      session: cookie.first
+  - id: callback-other-provider
+    request:
+      method: GET
+      path: /auth/callback/github
+      query: { code: conformance-dummy-code, state: '{{state}}' }
+      headers: { accept: application/json, cookie: '{{session}}' }
+    expect:
+      status: 400
+      json: { error: invalid_request }

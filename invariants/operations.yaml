@@ -1,4 +1,4 @@
-# Cross-scenario invariants for the operations profile (§3 runtime endpoints).
+# Cross-scenario invariants for the operations profile (§3 runtime endpoints, §4 social login).
 #
 # Same conventions as invariants/oidc-basic.yaml: one requirement per
 # invariant, ids cited from scenario notes. Machine wiring into cross-run and
@@ -54,3 +54,44 @@
   profile: operations
   summary: /events/health reports whether event ingest is enabled and which plugins are healthy.
   requirement: OPS-3.4-event-ingest-health-endpoint
+
+# §4 social login. Harness precondition for all of these: `reference/social-login-harness.md`
+# (google configured with placeholder credentials, github known but
+# unconfigured). No identity provider is contacted except by the draft
+# post-login scenario, which needs the C-06 ticket 4 mock identity provider.
+
+- id: INV-OPS-SOCIAL-PROVIDER-NOT-CONFIGURED
+  profile: operations
+  summary: Login for a known provider with no configured credentials answers 400 provider_not_configured.
+  requirement: OPS-4.1-provider-not-configured
+
+- id: INV-OPS-SOCIAL-LOGIN-STATE
+  profile: operations
+  summary: Login initiation sets a session and 302s to the provider with a nonempty state query parameter.
+  requirement: OPS-4.2-login-redirect-state
+
+- id: INV-OPS-SOCIAL-CALLBACK-STATE-REQUIRED
+  profile: operations
+  summary: A callback carrying the login session but no state answers 403 access_denied.
+  requirement: OPS-4.2-callback-state-missing-access-denied
+
+- id: INV-OPS-SOCIAL-CALLBACK-STATE-BOUND
+  profile: operations
+  summary: A callback carrying the login session and a state other than the issued one answers 403 access_denied.
+  requirement: OPS-4.2-callback-state-mismatch-access-denied
+
+- id: INV-OPS-SOCIAL-CALLBACK-PROVIDER-BOUND
+  profile: operations
+  summary: A callback with the issued state but a different supported provider in the path answers 400 invalid_request.
+  requirement: OPS-4.3-callback-provider-mismatch-invalid-request
+
+- id: INV-OPS-SOCIAL-CALLBACK-UNSUPPORTED-PROVIDER
+  profile: operations
+  summary: A callback with the issued state for a provider the server does not implement answers 400 invalid_request.
+  requirement: OPS-4.3-callback-unsupported-provider-invalid-request
+
+- id: INV-OPS-SOCIAL-POST-LOGIN-REDIRECT-SAFE
+  profile: operations
+  summary: After a successful callback an unsafe post-login target is replaced by a default destination, never followed.
+  requirement: OPS-4.4-post-login-redirect-validated
+  note: Needs the C-06 ticket 4 mock identity provider; scenario stays draft until then.

@@ -410,9 +410,26 @@ export function compareResponse(expect: ScenarioExpectation, actual: ActualRespo
 }
 
 /**
+ * First `name=value` pair of the `set-cookie` header (case-insensitive
+ * lookup), so a later step can replay a session cookie by sending it as a
+ * `cookie` request header. This is not a cookie jar: attributes (Path,
+ * HttpOnly, ...) are dropped and nothing is replayed automatically.
+ */
+export function firstCookiePair(headers: Record<string, string>): string | undefined {
+  const setCookie = headerValue(headers, 'set-cookie');
+  if (setCookie === undefined) return undefined;
+  // Multiple Set-Cookie values arrive comma-joined (see http.ts). Take the
+  // first cookie entry before stripping that entry's attributes.
+  const pair = ((setCookie.split(',')[0] ?? '').split(';')[0] ?? '').trim();
+  return pair.includes('=') && !pair.startsWith('=') ? pair : undefined;
+}
+
+/**
  * Extract a captured value from a response using `body.x`, `header.x`,
  * `redirect.query.x`, or `jwt.<var>.<header|payload>.<field>` (decode the JWT
  * held in an earlier-captured variable and read a header/payload field).
+ * `cookie.first` selects the first `name=value` pair of the `set-cookie`
+ * header (see firstCookiePair).
  */
 export function captureValue(expression: string, actual: ActualResponse, scope?: CaptureScope): string | undefined {
   const dot = expression.indexOf('.');
@@ -444,6 +461,7 @@ export function captureValue(expression: string, actual: ActualResponse, scope?:
     }
   }
   if (scope_ === 'text') return rest === 'body' ? actual.text : undefined;
+  if (scope_ === 'cookie') return rest === 'first' ? firstCookiePair(actual.headers) : undefined;
   if (scope_ === 'header') return headerValue(actual.headers, rest);
   if (scope_ === 'redirect') {
     const redirect = actual.redirect ?? (headerValue(actual.headers, 'location') !== undefined ? parseRedirect(headerValue(actual.headers, 'location') as string) : undefined);

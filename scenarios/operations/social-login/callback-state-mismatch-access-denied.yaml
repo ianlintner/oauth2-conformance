@@ -1,0 +1,30 @@
+id: operations.social-login.callback-state-mismatch-access-denied
+title: A callback whose state differs from the session state is rejected with access_denied
+requirements: [OPS-4.2-callback-state-mismatch-access-denied]
+profile: operations
+status: stable
+note: |
+  Invariant INV-OPS-SOCIAL-CALLBACK-STATE-BOUND (RFC 6749 section 10.12).
+  Harness precondition (`reference/social-login-harness.md`): `google` is configured. The
+  callback replays the login session cookie with a state that is not the one
+  the server issued; the provider segment matches the session, so only the
+  state differs. The dummy `code` is never exchanged.
+steps:
+  - id: login-google
+    request:
+      method: GET
+      path: /auth/login/google
+    expect:
+      status: 302
+    capture:
+      state: redirect.query.state
+      session: cookie.first
+  - id: callback-tampered-state
+    request:
+      method: GET
+      path: /auth/callback/google
+      query: { code: conformance-dummy-code, state: tampered-not-the-issued-state }
+      headers: { accept: application/json, cookie: '{{session}}' }
+    expect:
+      status: 403
+      json: { error: access_denied }

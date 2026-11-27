@@ -1,0 +1,22 @@
+id: operations.social-login.provider-not-configured
+title: Login for a known provider without credentials is rejected with provider_not_configured
+requirements: [OPS-4.1-provider-not-configured]
+profile: operations
+status: stable
+note: |
+  Invariant INV-OPS-SOCIAL-PROVIDER-NOT-CONFIGURED. Harness precondition
+  (`reference/social-login-harness.md`): the SUT knows `github` but runs with no github
+  credentials, while `google` is configured. The Rust reference ships every
+  provider disabled in application.conf and enables one only when both
+  OAUTH2_<PROVIDER>_CLIENT_ID and OAUTH2_<PROVIDER>_CLIENT_SECRET are set, so
+  github is deterministically unconfigured when only google credentials are
+  supplied. No identity provider is contacted.
+steps:
+  - id: login-github
+    request:
+      method: GET
+      path: /auth/login/github
+      headers: { accept: application/json }
+    expect:
+      status: 400
+      json: { error: provider_not_configured }
