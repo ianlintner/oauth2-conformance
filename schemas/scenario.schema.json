@@ -120,7 +120,7 @@
           "propertyNames": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$" },
           "additionalProperties": {
             "type": "string",
-            "pattern": "^(?:text\\.body|(?:redirect\\.(?:query|fragment)|body|header|jwt\\.[A-Za-z_][A-Za-z0-9_]*\\.(?:header|payload))\\.[^\\s]+)$"
+            "pattern": "^(?:text\\.body|cookie\\.first|(?:redirect\\.(?:query|fragment)|body|header|jwt\\.[A-Za-z_][A-Za-z0-9_]*\\.(?:header|payload))\\.[^\\s]+)$"
           }
         },
         "assert": {

@@ -1,0 +1,32 @@
+id: operations.social-login.callback-state-missing-access-denied
+title: A callback without state is rejected with access_denied
+requirements: [OPS-4.2-callback-state-missing-access-denied]
+profile: operations
+status: stable
+note: |
+  Invariant INV-OPS-SOCIAL-CALLBACK-STATE-REQUIRED (RFC 6749 section 10.12).
+  Harness precondition (`reference/social-login-harness.md`): `google` is configured. The
+  login step establishes a real session with an expected state; the callback
+  replays that session cookie (captured with `cookie.first`) but omits
+  `state`, so the rejection is the state check rather than a missing session.
+  The dummy `code` is never exchanged: the state check precedes any provider
+  call.
+steps:
+  - id: login-google
+    request:
+      method: GET
+      path: /auth/login/google
+    expect:
+      status: 302
+    capture:
+      state: redirect.query.state
+      session: cookie.first
+  - id: callback-without-state
+    request:
+      method: GET
+      path: /auth/callback/google
+      query: { code: conformance-dummy-code }
+      headers: { accept: application/json, cookie: '{{session}}' }
+    expect:
+      status: 403
+      json: { error: access_denied }

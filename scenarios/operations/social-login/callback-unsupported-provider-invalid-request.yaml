@@ -1,0 +1,35 @@
+id: operations.social-login.callback-unsupported-provider-invalid-request
+title: A callback for an unsupported provider is rejected with invalid_request
+requirements: [OPS-4.3-callback-unsupported-provider-invalid-request]
+profile: operations
+status: stable
+note: |
+  Invariant INV-OPS-SOCIAL-CALLBACK-UNSUPPORTED-PROVIDER. Harness precondition
+  (`reference/social-login-harness.md`): `google` is configured. The callback replays the
+  login session cookie and issued state, so the state check passes, and names
+  a provider the server does not implement. Black-box limit: a session can
+  only be bound to a provider whose login the server supports, so an
+  unsupported callback provider always also differs from the session's
+  provider. The Rust reference rejects it at the provider-binding check
+  (before its unsupported-provider match arm); both paths answer
+  invalid_request, which is what the clause requires. The dummy `code` is
+  never exchanged.
+steps:
+  - id: login-google
+    request:
+      method: GET
+      path: /auth/login/google
+    expect:
+      status: 302
+    capture:
+      state: redirect.query.state
+      session: cookie.first
+  - id: callback-unsupported-provider
+    request:
+      method: GET
+      path: /auth/callback/conformance-unsupported-provider
+      query: { code: conformance-dummy-code, state: '{{state}}' }
+      headers: { accept: application/json, cookie: '{{session}}' }
+    expect:
+      status: 400
+      json: { error: invalid_request }

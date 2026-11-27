@@ -1,0 +1,43 @@
+id: operations.social-login.post-login-redirect-validated
+title: An unsafe post-login redirect target is replaced by a default destination
+requirements: [OPS-4.4-post-login-redirect-validated]
+profile: operations
+status: draft
+note: |
+  Invariant INV-OPS-SOCIAL-POST-LOGIN-REDIRECT-SAFE. Draft, two missing
+  capabilities (C-06 ticket 4):
+  1. A successful callback. The post-login redirect is only issued after the
+     provider code exchange succeeds, which needs a local mock identity
+     provider plus configurable provider base URLs
+     (OPS-4.1-provider-base-url-configurable); the Rust reference's provider
+     token URLs are hard-coded. `{{mock_idp_code}}` below is deliberately
+     unbound until that capability supplies a code, so this scenario fails
+     closed instead of passing vacuously.
+  2. An unsafe target in the session's post-login slot. Rust records
+     `return_to` only from its own /oauth/authorize redirect, so a black-box
+     client cannot place an absolute or protocol-relative target there; the
+     contract needs a way to seed one (e.g. via the mock identity provider
+     harness) before the negative is observable.
+  Once both exist: seed an unsafe target such as https://attacker.example/,
+  complete the callback, and require a 302 whose Location is the server's
+  default destination, never the unsafe target. Do not promote earlier.
+steps:
+  - id: login-google
+    request:
+      method: GET
+      path: /auth/login/google
+    expect:
+      status: 302
+    capture:
+      state: redirect.query.state
+      session: cookie.first
+  - id: callback-success
+    request:
+      method: GET
+      path: /auth/callback/google
+      query: { code: '{{mock_idp_code}}', state: '{{state}}' }
+      headers: { cookie: '{{session}}' }
+    expect:
+      status: 302
+      statusNot: [400, 403, 500]
+      redirectNot: { location: https://attacker.example/ }
