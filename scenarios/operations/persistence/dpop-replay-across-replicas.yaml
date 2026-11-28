@@ -1,0 +1,77 @@
+id: operations.persistence.dpop-replay-across-replicas
+title: "A DPoP proof replayed with the same jti on another instance is rejected"
+requirements: [OPS-5.4-dpop-replay-across-replicas]
+profile: operations
+status: draft
+note: |
+  Invariant INV-OPS-PERSIST-DPOP-REPLAY-REPLICAS (OPS-5.4 SHOULD; RFC 9449
+  11.1). Draft: contract section 7.5 requires a shared replay store; the Rust
+  reference at origin/main fail-closes conformance mode unless
+  OAUTH2_DATABASE_URL=sqlite::memory:. Both proofs use the same signing key
+  and the same jti, but each carries the htu of the instance it is sent to,
+  so an htu mismatch cannot masquerade as replay detection. A control token
+  request on b uses a fresh key and jti and must succeed: without it, any 400
+  on b could be an unrelated binding failure. Not promoted: isolated in-memory
+  stores cannot share the replay record. Harness:
+  examples/sut-config.multi-instance.yaml; see reference/persistence-harness.md.
+steps:
+  - id: proof-for-a
+    use: dpop-proof
+    with:
+      htm: POST
+      htu: http://127.0.0.1:18083/oauth/token
+      key: ops-persist-replay
+      jti: ops-persist-dpop-replay-jti
+    expect: { status: 200, json: { proof: { "$nonempty": true } } }
+    capture: { proof_a: body.proof }
+  - id: proof-control-b
+    use: dpop-proof
+    with:
+      htm: POST
+      htu: http://127.0.0.1:18085/oauth/token
+      key: ops-persist-control
+      jti: ops-persist-dpop-control-jti
+    expect: { status: 200, json: { proof: { "$nonempty": true } } }
+    capture: { proof_control: body.proof }
+  - id: token-control-on-b
+    use: request-on-instance
+    with:
+      instance: b
+      method: POST
+      path: /oauth/token
+      headers:
+        authorization: "Basic Y2xpZW50LWNjOnRlc3Qtb25seS1jYy1zZWNyZXQ="
+        dpop: "{{proof_control}}"
+      form: { grant_type: client_credentials }
+    expect: { status: 200, json: { token_type: DPoP, access_token: x } }
+  - id: proof-for-b
+    use: dpop-proof
+    with:
+      htm: POST
+      htu: http://127.0.0.1:18085/oauth/token
+      key: ops-persist-replay
+      jti: ops-persist-dpop-replay-jti
+    expect: { status: 200, json: { proof: { "$nonempty": true } } }
+    capture: { proof_b: body.proof }
+  - id: token-on-a
+    use: request-on-instance
+    with:
+      instance: a
+      method: POST
+      path: /oauth/token
+      headers:
+        authorization: "Basic Y2xpZW50LWNjOnRlc3Qtb25seS1jYy1zZWNyZXQ="
+        dpop: "{{proof_a}}"
+      form: { grant_type: client_credentials }
+    expect: { status: 200, json: { token_type: DPoP, access_token: x } }
+  - id: replay-on-b
+    use: request-on-instance
+    with:
+      instance: b
+      method: POST
+      path: /oauth/token
+      headers:
+        authorization: "Basic Y2xpZW50LWNjOnRlc3Qtb25seS1jYy1zZWNyZXQ="
+        dpop: "{{proof_b}}"
+      form: { grant_type: client_credentials }
+    expect: { status: 400, json: { error: invalid_dpop_proof } }

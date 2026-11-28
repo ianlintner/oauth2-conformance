@@ -1,0 +1,53 @@
+id: operations.persistence.dpop-replay-survives-restart
+title: "A DPoP proof consumed before a restart is still rejected afterwards"
+requirements: [OPS-5.4-dpop-replay-survives-restart]
+profile: operations
+status: draft
+note: |
+  Invariant INV-OPS-PERSIST-DPOP-REPLAY-RESTART (OPS-5.4 SHOULD; RFC 9449
+  11.1). Draft: contract section 7.4 requires the replay record to survive a
+  restart of the same process on the same base URL. The Rust reference at
+  origin/main fail-closes conformance mode unless
+  OAUTH2_DATABASE_URL=sqlite::memory:, so its replay record is gone after a
+  restart. Not promoted: a replay rejection caused by a fresh, empty store
+  would not prove persistence. Harness: examples/sut-config.multi-instance.yaml;
+  see reference/persistence-harness.md.
+steps:
+  - id: proof
+    use: dpop-proof
+    with:
+      htm: POST
+      htu: http://127.0.0.1:18083/oauth/token
+      key: ops-persist-restart
+      jti: ops-persist-dpop-restart-jti
+    expect: { status: 200, json: { proof: { "$nonempty": true } } }
+    capture: { proof: body.proof }
+  - id: token-before-restart
+    request:
+      method: POST
+      path: /oauth/token
+      headers:
+        authorization: "Basic Y2xpZW50LWNjOnRlc3Qtb25seS1jYy1zZWNyZXQ="
+        dpop: "{{proof}}"
+      form: { grant_type: client_credentials }
+    expect: { status: 200, json: { token_type: DPoP, access_token: x } }
+    capture: { at: body.access_token }
+  - id: restart
+    use: sut-restart
+    expect: { status: 200, json: { restarted: true } }
+  - id: persisted-state-control
+    request:
+      method: POST
+      path: /oauth/introspect
+      headers: { authorization: "Basic Y2xpZW50LWNjOnRlc3Qtb25seS1jYy1zZWNyZXQ=" }
+      form: { token: "{{at}}" }
+    expect: { status: 200, json: { active: true } }
+  - id: replay-after-restart
+    request:
+      method: POST
+      path: /oauth/token
+      headers:
+        authorization: "Basic Y2xpZW50LWNjOnRlc3Qtb25seS1jYy1zZWNyZXQ="
+        dpop: "{{proof}}"
+      form: { grant_type: client_credentials }
+    expect: { status: 400, json: { error: invalid_dpop_proof } }
