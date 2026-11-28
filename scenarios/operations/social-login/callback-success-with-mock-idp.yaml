@@ -1,0 +1,39 @@
+id: operations.social-login.callback-success-with-mock-idp
+title: A social-login callback completes a code exchange against the runner-owned mock IdP
+requirements: [OPS-4.1-provider-base-url-configurable]
+profile: operations
+status: draft
+note: |
+  Invariant INV-OPS-SOCIAL-PROVIDER-BASE-URL-CONFIGURED. Draft: needs a SUT
+  that advertises `provider-base-url-configurable` and points its provider
+  authorize/token/userinfo endpoints at the runner-owned mock IdP (contract
+  7.10). The Rust reference hard-codes provider URLs, so this scenario defers
+  there. No live provider is contacted and no real credential is used: the
+  code, token and userinfo are synthetic. A successful callback must not be
+  rejected with state/provider errors and must land on the server's default
+  post-login destination with a usable session cookie.
+steps:
+  - id: login-google
+    request:
+      method: GET
+      path: /auth/login/google
+    expect: { status: 302 }
+    capture:
+      state: redirect.query.state
+      session: cookie.first
+      location: header.location
+  - id: mock-idp-authorize
+    use: mock-idp-authorize
+    with: { location: '{{location}}' }
+    expect: { status: 302 }
+    capture:
+      code: redirect.query.code
+  - id: callback-success
+    request:
+      method: GET
+      path: /auth/callback/google
+      query: { code: '{{code}}', state: '{{state}}' }
+      headers: { cookie: '{{session}}' }
+    expect:
+      statusNot: [400, 403, 500]
+      headers: { location: /profile }

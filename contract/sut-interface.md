@@ -75,12 +75,12 @@ Additive and owner-gated. A SUT that implements none of this is still a valid v1
 `GET /conformance/capabilities` returns `200` JSON validated by [`schemas/sut-capabilities.schema.json`](../schemas/sut-capabilities.schema.json):
 
 ```json
-{ "interface_version": 2, "capabilities": ["test-clock", "dpop-nonce-mode", "restart", "multi-instance", "mtls"],
+{ "interface_version": 2, "capabilities": ["test-clock", "dpop-nonce-mode", "restart", "multi-instance", "mtls", "storage-fault", "provider-base-url-configurable"],
   "mtls": { "base_url": "https://127.0.0.1:8443" },
   "instances": ["http://127.0.0.1:8081", "http://127.0.0.1:8082"] }
 ```
 
-`mtls` is required exactly when `mtls` is advertised, `instances` (at least two) exactly when `multi-instance` is. With conformance mode off the path is `404`, like every other `/conformance/*` path.
+`mtls` is required exactly when `mtls` is advertised, `instances` (at least two) exactly when `multi-instance` is. With conformance mode off the path is `404`, like every other `/conformance/*` path. `storage-fault` and `provider-base-url-configurable` (sections 7.9 and 7.10) need no companion fields: the former is a SUT control endpoint, the latter is an advertised promise about conformance-mode configuration. The **runner-owned** mock IdP in section 7.10 is harness configuration, not a SUT capability and never an advertisement.
 
 The advertisement tells a **scenario author** which capabilities a SUT claims; it is not enforced by the runner. The runner does not read `/conformance/capabilities` and does not cross-check the advertised `instances`/`mtls.base_url` against `--sut-config`. What the runner actually verifies is narrower: a helper whose harness configuration (`--sut-config`) is absent throws (section 7.7), and `advance-clock` requires a `2xx` from the SUT. Advertised capabilities and harness configuration are two independent claims; a mismatch between them is not detected by the runner. Do not rely on the advertisement alone as proof that a scenario can run or that a capability works.
 
@@ -124,6 +124,8 @@ mtls:
   baseUrl: https://127.0.0.1:8443
   caFile: server-ca.pem
   clients: { client-mtls: { certFile: client.pem, keyFile: client.key } }
+mockIdp:
+  origin: http://127.0.0.1:8098   # runner-owned listener for section 7.10
 metrics:
   requestsTotal: oauth2_server_http_requests_total
   requestsByStatusClass: oauth2_server_http_requests_by_class_total
@@ -146,5 +148,23 @@ Additive and optional. Seed clients may carry (public values only; see [`schemas
 - Back-channel: the SUT POSTs `application/x-www-form-urlencoded` `logout_token=<JWT>` to the client's `backchannel_logout_uri`. The **runner** owns the receiver: `--sut-config` `logoutReceiver: { origin: http://127.0.0.1:8099, path: /backchannel-logout }` (loopback `http` origin only, unknown keys rejected). The runner binds that fixed origin for the run; the seed must register the same URI. `use: read-logout-token` (`with.waitMs`, default 5000, max 60000) returns `{ "logout_token": ... }` for the next captured POST, or throws on timeout. Non-form posts get `415`, posts without `logout_token` get `400`, and neither is ever exposed as evidence. Unconfigured, the helper throws.
 - Front-channel: capture the logout page with `capture: { page: text.body }` (new capture source: raw non-JSON response text), then `use: frontchannel-capture` with `with.body: "{{page}}"` returns `{ "iframe_srcs": [...] }` (http(s) iframe `src` values, entities decoded).
 - Seed material is synthetic and valid only in conformance mode; the seed never carries private keys.
+
+### 7.9 `storage-fault` (operations §3 readiness)
+
+- `POST /conformance/storage-fault` with `{"enabled": true|false}` makes the SUT's storage health check fail while enabled (`true`) and restores it (`false`); answers `200` `{"enabled": <bool>}`. Default is `false`. Missing, non-boolean or malformed input is `400` and changes nothing.
+- The injected failure is observed by the SUT's **own** readiness probe: `GET /ready` (or the documented equivalent declared in `conformance.yaml`) answers `503` with a storage-unhealthy body while the fault is enabled. The runner never fabricates readiness; it only toggles the fault and reads the answer. `GET /health` stays `200` so the runner's restart readiness polling remains usable (section 7.4).
+- Conformance mode only: outside it the path is `404`, exactly like the other `/conformance/*` controls. The toggle is process-local and resets on restart (section 7.4). With `multi-instance`, it applies only to the addressed instance.
+- Runner side: `use: storage-fault` with `with.enabled` (a boolean, or a `{{var}}` resolving to `true`/`false`) and optional `with.path` (default `/conformance/storage-fault`). A non-boolean value is rejected before any request; a non-2xx answer throws, so a SUT that does not offer the capability cannot make the scenario pass. The capability is a SUT endpoint, not a harness command: this keeps the semantics in the SUT, makes the same scenario portable across all four ports, and avoids letting a harness-side command fake the readiness result.
+- Scenarios that enable the fault should disable it in a later step (or rely on process restart) so later scenarios in the same run see a healthy store.
+
+### 7.10 Runner-owned mock IdP (operations §4 social login)
+
+- `--sut-config mockIdp: { origin: http://127.0.0.1:<port> }` binds a **runner-owned, loopback-only** synthetic identity provider for the run. `https`, non-loopback hosts, paths and unknown keys are rejected; the listener is closed when the run ends. No live identity provider is contacted and no real credential is used.
+- The runner owns these endpoints (all synthetic, conformance-only):
+  - `GET /authorize?state=…&redirect_uri=…[&code_challenge=…&code_challenge_method=S256]` answers `302` to **`redirect_uri` only when it is a loopback `http(s)` URI**, carrying a single-use `code` bound to `state`/`redirect_uri`/optional S256 challenge. Missing `state`, an external `redirect_uri` or an unsupported challenge method is `400` and issues no code.
+  - `POST /token` (`application/x-www-form-urlencoded`) with `grant_type=authorization_code`, `code`, optional `redirect_uri` and S256 `code_verifier` answers `200` with a synthetic bearer access token; replayed codes and PKCE mismatches get `400` `invalid_grant`. A failed PKCE check does not consume the code.
+  - `GET /userinfo` with the synthetic bearer token answers `200` with synthetic claims (`sub`, `email`, `email_verified`, `name`); missing/invalid tokens get `401`.
+- Runner helper `use: mock-idp-authorize` with `with.location` (the SUT's captured login redirect, interpolated) follows **exactly one** redirect with `redirect: 'manual'` and returns the actual `302` response so the scenario captures `redirect.query.code` and `state` and replays the callback itself. It refuses a location that is not an absolute URL on the configured mock IdP origin, and throws when no `mockIdp` is configured. The helper never contacts the SUT callback.
+- SUT side: a SUT that advertises `provider-base-url-configurable` accepts conformance-mode configuration pointing a social provider's authorize/token/userinfo base URLs at the configured mock IdP origin, and completes the code exchange against it using only the synthetic values it returns. The provider origin must never be hard-coded to a live provider in conformance mode once this capability is advertised. This is the capability the full round-trip scenario needs; a SUT without it stays `draft`/deferred.
 
 No scenario is promoted by this contract: the SUT-side implementations are separate port work, and a scenario becomes `stable` only after it passes on a SUT that advertises the capability it uses.

@@ -141,6 +141,90 @@ export async function dpopNonceMode(context: HelperContext): Promise<import('./c
 }
 
 /**
+ * `storage-fault`: POST /conformance/storage-fault {"enabled": boolean}.
+ *
+ * Chosen over a harness restart/fault command because the existing control
+ * endpoints (test-clock, dpop-nonce-mode) already define the shape: a boolean
+ * toggle, process-local, reset on restart, refused outside conformance mode.
+ * The SUT's own /ready probe observes the injected fault, so the harness never
+ * has to fake readiness evidence. Fails closed on non-boolean input or a
+ * non-2xx answer (contract §7.9).
+ */
+const DEFAULT_STORAGE_FAULT_PATH = '/conformance/storage-fault';
+
+export async function storageFault(context: HelperContext): Promise<ActualResponse> {
+  const raw = context.with.enabled;
+  let enabled: boolean;
+  if (typeof raw === 'boolean') {
+    enabled = raw;
+  } else if (typeof raw === 'string') {
+    const value = interpolate(raw, context.scope);
+    if (value === 'true') enabled = true;
+    else if (value === 'false') enabled = false;
+    else throw new Error('storage-fault: with.enabled must be a boolean or {{var}} resolving to true/false');
+  } else {
+    throw new Error('storage-fault: with.enabled must be a boolean or {{var}} resolving to true/false');
+  }
+  const path = context.with.path === undefined
+    ? DEFAULT_STORAGE_FAULT_PATH
+    : localPath('storage-fault', sub(context, String(context.with.path)));
+  const response = await context.send({
+    method: 'POST',
+    url: path,
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ enabled }),
+  });
+  if (response.status < 200 || response.status > 299) {
+    throw new Error(`storage-fault: SUT answered ${response.status} to ${path}; the storage-fault capability is unavailable or conformance mode is off`);
+  }
+  return response;
+}
+
+/**
+ * `use: mock-idp-authorize` — the runner acts as the browser at the mock IdP:
+ * it GETs the SUT's captured login redirect (which must target the configured
+ * loopback IdP) and returns the IdP's code-bearing redirect for the scenario to
+ * replay at the SUT callback. Only one redirect is followed, on the runner side;
+ * the SUT callback is never contacted by this helper.
+ */
+export async function mockIdpAuthorize(context: HelperContext): Promise<ActualResponse> {
+  const idp = context.mockIdp;
+  if (idp === undefined) {
+    throw new Error('mock-idp-authorize: no mock IdP configured (pass --sut-config with mockIdp.origin)');
+  }
+  const raw = context.with.location;
+  if (typeof raw !== 'string' || raw === '') {
+    throw new Error('mock-idp-authorize: with.location must be the captured login redirect Location');
+  }
+  const location = sub(context, raw);
+  let url: URL;
+  try {
+    url = new URL(location);
+  } catch {
+    throw new Error('mock-idp-authorize: with.location is not an absolute URL');
+  }
+  if (url.origin !== idp.origin) {
+    throw new Error(`mock-idp-authorize: login redirect targets ${url.origin}, not the configured mock IdP ${idp.origin}`);
+  }
+  let response: globalThis.Response;
+  try {
+    response = await fetch(url, { redirect: 'manual' });
+  } catch (cause) {
+    throw new Error(`mock-idp-authorize: mock IdP request failed (${cause instanceof Error ? cause.message : String(cause)})`);
+  }
+  const headers: Record<string, string> = {};
+  response.headers.forEach((value, key) => { headers[key] = value; });
+  const actual = toActualResponse(response.status, headers, await response.text());
+  if (actual.status !== 302 && actual.status !== 303) {
+    throw new Error(`mock-idp-authorize: mock IdP answered ${actual.status} to ${url.pathname}; expected a code-bearing redirect`);
+  }
+  if (actual.redirect?.query.code === undefined || actual.redirect?.query.state === undefined) {
+    throw new Error('mock-idp-authorize: mock IdP redirect is missing code or state');
+  }
+  return actual;
+}
+
+/**
  * `use: sut-restart` — run the harness-configured restart command (never taken
  * from the scenario), then poll readiness until the SUT answers 2xx again.
  */

@@ -21,9 +21,10 @@ import { clientAssertion } from './client-assertion.js';
 import { requestObject } from './request-object.js';
 import { prometheusSample } from './prometheus.js';
 import { deviceVerify, loginAndAuthorize, logout } from './helpers.js';
-import { advanceClock, dpopNonceMode, mtlsRequest, requestOnInstance, sutRestart, x5tThumbprint } from './sut-helpers.js';
+import { advanceClock, dpopNonceMode, mockIdpAuthorize, mtlsRequest, requestOnInstance, storageFault, sutRestart, x5tThumbprint } from './sut-helpers.js';
 import { parseSutConfig } from './sut-runtime.js';
 import { startLogoutReceiver } from './logout-receiver.js';
+import { startMockIdp, type MockIdp } from './mock-idp.js';
 import { readLogoutToken, frontchannelCapture } from './logout-helpers.js';
 import { validateRepository } from './schema-validate.js';
 import { parseContractRef } from './manifest.js';
@@ -208,6 +209,14 @@ export async function commandRun(flags: Record<string, string | boolean>): Promi
     })
     : undefined;
   if (receiver !== undefined && sut !== undefined) sut.logoutReceiverInstance = receiver;
+  let mockIdp: MockIdp | undefined;
+  try {
+    if (sut?.mockIdp !== undefined) mockIdp = await startMockIdp({ origin: sut.mockIdp.origin });
+  } catch (cause) {
+    await receiver?.close();
+    throw cause;
+  }
+  if (mockIdp !== undefined && sut !== undefined) sut.mockIdpInstance = mockIdp;
   let report: RunReport;
   try {
     report = await runScenarios(scenarios, {
@@ -224,6 +233,8 @@ export async function commandRun(flags: Record<string, string | boolean>): Promi
         'request-object': requestObject,
         'advance-clock': advanceClock,
         'dpop-nonce-mode': dpopNonceMode,
+        'storage-fault': storageFault,
+        'mock-idp-authorize': mockIdpAuthorize,
         'sut-restart': sutRestart,
         'request-on-instance': requestOnInstance,
         'mtls-request': mtlsRequest,
@@ -235,6 +246,7 @@ export async function commandRun(flags: Record<string, string | boolean>): Promi
       ...(sut !== undefined ? { sut } : {}),
     });
   } finally {
+    await mockIdp?.close();
     await receiver?.close();
   }
   if (reportFile !== undefined) {

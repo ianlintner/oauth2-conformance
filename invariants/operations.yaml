@@ -18,7 +18,7 @@
   profile: operations
   summary: /ready answers 503 when the storage health check fails.
   requirement: OPS-3.2-ready-503-when-storage-unhealthy
-  note: Needs the C-06 ticket 4 storage-fault capability; scenario stays draft until then.
+  note: Runner capability specified in contract 7.9; scenario stays draft until a SUT advertising `storage-fault` passes it.
 
 - id: INV-OPS-CONFORMANCE-READY-DETAIL
   profile: operations
@@ -57,13 +57,20 @@
 
 # §4 social login. Harness precondition for all of these: `reference/social-login-harness.md`
 # (google configured with placeholder credentials, github known but
-# unconfigured). No identity provider is contacted except by the draft
-# post-login scenario, which needs the C-06 ticket 4 mock identity provider.
+# unconfigured). No live identity provider is contacted and no real credential
+# is used: draft scenarios use the runner-owned loopback mock IdP (contract
+# 7.10) and synthetic codes only.
 
 - id: INV-OPS-SOCIAL-PROVIDER-NOT-CONFIGURED
   profile: operations
   summary: Login for a known provider with no configured credentials answers 400 provider_not_configured.
   requirement: OPS-4.1-provider-not-configured
+
+- id: INV-OPS-SOCIAL-PROVIDER-BASE-URL-CONFIGURED
+  profile: operations
+  summary: In conformance mode a provider's endpoints can point at the runner-owned mock IdP and a synthetic callback completes the login.
+  requirement: OPS-4.1-provider-base-url-configurable
+  note: Runner capability specified in contract 7.10; scenario stays draft until a SUT advertising `provider-base-url-configurable` passes it.
 
 - id: INV-OPS-SOCIAL-LOGIN-STATE
   profile: operations
@@ -94,7 +101,7 @@
   profile: operations
   summary: After a successful callback an unsafe post-login target is replaced by a default destination, never followed.
   requirement: OPS-4.4-post-login-redirect-validated
-  note: Needs the C-06 ticket 4 mock identity provider; scenario stays draft until then.
+  note: The runner now supplies a synthetic code through `mock-idp-authorize` (contract 7.10); the unsafe `return_to` target still has no black-box seeding capability, so the scenario stays draft and fails closed.
 
 # §5 persistence. All nine scenarios need contract section 7.4 (restart) or
 # section 7.5 (instances sharing one durable store). The Rust reference at

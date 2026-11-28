@@ -13,6 +13,12 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { parse as parseYaml } from 'yaml';
 import type { LogoutReceiver } from './logout-receiver.js';
+import type { MockIdp } from './mock-idp.js';
+
+export interface MockIdpConfig {
+  /** Loopback origin the SUT's provider base URL points at, e.g. `http://127.0.0.1:8098`. */
+  origin: string;
+}
 
 export interface LogoutReceiverConfig {
   /** Loopback origin the SUT is seeded with, e.g. `http://127.0.0.1:8099`. */
@@ -74,6 +80,10 @@ export interface SutRuntime {
   logoutReceiver?: LogoutReceiverConfig;
   /** Live listener started by the CLI for that config; not parsed from YAML. */
   logoutReceiverInstance?: LogoutReceiver;
+  /** Harness-supplied mock IdP origin (contract section 7.10). */
+  mockIdp?: MockIdpConfig;
+  /** Live mock IdP started by the CLI; not parsed from YAML. */
+  mockIdpInstance?: MockIdp;
   /** Harness-supplied exposition family names (contract section 7.7). */
   metrics?: SutMetricsConfig;
 }
@@ -89,7 +99,7 @@ export function x5tS256(pem: string): string {
   return createHash('sha256').update(der).digest('base64url');
 }
 
-const TOP_KEYS = ['instances', 'restart', 'mtls', 'logoutReceiver', 'metrics'];
+const TOP_KEYS = ['instances', 'restart', 'mtls', 'logoutReceiver', 'mockIdp', 'metrics'];
 
 /** Prometheus exposition identifier grammars (metric family vs label name). */
 const METRIC_NAME = /^[a-zA-Z_:][a-zA-Z0-9_:]*$/;
@@ -227,6 +237,18 @@ export async function parseSutConfig(text: string, baseDir: string): Promise<Sut
     }
     out.logoutReceiver = { origin: configured, path: receiverPath };
   }
+
+  if (root.mockIdp !== undefined) {
+    const raw = obj(root.mockIdp, 'mockIdp');
+    exactKeys(raw, ['origin'], 'mockIdp');
+    const configured = origin(raw.origin, 'mockIdp.origin', ['http:'], 'an http loopback URL');
+    const url = new URL(configured);
+    if (!['127.0.0.1', 'localhost'].includes(url.hostname)) {
+      throw new TypeError('mockIdp.origin must use a loopback host supported by the runner (127.0.0.1 or localhost)');
+    }
+    out.mockIdp = { origin: configured };
+  }
+
   if (root.metrics !== undefined) out.metrics = parseMetrics(root.metrics);
   return out;
 }

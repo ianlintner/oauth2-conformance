@@ -11,7 +11,7 @@
     "capabilities": {
       "type": "array",
       "uniqueItems": true,
-      "items": { "enum": ["test-clock", "dpop-nonce-mode", "restart", "multi-instance", "mtls"] }
+      "items": { "enum": ["test-clock", "dpop-nonce-mode", "restart", "multi-instance", "mtls", "storage-fault", "provider-base-url-configurable"] }
     },
     "mtls": {
       "type": "object",

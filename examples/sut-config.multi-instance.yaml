@@ -8,6 +8,12 @@
 #
 # No credentials live here: OAUTH2_JWT_SECRET and OAUTH2_DATABASE_URL come
 # from the operator's environment. See reference/persistence-harness.md.
+#
+# Contract section 7.10: the runner binds this loopback-only mock IdP; a SUT
+# that advertises `provider-base-url-configurable` points its provider base
+# URLs here in conformance mode. No live provider or real credential is used.
+mockIdp:
+  origin: http://127.0.0.1:8098
 
 # The primary base URL comes from `run --base-url`; it must match instance "a".
 instances:
