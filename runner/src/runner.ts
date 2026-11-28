@@ -73,6 +73,8 @@ export interface HelperContext {
   sut?: import('./sut-runtime.js').SutRuntime;
   /** Live local back-channel receiver started by the CLI when configured. */
   logoutReceiver?: import('./logout-receiver.js').LogoutReceiver;
+  /** Live runner-owned mock IdP (contract section 7.10), when configured. */
+  mockIdp?: import('./mock-idp.js').MockIdp;
 }
 
 export type ScenarioHelper = (context: HelperContext) => Promise<import('./compare.js').ActualResponse>;
@@ -149,6 +151,7 @@ export async function runScenarios(scenarios: Scenario[], options: RunOptions): 
             baseUrl: options.baseUrl,
             ...(options.sut !== undefined ? { sut: options.sut } : {}),
             ...(options.sut?.logoutReceiverInstance !== undefined ? { logoutReceiver: options.sut.logoutReceiverInstance } : {}),
+            ...(options.sut?.mockIdpInstance !== undefined ? { mockIdp: options.sut.mockIdpInstance } : {}),
           });
         } else if (step.assert !== undefined) {
           // Assert-only step: no HTTP request. Build a synthetic response so

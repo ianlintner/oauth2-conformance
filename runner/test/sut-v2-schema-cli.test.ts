@@ -88,7 +88,9 @@ test('seed schema rejects tls_client_auth without a subject DN or with a secret,
 test('capabilities schema: each capability is independent and its companion fields are enforced', async () => {
   const valid = await validator('sut-capabilities.schema.json');
   assert.equal(valid({ interface_version: 2, capabilities: [] }), true, 'a SUT may advertise nothing');
-  assert.equal(valid({ interface_version: 2, capabilities: ['test-clock', 'dpop-nonce-mode', 'restart'] }), true);
+  assert.equal(valid({ interface_version: 2, capabilities: ['test-clock', 'dpop-nonce-mode', 'restart', 'storage-fault', 'provider-base-url-configurable'] }), true);
+  assert.equal(valid({ interface_version: 2, capabilities: ['storage-fault'] }), true, 'the storage fault needs no companion field');
+  assert.equal(valid({ interface_version: 2, capabilities: ['provider-base-url-configurable'] }), true, 'configurable provider URLs need no companion field');
   assert.equal(valid({ interface_version: 2, capabilities: ['mtls'], mtls: { base_url: 'https://127.0.0.1:8443' } }), true);
   assert.equal(valid({ interface_version: 2, capabilities: ['multi-instance'], instances: ['http://127.0.0.1:8081', 'http://127.0.0.1:8082'] }), true);
   assert.equal(valid({ interface_version: 2, capabilities: ['mtls'] }), false, 'mtls requires its listener origin');

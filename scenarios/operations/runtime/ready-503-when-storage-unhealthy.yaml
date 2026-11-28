@@ -1,19 +1,37 @@
 id: operations.runtime.ready-503-when-storage-unhealthy
-title: Readiness answers 503 when the storage health check fails
+title: Readiness answers 503 while the SUT storage health check is failing
 requirements: [OPS-3.2-ready-503-when-storage-unhealthy]
 profile: operations
 status: draft
 note: |
-  Invariant INV-OPS-READY-503-ON-STORAGE-FAILURE. Draft: no SUT capability
-  exists to make storage unhealthy, and inventing a control endpoint here
-  would exceed this ticket. C-06 ticket 4 will add the runner-driven
-  `storage-fault` capability; the step below is the observation to make once
-  it exists. Do not promote this scenario before that capability lands.
+  Invariant INV-OPS-READY-503-STORAGE-UNHEALTHY. Draft: requires a SUT that
+  advertises `storage-fault` and implements POST /conformance/storage-fault
+  (contract 7.9). The fault is injected in the SUT, and `/ready` must observe
+  it: the runner never fabricates readiness. No Capability/seed field exists
+  yet, so this scenario defers on SUTs without the capability. The fault is
+  disabled in the last step so later scenarios see a healthy store.
 steps:
-  - id: ready-after-storage-fault
+  - id: fault-on
+    use: storage-fault
+    with: { enabled: true }
+    expect: { status: 200, json: { enabled: true } }
+  - id: ready-failing
+    request:
+      method: GET
+      path: /ready
+      headers: { accept: application/json }
+    expect: { status: 503 }
+  - id: fault-off
+    use: storage-fault
+    with: { enabled: false }
+    expect: { status: 200, json: { enabled: false } }
+  - id: ready-restored
     request:
       method: GET
       path: /ready
       headers: { accept: application/json }
     expect:
-      status: 503
+      status: 200
+      json:
+        status: ready
+        checks: { database: ok }
